@@ -62,8 +62,8 @@ test("step 1 of 7, settings branch: the 9 actions reach sidebar settings", () =>
   expect(drawn(beforeRestart)).toContain("STUB view > STUB app > STUB settings(9 actions)");
 });
 
-test("step 1 of 7, banner branch: the 9 actions reach the banner cache", () => {
-  expect(drawn(beforeRestart)).toContain("STUB view > STUB app > STUB banners(9 actions)");
+test("step 2 of 7, banner branch: the banner cache is real in shape and has no banner for the 9 actions", () => {
+  expect(drawn(beforeRestart)).toContain("STUB view > STUB app > banners 0 of 9");
 });
 
 test("step 1 of 7, groups branch: sort order is real in shape and returns no items for the 9 actions", () => {
