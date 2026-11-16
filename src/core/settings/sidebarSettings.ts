@@ -1,5 +1,5 @@
-import { type } from "arktype";
 import { SavedDataError } from "../errors/savedDataError";
+import { z } from "../schema/zod";
 
 export type WordForm = string;
 
@@ -22,10 +22,10 @@ export const defaultSettings: SidebarSettings = {
 };
 
 /** What may be saved: every setting optional, each checked when present. */
-const SavedSettings = type({
-  "groupWord?": { singular: "string > 0", plural: "string > 0" },
-  "ungroupedHeader?": "boolean",
-  "ungroupedName?": "string > 0",
+const SavedSettings = z.object({
+  groupWord: z.object({ singular: z.string().min(1), plural: z.string().min(1) }).optional(),
+  ungroupedHeader: z.boolean().optional(),
+  ungroupedName: z.string().min(1).optional(),
 });
 
 export interface SettingsRead {
@@ -36,12 +36,20 @@ export interface SettingsRead {
 
 /** Reads the saved settings, filling each missing value from its default. */
 export const readSettings = (saved: unknown): SettingsRead => {
-  const parsed = SavedSettings(saved ?? {});
-  if (parsed instanceof type.errors) {
+  const parsed = SavedSettings.safeParse(saved ?? {});
+  if (!parsed.success) {
     return {
       settings: defaultSettings,
-      problem: new SavedDataError("settings", { cause: parsed }),
+      problem: new SavedDataError("settings", { cause: parsed.error }),
     };
   }
-  return { settings: { ...defaultSettings, ...parsed }, problem: null };
+  const { groupWord, ungroupedHeader, ungroupedName } = parsed.data;
+  return {
+    settings: {
+      groupWord: groupWord ?? defaultSettings.groupWord,
+      ungroupedHeader: ungroupedHeader ?? defaultSettings.ungroupedHeader,
+      ungroupedName: ungroupedName ?? defaultSettings.ungroupedName,
+    },
+    problem: null,
+  };
 };
