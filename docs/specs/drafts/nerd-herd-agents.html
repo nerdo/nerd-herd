@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spec: nerd-herd Agents mod</title>
+<style>
+:root { color-scheme: light dark;
+        --ink:#1a1a1a; --bg:#fff; --muted:#595959; --rule:#d4d4d4; --ok:#2e7d32; --warn:#b34700;
+        --bg-soft:#f4f4f4; --link:#0b5fa5; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+        --ink:#e8e8e8; --bg:#16181c; --muted:#a8a8a8; --rule:#3a3d44; --ok:#7bc47f; --warn:#ffa04d;
+        --bg-soft:#22252b; --link:#7ab8f5; } }
+:root[data-theme="dark"] {
+        --ink:#e8e8e8; --bg:#16181c; --muted:#a8a8a8; --rule:#3a3d44; --ok:#7bc47f; --warn:#ffa04d;
+        --bg-soft:#22252b; --link:#7ab8f5; }
+* { box-sizing: border-box; }
+body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.55; color: var(--ink);
+       background: var(--bg); margin: 0; display: grid; grid-template-columns: 17rem minmax(0,46rem);
+       gap: 2.5rem; justify-content: center; padding: 2rem 1.25rem; }
+@media (max-width: 62rem) { body { grid-template-columns: minmax(0,1fr); gap: 1rem; } }
+a { color: var(--link); }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-radius: 2px; }
+.skip { position: absolute; left: -9999px; }
+.skip:focus { position: static; display: inline-block; margin-bottom: 1rem; }
+/* Prose holds to 60-75 characters per line; tables, figures and code use the full column. */
+main p, main li, dd { max-width: 68ch; }
+
+/* Contents panel and toolbar */
+#toc { position: sticky; top: 2rem; align-self: start; max-height: calc(100vh - 4rem); overflow-y: auto;
+       font-size: .9rem; border-right: 1px solid var(--rule); padding-right: 1rem; }
+@media (max-width: 62rem) { #toc { position: static; max-height: none; border-right: 0;
+       border-bottom: 1px solid var(--rule); padding: 0 0 1rem 0; } }
+#toc > h2 { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+            margin: 0 0 .5rem; border: 0; padding: 0; }
+#toc ol { list-style: none; margin: 0; padding: 0; }
+#toc a { color: var(--muted); text-decoration: none; display: block; padding: .15rem .4rem;
+         border-left: 2px solid transparent; border-radius: 0 3px 3px 0; }
+#toc a:hover { background: var(--bg-soft); color: var(--ink); }
+#toc a[aria-current] { color: var(--ink); font-weight: 600; border-left-color: var(--ink); background: var(--bg-soft); }
+#toc .count { color: var(--muted); font-weight: 400; font-size: .85em; }
+#toc li.for-you > a { border-left-color: var(--ok); color: var(--ink); }
+#toc li.not-yours > a { opacity: .5; }
+#toolbar { display: flex; flex-wrap: wrap; gap: .3rem; margin: 0 0 .75rem; }
+#toolbar fieldset { border: 0; margin: 0; padding: 0; display: contents; }
+#toolbar legend { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+                  color: var(--muted); width: 100%; padding: 0; }
+#toolbar button, #toolbar label { font: inherit; font-size: .8rem; cursor: pointer; color: var(--muted);
+       background: transparent; border: 1px solid var(--rule); border-radius: 999px; padding: .1rem .6rem; }
+#toolbar [aria-pressed="true"], #toolbar input:checked + span {
+       color: var(--ink); border-color: var(--ink); background: var(--bg-soft); font-weight: 600; }
+#toolbar input { position: absolute; opacity: 0; width: 0; height: 0; }
+#toolbar input:focus-visible + span { outline: 2px solid var(--link); outline-offset: 2px; }
+#toolbar label span { display: inline-block; border-radius: 999px; padding: .1rem .6rem;
+       border: 1px solid var(--rule); }
+#toolbar label { border: 0; padding: 0; }
+
+/* Prose */
+h1 { border-bottom: 2px solid var(--ink); padding-bottom: .4rem; margin-top: 0; }
+h2, h3, h4 { scroll-margin-top: 1rem; }
+h2 { margin-top: 2.25rem; border-bottom: 1px solid var(--rule); padding-bottom: .25rem; }
+h3 { margin: 1.75rem 0 .5rem; font-size: 1.15rem; }
+h4 { margin: 0 0 .4rem; font-size: 1rem; }
+code { background: var(--bg-soft); padding: .1rem .3rem; border-radius: 3px; font-size: .92em; }
+pre { background: var(--bg-soft); padding: .75rem; border-radius: 4px; overflow-x: auto; }
+pre.mermaid { background: transparent; text-align: center; }
+figcaption { color: var(--muted); font-size: .9em; text-align: center; }
+table { border-collapse: collapse; width: 100%; margin: .75rem 0; }
+th, td { border: 1px solid var(--rule); padding: .4rem .6rem; text-align: left; vertical-align: top; }
+th { background: var(--bg-soft); }
+.anchor { color: var(--muted); text-decoration: none; opacity: 0; padding-left: .4rem; font-weight: 400; }
+:hover > .anchor, .anchor:focus-visible { opacity: 1; }
+details.backlinks { font-size: .85em; color: var(--muted); margin: .25rem 0 .5rem; }
+details.backlinks > summary { cursor: pointer; width: fit-content; }
+details.backlinks > ul { margin: .25rem 0 0; padding-left: 1.25rem; }
+details.claims { margin: .25rem 0 .75rem; }
+details.claims > summary { cursor: pointer; width: fit-content; color: var(--muted); font-weight: 600; }
+details.claims > ol { margin: .35rem 0 0; padding-left: 1.6rem; }
+details.claims li { margin: .2rem 0; scroll-margin-top: 1rem; }
+dl.checked-by { font-size: .85em; gap: 0 .5rem; margin: .1rem 0 .35rem; }
+dl.checked-by > :is(dt, dd) { margin: 0; }
+dl.checked-by > dd { grid-column: -2; }   /* every case beside the one label */
+.badge { font-size: .7em; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+         border: 1px solid currentColor; border-radius: 3px; padding: 0 .35em; margin-left: .5em;
+         vertical-align: middle; white-space: nowrap; }
+.badge.is-ok { color: var(--ok); }
+.badge.is-warn { color: var(--warn); }
+.unresolved-ref { color: var(--warn); font-weight: 600; }
+details.source { margin-top: .5rem; font-size: .9em; }
+details.source > summary { cursor: pointer; color: var(--muted); width: fit-content; }
+details.source > pre { margin-top: .4rem; }
+spec-roles { display: none; }
+
+/* Labeled fields: one rule set styles every block's fields identically. */
+dl { display: grid; grid-template-columns: max-content 1fr; gap: .25rem .75rem; margin: .5rem 0 0; }
+dt { font-weight: 600; color: var(--muted); }
+dd { margin: 0; }
+dd > ul { margin: 0; padding-left: 1.1rem; }
+@media (max-width: 46rem) { dl { grid-template-columns: 1fr; gap: 0; }
+  dt { margin-top: .5rem; } dd { margin-bottom: .25rem; } }
+
+/* Domain blocks: the container is named, the structure inside it is HTML. */
+spec-question, test-case, spec-phase, spec-module {
+  display: block; border: 1px solid var(--rule); border-radius: 4px; margin: .75rem 0;
+  padding: .6rem .85rem; scroll-margin-top: 1rem; }
+ol.tasks { margin: .6rem 0 0; padding-left: 1.6rem; }
+ol.tasks > li { margin: .5rem 0; }
+ol.tasks h4 { margin: 0 0 .2rem; font-size: 1rem; }
+spec-question[status="open"] { border-left: 4px solid var(--warn); }
+spec-question[status="resolved"]   { border-left: 4px solid var(--ok); }
+spec-phase[parallel-safe="yes"] { border-left: 4px solid var(--ok); }
+spec-phase[parallel-safe="no"]  { border-left: 4px solid var(--warn); }
+test-group { display: block; margin: 1.25rem 0; }
+
+/* Section disclosure: the title stays visible whatever the body is doing. */
+section > details > summary { list-style: none; cursor: pointer; }
+section > details > summary::-webkit-details-marker { display: none; }
+section > details > summary > h2 { display: inline-block; width: calc(100% - 1.5rem); }
+section > details > summary::after { content: "\25BE"; color: var(--muted); margin-left: .35rem; }
+section > details:not([open]) > summary::after { content: "\25B8"; }
+section > details:not([open]) > summary > h2 { color: var(--muted); border-bottom-style: dashed; }
+
+/* Reader modes fold what is not yours; the "for you" marker is written into the
+   document by the behavior script, never generated here. */
+[data-roles].not-yours > details:not(.backlinks) > summary { opacity: .6; }
+
+/* Facet filters dim non-matching items in place. */
+.facets { display: flex; flex-direction: column; gap: .35rem; margin: .5rem 0 1.25rem; }
+.facets .facet { display: flex; flex-wrap: wrap; gap: .3rem; align-items: baseline; }
+.facets .facet-name { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--muted); min-width: 7rem; }
+.facets button { font: inherit; font-size: .78rem; cursor: pointer; color: var(--muted);
+  background: transparent; border: 1px solid var(--rule); border-radius: 999px; padding: .05rem .55rem; }
+.facets button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink);
+  background: var(--bg-soft); font-weight: 600; }
+.facets .facet-count { opacity: .7; font-variant-numeric: tabular-nums; }
+.filtered-out > :is(h3, h4) { opacity: .5; }
+
+/* A folded block keeps its heading and hides only its body. `hidden="until-found"`
+   leaves that body reachable by the browser's find, and nothing moves in the DOM. */
+.folded > :is(h3, h4)::after { content: "\2026"; color: var(--muted); margin-left: .4rem; }
+
+/* Print renders the document complete: everything expanded, undimmed, no chrome. */
+@media print {
+  body { display: block; padding: 0; color: #000; background: #fff; }
+  #toc { position: static; max-height: none; border: 0; padding: 0; margin-bottom: 1.5rem; }
+  #toolbar, .skip, .anchor { display: none; }
+  [data-roles].not-yours > details:not(.backlinks) > summary, .filtered-out > :is(h3, h4) { opacity: 1; }
+  [hidden] { display: revert !important; }   /* a printed spec is complete */
+  .facets { display: none; }
+  section > details > summary::after { content: none; }
+  .folded > :is(h3, h4)::after { content: none; }
+  a { color: #000; }
+  spec-question, test-case, spec-phase, spec-module, ol.tasks > li, figure, details.source { break-inside: avoid; }
+  h2, h3, h4 { break-after: avoid; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<nav id="toc" aria-labelledby="toc-heading">
+  <h2 id="toc-heading">Contents</h2>
+  <div id="toolbar"></div>
+  <ol></ol>
+</nav>
+<main id="content">
+  <h1>nerd-herd Agents mod: sessions by machine</h1>
+  <p>nerd-herd is a set of Herdr mods, and its full scope is not settled yet. This spec covers one of them: an Agents mod that replaces the sidebar’s Agents section, lists each session under the machine it runs on, wraps long subjects instead of cutting them off, and renames sessions with Herdr’s own rename. The Spaces mod has <a href="nerd-herd-spaces.html">its own spec</a>. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
+  <dl class="spec-meta">
+    <dt>Stage</dt> <dd data-field="stage">drafts</dd>
+    <dt>Complexity</dt> <dd data-field="complexity">3 / 10 &mdash; one mod, a session list model, and Herdr commands it already offers</dd>
+    <dt>Sequence</dt> <dd data-field="sequence">Built after the <a href="nerd-herd-spaces.html">Spaces mod</a>, whose groups the Agents list may reuse (<a href="#spec-question-agents-grouping">Agents grouping</a>)</dd>
+    <dt>Herdr version</dt> <dd data-field="herdr-version">0.1.16 (app), read from <code>/Applications/Herdr.app/Contents/Info.plist</code></dd>
+    <dt>Toolchain</dt> <dd data-field="toolchain">TypeScript on Bun, compiled by <code>bun build</code> into the mod’s <code>main.js</code>, the same as the Spaces mod.</dd>
+    <dt>Standing rule</dt> <dd data-field="standing-rule">Where Herdr already provides a feature, use it, unless the idea does not fit it (from the user, 2026-11-16).</dd>
+  </dl>
+  <spec-roles>
+    <spec-role id="design">Design reviewer</spec-role>
+    <spec-role id="build">Implementation lead</spec-role>
+    <spec-role id="qa">Test reviewer</spec-role>
+  </spec-roles>
+
+  <section class="narrative">
+    <details open><summary><h2>Narrative</h2></summary>
+      <p class="skeleton-journey">Dannel opens the Herdr sidebar and sees each running agent session under the machine it runs on, with its full subject wrapped onto more lines, renames one session from its row and sees the new name in the row and in Herdr’s tab bar, and clicks a row to focus that session’s pane.</p>
+
+      <h3>Reading and renaming sessions by machine</h3>
+      <details open class="claims"><summary>Claims</summary>
+        <ol>
+          <li>Agents lists each session under the machine it runs on</li>
+          <li>A session row shows the session's subject wrapped onto more lines when it is longer than one line</li>
+          <li>Renaming a session from its row gives its Herdr tab that name</li>
+          <li>Renaming a session to an empty name returns it to its automatic name</li>
+          <li>Clicking a session row focuses that session's pane</li>
+        </ol>
+      </details>
+      <p>Dannel has three agent sessions running: one on desk-client working on "THRD: Reset leader election", one on this computer fixing a Python virtual environment, and one on desk-home about NAS hardware. Today the Agents section shows them in one list, cut off at the right edge, with the machine's name in tiny text.</p>
+      <p>With nerd-herd, Agents shows a header for each machine and the sessions running there beneath it. The desk-client session's full subject, "π 🧵 THRD: Reset leader election", wraps onto a second line instead of ending in "…". The two sessions both called "sandbox" are easy to tell apart because each sits under its own machine.</p>
+      <p>One session still has a vague automatic subject, so they rename it "NAS drive health" from its row, and the row and the Herdr tab bar both show the new name. Later they clear the name, and the session goes back to its automatic name. They click a row, and Herdr focuses that session's pane.</p>
+    </details>
+  </section>
+
+  <section class="questions" data-roles="design build">
+    <details open><summary><h2>Questions</h2></summary>
+      <spec-question status="open">
+        <h3>Skeleton sentence</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Does the narrative’s skeleton journey say what “it works” means for the Agents mod?</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-16">
+        <h3>Session rename scope</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Is renaming a session Herdr's own rename, or a name only this mod shows?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Herdr's own tab rename (the <code>tab.rename</code> command), so the name shows everywhere Herdr shows that tab.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Agents grouping</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">How is the Agents list organized?</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>One header per machine; groups ignored</li>
+            <li>Group, then machine, then sessions, matching Spaces</li>
+            <li>Herdr's two existing views, plus this as a third choice in its sort menu</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Group, then machine, then sessions.</dd>
+                  </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-16">
+        <h3>Header size</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Are bigger, higher-contrast section and machine headers part of this mod?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">No. Headers keep Herdr’s current size (11 to 11.5 pixel text) for now.</dd>
+        </dl>
+      </spec-question>
+    </details>
+  </section>
+
+  <section class="process-flow">
+    <details open><summary><h2>Process Flow</h2></summary>
+      <figure>
+        <pre class="mermaid">flowchart TD
+  data["Herdr agents and spaces"] --> model["Session list model groups sessions by machine"]
+  model --> rows["Agents shows machines and their sessions"]
+  rename["Dannel renames a session"] --> herdr["Herdr tab.rename"]
+  click["Dannel clicks a session row"] --> focus["Herdr pane.focus"]
+  herdr --> data</pre>
+        <figcaption>The Agents mod only reads Herdr’s data and calls Herdr’s own commands, so a rename shows up everywhere Herdr names that tab.</figcaption>
+      </figure>
+    </details>
+  </section>
+
+  <section class="module-definitions" data-roles="build">
+    <details open><summary><h2>Module Definitions</h2></summary>
+      <spec-module>
+        <h3>Session list model</h3>
+        <dl>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Groups Herdr's agents under the machine they run on and picks each row's subject text.</dd>
+          <dt>Owns</dt> <dd data-field="owns">Grouping and row text.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Nothing. Data in, data out.</dd>
+          <dt>Input <code>Agent[]</code>, <code>Space[]</code></dt>
+          <dd data-field="input">Herdr's agents and spaces.</dd>
+          <dt>Output <code>AgentsRow[]</code></dt>
+          <dd data-field="output">The rows to draw.</dd>
+        </dl>
+      </spec-module>
+      <spec-module>
+        <h3>Agents sidebar mod</h3>
+        <dl>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Draws the Agents rows and turns clicks into Herdr commands.</dd>
+          <dt>Owns</dt> <dd data-field="owns">Layout, wrapping, the rename control.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Grouping to Session list model; renaming to Herdr <code>tab.rename</code>; focusing to Herdr <code>pane.focus</code>.</dd>
+        </dl>
+      </spec-module>
+    </details>
+  </section>
+
+  <section class="validation-boundaries" data-roles="build">
+    <details open><summary><h2>Validation Boundaries</h2></summary>
+      <ul>
+        <li><strong>Herdr’s agents, spaces, and terminals</strong> come typed from <code>herdr.d.ts</code>. An agent’s title is text the agent chose, so the row shows it as text and never interprets it.</li>
+        <li><strong>A session name typed by the user</strong> goes to Herdr’s <code>tab.rename</code>, which owns its rules; an empty name returns the tab to its automatic name.</li>
+      </ul>
+    </details>
+  </section>
+
+  <section class="ambiguity-resolution">
+    <details open><summary><h2>Ambiguity Resolution</h2></summary>
+      <p>"Session" means a Herdr tab that runs an agent. Herdr's Agents section already labels each row from its tab name when the tab is named, so renaming a session means renaming its tab (<code>tab.rename</code>), which also follows the standing rule to use Herdr's own features.</p>
+      <p>The shipped <code>agents</code> mod belongs to Herdr. Herdr’s guide says to copy shipped mods with <code>mod.clone</code> before changing them, so nerd-herd’s Agents mod goes into a copied layout and the user’s <code>main</code> layout stays as it is.</p>
+      <p>End-to-end tests share the harness the Spaces spec researches (its question “End-to-end test harness”).</p>
+    </details>
+  </section>
+
+  <section class="test-cases" data-roles="qa">
+    <details open><summary><h2>Test Cases</h2></summary>
+      <test-group category="error-scenarios">
+        <h3>Error scenarios</h3>
+        <test-case traces-to="Renaming a session to an empty name returns it to its automatic name" covers-module="Agents sidebar mod" status="pending">
+          <h4>Clearing a session's name restores its automatic name</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session whose tab is named "NAS drive health"</dd>
+            <dt>When</dt> <dd data-field="when">Dannel renames it to an empty name</dd>
+            <dt>Then</dt> <dd data-field="then">Herdr receives <code>tab.rename</code> with an empty name, and the row shows the session's automatic name (Herdr documents an empty name as returning a tab to its number)</dd>
+          </dl>
+        </test-case>
+      </test-group>
+      <test-group category="happy-paths">
+        <h3>Happy paths</h3>
+        <test-case traces-to="Agents lists each session under the machine it runs on" covers-module="Session list model" status="pending">
+          <h4>Sessions group under their machine</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Agents on desk-client, this computer, and desk-home</dd>
+            <dt>When</dt> <dd data-field="when">Agents rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">Each agent's row follows the header of the machine it runs on</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A session row shows the session's subject wrapped onto more lines when it is longer than one line" covers-module="Session list model" status="pending">
+          <h4>A session row carries the whole subject</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">An agent whose title is "π 🧵 THRD: Reset leader election"</dd>
+            <dt>When</dt> <dd data-field="when">Agents rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">The row's subject is "π 🧵 THRD: Reset leader election", with no characters dropped</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Renaming a session from its row gives its Herdr tab that name" covers-module="Agents sidebar mod" status="pending">
+          <h4>Renaming a session runs Herdr's tab rename</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session in tab T</dd>
+            <dt>When</dt> <dd data-field="when">Dannel renames it "NAS drive health" from its row</dd>
+            <dt>Then</dt> <dd data-field="then">Herdr's tab T is named "NAS drive health"</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Clicking a session row focuses that session's pane" covers-module="Agents sidebar mod" status="pending">
+          <h4>Clicking a session row focuses its pane</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session in pane P, and another pane focused</dd>
+            <dt>When</dt> <dd data-field="when">Dannel clicks the session's row</dd>
+            <dt>Then</dt> <dd data-field="then">Herdr reports pane P as focused</dd>
+          </dl>
+        </test-case>
+      </test-group>
+      <test-group category="ux-validation">
+        <h3>UX validation</h3>
+        <test-case traces-to="Renaming a session from its row gives its Herdr tab that name" covers-module="Agents sidebar mod" status="pending" browser-test>
+          <h4>Reading and renaming a session by machine</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">An isolated Herdr window with an agent on a machine whose subject is longer than the sidebar is wide</dd>
+            <dt>When</dt> <dd data-field="when">Rename that session "NAS drive health" from its row</dd>
+            <dt>Then (experience)</dt> <dd data-field="then" data-aspect="experience">The screenshot shows the session under its machine's header, its row reading "NAS drive health"</dd>
+            <dt>Then (technical)</dt> <dd data-field="then" data-aspect="technical"><code>herdr-app ls</code> lists the tab named "NAS drive health"</dd>
+            <dt>Incremental</dt> <dd data-field="incremental">Testable once the Agents mod is in the copied layout</dd>
+          </dl>
+        </test-case>
+      </test-group>
+    </details>
+  </section>
+
+  <section class="phase-dependencies" data-roles="build">
+    <details open><summary><h2>Phase Dependencies</h2></summary>
+      <spec-phase parallel-safe="no" agent-suitable="no">
+        <h3>Walking skeleton</h3>
+        <dl>
+          <dt>Writes</dt>
+          <dd><ul>
+            <li data-field="shared-artifact">e2e test harness</li>
+            <li data-field="shared-artifact">mods/nerd-herd-agents/*</li>
+            <li data-field="shared-artifact">copied Herdr layout</li>
+          </ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Walking skeleton" parallel-safe="no" agent-suitable="no">
+        <h3>Session list model</h3>
+        <dl>
+          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">src/sessions/*</li></ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Session list model" parallel-safe="no" agent-suitable="no">
+        <h3>Agents sidebar mod</h3>
+        <dl>
+          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">mods/nerd-herd-agents/*</li></ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Agents sidebar mod" parallel-safe="no" agent-suitable="no">
+        <h3>Skeleton re-walk</h3>
+        <dl>
+          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">e2e test harness</li></ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <h3>Definition of Done</h3>
+      <ol class="tasks">
+        <li><h4>The full testing cycle passes: test, typecheck, test, build</h4>
+          <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+        <li><h4>herdr-app check passes for the Agents mod</h4>
+          <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+        <li><h4>The sessions journey walked by hand in the running Herdr window, with screenshots</h4>
+          <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+        <li><h4>A security scan runs clean</h4>
+          <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+      </ol>
+      <execution-plan>Walking skeleton &rarr; Session list model &rarr; Agents sidebar mod &rarr; Skeleton re-walk</execution-plan>
+    </details>
+  </section>
+</main>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true });
+</script>
+<script>
+(() => {
+  const slug = s => s.trim().toLowerCase().replace(/[^\w]+/g, '-').replace(/^-|-$/g, '');
+  const el = (tag, props = {}, ...kids) => {
+    const node = document.createElement(tag);
+    Object.assign(node, props);
+    node.append(...kids);
+    return node;
+  };
+  const BLOCKS = 'spec-question, test-case, spec-module, spec-phase';
+  const byLabel = new Map();
+
+  // 1a. Section and narrative headings: stable id, copyable anchor, section labelling.
+  //     Headings inside a block belong to that block and are handled in 1b.
+  //     A task heading names a behavior, not an addressable thing: two halves of a pair
+  //     share it on purpose, so it gets no id and resolves nothing.
+  document.querySelectorAll('main :is(h2, h3, h4)').forEach(h => {
+    if (h.closest(BLOCKS) || h.closest('ol.tasks')) return;
+    const label = h.textContent.trim();
+    h.id ||= slug('sec-' + label);
+    byLabel.set(label.toLowerCase(), h);
+    const a = el('a', { className: 'anchor', href: '#' + h.id, textContent: '#' });
+    a.setAttribute('aria-label', 'Link to this section');
+    h.append(a);
+    const section = h.closest('section');
+    if (h.tagName === 'H2' && section) section.setAttribute('aria-labelledby', h.id);
+  });
+
+  // 1b. Domain blocks: named by their own heading, announced as one unit.
+  document.querySelectorAll(BLOCKS).forEach(node => {
+    const heading = node.querySelector(':scope > :is(h3, h4)');
+    const label = (heading?.textContent || node.textContent).trim().slice(0, 80);
+    node.id ||= slug(node.tagName.toLowerCase() + '-' + label);
+    node.dataset.label = label;        // captured before badges are appended, so it stays clean
+    byLabel.set(label.toLowerCase(), node);
+    node.setAttribute('role', 'group');
+    if (heading) {
+      heading.id ||= node.id + '-h';
+      node.setAttribute('aria-labelledby', heading.id);
+    } else {
+      node.setAttribute('aria-label', label);
+    }
+  });
+
+  // 1c. Claims: the one target `traces-to` resolves against, so they keep an index of
+  //     their own. A journey heading is not in it, and a case traced to one is unresolved.
+  const claims = new Map();
+  document.querySelectorAll('section.narrative details.claims').forEach(list => {
+    const items = list.querySelectorAll(':scope > ol > li');
+    list.querySelector(':scope > summary').textContent = 'Claims (' + items.length + ')';
+    items.forEach(li => {
+      const label = li.textContent.trim();
+      li.id ||= slug('claim-' + label);
+      li.dataset.label = label;
+      claims.set(label.toLowerCase(), li);
+      const a = el('a', { className: 'anchor', href: '#' + li.id, textContent: '#' });
+      a.setAttribute('aria-label', 'Link to this claim');
+      li.append(a);
+    });
+  });
+
+  // 2. Status attributes become document text, not just a border colour.
+  const badge = (node, text, tone) => {
+    const target = node.querySelector(':scope > :is(h3, h4)') || node;
+    target.append(el('span', { className: 'badge is-' + tone, textContent: text }));
+  };
+  document.querySelectorAll('spec-question[status]').forEach(q =>
+    badge(q, q.getAttribute('status'), q.getAttribute('status') === 'resolved' ? 'ok' : 'warn'));
+  document.querySelectorAll('test-case[status]').forEach(t =>
+    badge(t, t.getAttribute('status'), t.getAttribute('status') === 'done' ? 'ok' : 'warn'));
+  document.querySelectorAll('spec-phase[parallel-safe]').forEach(p => {
+    const yes = p.getAttribute('parallel-safe') === 'yes';
+    badge(p, yes ? 'parallel-safe' : 'sequential', yes ? 'ok' : 'warn');
+  });
+  // Written by execution at nomination, never by the author: the artifacts were
+  // read off tasks that exist and checked against the siblings nominated with it.
+  document.querySelectorAll('spec-phase[artifacts-verified="yes"]').forEach(p =>
+    badge(p, 'artifacts verified', 'ok'));
+
+  // 3. Cross-reference attributes become linked rows in the block's own field list.
+  //    Backlinks are a navigation aid, so they arrive folded. A claim is the exception:
+  //    it usually has one case, so its cases stay open beneath it as "Checked by".
+  //    A heading cannot hold a <details>, so a heading target gets its list after it.
+  const addBacklink = (target, node) => {
+    if (target.matches('details.claims li')) {
+      let checked = target.querySelector(':scope > dl.checked-by');
+      if (!checked) target.append(checked = el('dl', { className: 'checked-by' },
+        el('dt', { textContent: 'Checked by' })));
+      return checked.append(el('dd', {}, node));
+    }
+    const isHeading = /^H[2-4]$/.test(target.tagName);
+    let box = isHeading
+      ? (target.nextElementSibling?.matches('details.backlinks') ? target.nextElementSibling : null)
+      : target.querySelector(':scope > details.backlinks');
+    if (!box) {
+      box = el('details', { className: 'backlinks' }, el('summary'), el('ul'));
+      isHeading ? target.after(box) : target.append(box);
+    }
+    box.querySelector(':scope > ul').append(el('li', {}, node));
+    box.querySelector(':scope > summary').textContent =
+      'Referenced by (' + box.querySelectorAll(':scope > ul > li').length + ')';
+  };
+  const resolve = (node, attr, label, index = byLabel) => {
+    const raw = node.getAttribute(attr);
+    if (!raw) return;
+    const dd = el('dd');
+    raw.split(',').map(s => s.trim()).filter(Boolean).forEach((ref, i) => {
+      if (i) dd.append(document.createTextNode(', '));
+      const target = index.get(ref.toLowerCase());
+      if (!target) return dd.append(el('span', {
+        className: 'unresolved-ref', textContent: ref + ' (unresolved)' }));
+      dd.append(el('a', { href: '#' + target.id, textContent: ref }));
+      addBacklink(target, el('a', { href: '#' + node.id, textContent: node.dataset.label }));
+    });
+    let list = node.querySelector(':scope > dl');
+    if (!list) node.append(list = el('dl'));
+    list.prepend(el('dt', { textContent: label }), dd);
+  };
+  document.querySelectorAll('test-case').forEach(t => {
+    resolve(t, 'traces-to', 'Traces to', claims);
+    resolve(t, 'covers-module', 'Covers module');
+  });
+  document.querySelectorAll('spec-phase').forEach(p => resolve(p, 'depends-on', 'Depends on'));
+
+  // 4. Show first, tell on demand: each diagram keeps its source one toggle away.
+  //    Runs before the deferred module script, so it captures the source pre-render.
+  document.querySelectorAll('pre.mermaid').forEach(pre => {
+    const details = el('details', { className: 'source' },
+      el('summary', { textContent: 'Diagram source' }),
+      el('pre', { textContent: pre.textContent.trim() }));
+    (pre.closest('figure') || pre).append(details);
+  });
+  let reopened = [];   // a printed spec must be complete, so nothing stays collapsed on paper
+  addEventListener('beforeprint', () => {
+    reopened = [...document.querySelectorAll('details:not([open])')];
+    reopened.forEach(d => d.open = true);
+  });
+  addEventListener('afterprint', () => reopened.forEach(d => d.open = false));
+
+  // 5. Toolbar: theme switch, then reader modes when roles are declared.
+  const toolbar = document.getElementById('toolbar');
+  const store = {
+    get: k => { try { return localStorage.getItem(k); } catch { return null; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+  };
+  const themeBtn = el('button', { type: 'button' });
+  const paintTheme = () => {
+    const dark = document.documentElement.dataset.theme === 'dark';
+    themeBtn.textContent = dark ? 'Light' : 'Dark';
+    themeBtn.setAttribute('aria-label', `Switch to ${dark ? 'light' : 'dark'} theme`);
+  };
+  const saved = store.get('spec-theme');
+  if (saved) document.documentElement.dataset.theme = saved;
+  else document.documentElement.dataset.theme =
+    matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  themeBtn.addEventListener('click', () => {
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    store.set('spec-theme', next);
+    paintTheme();
+  });
+  paintTheme();
+  toolbar.append(themeBtn);
+
+  const roles = [...document.querySelectorAll('spec-role')].map(r => ({
+    id: r.id || slug(r.textContent), label: r.textContent.trim() }));
+  if (roles.length) {
+    const fs = el('fieldset', {}, el('legend', { textContent: 'Reading as' }));
+    const apply = mode => {
+      document.querySelectorAll('.for-you-marker').forEach(m => m.remove());
+      document.querySelectorAll('[data-roles]').forEach(node => {
+        const mine = !mode || node.dataset.roles.split(/\s+/).includes(mode);
+        node.classList.toggle('for-you', !!mode && mine);
+        node.classList.toggle('not-yours', !!mode && !mine);
+        // Fold what is not yours down to its title; never hide it.
+        const panel = node.querySelector(':scope > details:not(.backlinks)');
+        if (panel) panel.open = !mode || mine;
+        // The marker is document text, so it reaches assistive technology too.
+        if (mode && mine) node.querySelector(':scope :is(h2, h3, h4)')
+          ?.append(el('span', { className: 'badge is-ok for-you-marker', textContent: 'for you' }));
+      });
+      document.querySelectorAll('#toc li').forEach(li => {
+        const target = document.getElementById(li.querySelector('a').hash.slice(1));
+        const owner = target?.closest('[data-roles]') || target?.querySelector('[data-roles]');
+        li.classList.toggle('for-you', !!mode && !!owner?.classList.contains('for-you'));
+        li.classList.toggle('not-yours', !!mode && !!owner?.classList.contains('not-yours'));
+      });
+      store.set('spec-reader-mode', mode || '');
+    };
+    [{ id: '', label: 'Everything' }, ...roles].forEach(({ id, label }) => {
+      const input = el('input', { type: 'radio', name: 'reader-mode', value: id });
+      input.addEventListener('change', () => apply(id));
+      fs.append(el('label', {}, input, el('span', { textContent: label })));
+    });
+    toolbar.append(fs);
+    const initial = store.get('spec-reader-mode') || '';
+    const chosen = [...fs.querySelectorAll('input')].find(i => i.value === initial);
+    if (chosen) { chosen.checked = true; queueMicrotask(() => apply(initial)); }
+  }
+
+  // 6. Facet filters, discovered rather than configured: any attribute repeating a small
+  //    set of values across a section's blocks becomes a filter over that section.
+  const NOT_A_FACET = new Set(['id', 'class', 'style', 'role', 'slot', 'title', 'name',
+    'data-label', 'data-roles', 'traces-to', 'depends-on', 'covers-module', 'resolved-on']);
+
+  // Folding hides a block's body and leaves its heading in place. `until-found`
+  // keeps the hidden body reachable by find-in-page, and nothing is moved, so a
+  // selector written against the source still matches the live DOM.
+  const foldBody = (node, folded) => {
+    node.querySelectorAll(':scope > :not(h1):not(h2):not(h3):not(h4)').forEach(part => {
+      if (folded) part.setAttribute('hidden', 'until-found');
+      else part.removeAttribute('hidden');
+    });
+    node.classList.toggle('folded', folded);
+  };
+
+  document.querySelectorAll('main section').forEach(section => {
+    const items = [...section.querySelectorAll(BLOCKS)];
+    if (items.length < 3) return;
+    const names = new Set();
+    section.querySelectorAll(BLOCKS + ', test-group').forEach(node => {
+      for (const { name, value } of node.attributes) {
+        if (NOT_A_FACET.has(name) || name.startsWith('aria-')) continue;
+        if (!value.trim() || /\s/.test(value.trim())) continue;   // multi-word reads as prose
+        names.add(name);
+      }
+    });
+    const valueOf = (item, name) => item.closest(`[${name}]`)?.getAttribute(name);
+    const facets = [...names].map(name => {
+      const valued = items.filter(i => valueOf(i, name));
+      const values = [...new Set(valued.map(i => valueOf(i, name)))];
+      return { name, values, count: v => valued.filter(i => valueOf(i, name) === v).length };
+    }).filter(f => f.values.length >= 2 && f.values.length <= 8);
+    if (!facets.length) return;
+
+    const active = new Map(facets.map(f => [f.name, new Set()]));
+    const paint = () => {
+      items.forEach(item => {
+        const out = facets.some(f => {
+          const on = active.get(f.name);
+          return on.size && !on.has(valueOf(item, f.name));
+        });
+        item.classList.toggle('filtered-out', out);
+        foldBody(item, out);                              // fold to the title, never remove
+      });
+      // A container whose every item is filtered out folds as a unit.
+      section.querySelectorAll('test-group').forEach(group => {
+        const own = [...group.querySelectorAll(BLOCKS)];
+        const allOut = own.length && own.every(i => i.classList.contains('filtered-out'));
+        group.classList.toggle('filtered-out', !!allOut);
+        group.querySelectorAll(':scope > :is(test-case, spec-question, spec-module, spec-phase)')
+             .forEach(child => { if (allOut) child.setAttribute('hidden', 'until-found');
+                                 else child.removeAttribute('hidden'); });
+        group.classList.toggle('folded', !!allOut);
+      });
+    };
+
+    const bar = el('div', { className: 'facets' });
+    facets.forEach(f => {
+      const group = el('div', { className: 'facet' },
+        el('span', { className: 'facet-name', textContent: f.name.replace(/-/g, ' ') }));
+      const buttons = [];
+      const sync = () => {
+        const on = active.get(f.name);
+        allBtn.setAttribute('aria-pressed', String(on.size === 0));
+        buttons.forEach(([b, v]) => b.setAttribute('aria-pressed', String(on.has(v))));
+        paint();
+      };
+      const allBtn = el('button', { type: 'button' },
+        document.createTextNode('All'),
+        el('span', { className: 'facet-count', textContent: ` ${items.length}` }));
+      allBtn.addEventListener('click', () => { active.get(f.name).clear(); sync(); });
+      group.append(allBtn);
+      f.values.forEach(v => {
+        const b = el('button', { type: 'button' },
+          document.createTextNode(v.replace(/-/g, ' ')),
+          el('span', { className: 'facet-count', textContent: ` ${f.count(v)}` }));
+        b.addEventListener('click', () => {
+          const on = active.get(f.name);
+          on.has(v) ? on.delete(v) : on.add(v);
+          sync();
+        });
+        buttons.push([b, v]);
+        group.append(b);
+      });
+      sync();
+      bar.append(group);
+    });
+    const panel = section.querySelector(':scope > details');
+    (panel || section).insertBefore(bar, panel ? panel.querySelector('summary').nextSibling
+                                               : section.querySelector('h2').nextSibling);
+  });
+
+  // 7. Contents panel, with the section currently in view marked as the location.
+  const heads = [...document.querySelectorAll('main h2')];
+  const list = document.querySelector('#toc ol');
+  const links = new Map();
+  heads.forEach(h => {
+    const n = h.closest('section')?.querySelectorAll(BLOCKS).length ?? 0;
+    const a = el('a', { href: '#' + h.id, textContent: h.textContent.replace(/#$/, '') });
+    if (n) a.append(el('span', { className: 'count', textContent: ` (${n})` }));
+    list.append(el('li', {}, a));
+    links.set(h, a);
+  });
+  const visible = new Set();
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => e.isIntersecting ? visible.add(e.target) : visible.delete(e.target));
+    const current = heads.find(h => visible.has(h))
+      || [...heads].reverse().find(h => h.getBoundingClientRect().top < 100);
+    links.forEach(a => a.removeAttribute('aria-current'));
+    if (current) links.get(current)?.setAttribute('aria-current', 'location');
+  }, { rootMargin: '0px 0px -70% 0px' });
+  heads.forEach(h => io.observe(h));
+
+  // 8. A deep link lands on visible content: whatever encloses the target opens,
+  //    whether it was folded by a reader mode, a facet, or the reader themselves.
+  //    Runs last so nothing set up above re-folds the target.
+  const revealHash = () => {
+    const id = location.hash.slice(1);
+    const node = id && document.getElementById(decodeURIComponent(id));
+    if (!node) return;
+    for (let n = node; n && n !== document.body; n = n.parentElement) {
+      if (n.tagName === 'DETAILS') n.open = true;
+      n.classList.remove('folded', 'filtered-out');
+      n.hidden = false;
+    }
+    node.scrollIntoView();
+  };
+  addEventListener('hashchange', revealHash);
+  revealHash();
+})();
+</script>
+</body>
+</html>

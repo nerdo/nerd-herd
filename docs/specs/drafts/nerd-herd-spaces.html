@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Spec: nerd-herd sidebar mods</title>
+<title>Spec: nerd-herd Spaces mod</title>
 <style>
 :root { color-scheme: light dark;
         --ink:#1a1a1a; --bg:#fff; --muted:#595959; --rule:#d4d4d4; --ok:#2e7d32; --warn:#b34700;
@@ -164,12 +164,11 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
   <ol></ol>
 </nav>
 <main id="content">
-  <h1>nerd-herd sidebar mods: Spaces and Agents</h1>
-  <p>nerd-herd is a set of Herdr mods, and its full scope is not settled yet. This spec covers two of them, which replace the sidebar's Spaces and Agents sections. Spaces gains groups that gather machines (for example Personal and Work). Agents lists each machine's sessions under that machine, with subjects that wrap instead of being cut off. The first build is the Spaces mod with groups; the Agents mod comes after it. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
+  <h1>nerd-herd Spaces mod: groups of machines</h1>
+  <p>nerd-herd is a set of Herdr mods, and its full scope is not settled yet. This spec covers one of them: a Spaces mod that replaces the sidebar’s Spaces section and gathers machines into groups (for example Personal and Work). The Agents section has <a href="nerd-herd-agents.html">its own spec</a>. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
   <dl class="spec-meta">
     <dt>Stage</dt> <dd data-field="stage">drafts</dd>
     <dt>Complexity</dt> <dd data-field="complexity">6 / 10 for the first build &mdash; one mod with nested groups, drag and drop, per-group sorts, settings, downloaded banners with error cards, and a test harness for a native app not yet proven</dd>
-    <dt>First build</dt> <dd data-field="first-build">Spaces and groups. Agents waits (from the user, 2026-11-16).</dd>
     <dt>Toolchain</dt> <dd data-field="toolchain">TypeScript on Bun. <code>bun build</code> compiles each mod into one ES module with <code>herdr</code>, <code>gpui-kit</code>, and <code>gpui-base</code> left as imports; a probe built this way passed <code>herdr-app check</code> on 2026-11-16.</dd>
     <dt>Herdr version</dt> <dd data-field="herdr-version">0.1.16 (app), read from <code>/Applications/Herdr.app/Contents/Info.plist</code></dd>
     <dt>Standing rule</dt> <dd data-field="standing-rule">Where Herdr already provides a feature, use it, unless the idea does not fit it (from the user, 2026-11-16).</dd>
@@ -207,7 +206,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <li>A banner link is downloaded and shown as the group header's banner</li>
           <li>A banner link that fails to load shows an error card in the banner's place saying why</li>
           <li>Inside a group, its groups come before its machines, each ordered by the group's sort</li>
-          <li>A group name that is empty, longer than 60 characters, or already used is refused with a message saying why</li>
+          <li>A group name that is empty or longer than 60 characters is refused with a message saying why</li>
           <li>Each group's folded count shows every machine inside by default, or only direct machines, or all direct items</li>
           <li>Damaged saved groups are kept as a backup and Spaces shows Herdr's usual list with an error card</li>
         </ol>
@@ -218,19 +217,6 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       <p>"Groups" is not quite how Dannel thinks of these, so they change the sidebar's word for them to "Environments". The new-group button, the headers, and the menus now say "environment" instead. They drag This computer into Personal too, because it is a personal machine like the others. They try a temporary "Scratch" environment, holding ai-sandbox, then delete it; ai-sandbox moves down to the ungrouped machines below the environments. Last, they set the environments to sort alphabetically, so Personal shows above Work, while the machines inside each one keep their own sort.</p>
       <p>They made that word change in Spaces settings, which the cog wheel beside the Spaces "+" opens. In the same place they turn on the ungrouped header, and the ungrouped machines gather under "Ungrouped". They rename that header "Unsorted" the same way they rename any group. Work grows a "Clients" environment, which they drag onto Work so it nests inside it, with Work's own sort deciding where it sits. When they accidentally drag Work onto Clients, nothing moves. Finally they paste a banner link for Work, and after a moment a wide image runs across Work's header. The link they first tried for Clients was mistyped, and Clients' header showed a card in the banner's place: the link returned 404 Not Found, and they should check it in Spaces settings.</p>
 
-      <h3>Reading and renaming sessions by machine</h3>
-      <details open class="claims"><summary>Claims</summary>
-        <ol>
-          <li>Agents lists each session under the machine it runs on</li>
-          <li>A session row shows the session's subject wrapped onto more lines when it is longer than one line</li>
-          <li>Renaming a session from its row gives its Herdr tab that name</li>
-          <li>Renaming a session to an empty name returns it to its automatic name</li>
-          <li>Clicking a session row focuses that session's pane</li>
-        </ol>
-      </details>
-      <p>Dannel has three agent sessions running: one on desk-client working on "THRD: Reset leader election", one on this computer fixing a Python virtual environment, and one on desk-home about NAS hardware. Today the Agents section shows them in one list, cut off at the right edge, with the machine's name in tiny text.</p>
-      <p>With nerd-herd, Agents shows a header for each machine and the sessions running there beneath it. The desk-client session's full subject, "π 🧵 THRD: Reset leader election", wraps onto a second line instead of ending in "…". The two sessions both called "sandbox" are easy to tell apart because each sits under its own machine.</p>
-      <p>One session still has a vague automatic subject, so they rename it "NAS drive health" from its row, and the row and the Herdr tab bar both show the new name. Later they clear the name, and the session goes back to its automatic name. They click a row, and Herdr focuses that session's pane.</p>
     </details>
   </section>
 
@@ -261,20 +247,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <h3>Group name rules</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Which group names are accepted?</dd>
-          <dt>Resolution</dt> <dd data-field="resolution">Not empty after trimming spaces, at most 60 characters, and no duplicates. Groups are told apart by an internal id, never by name. Whether "no duplicates" covers every group or only groups in the same parent is <a href="#spec-question-duplicate-name-scope">Duplicate name scope</a>.</dd>
-        </dl>
-      </spec-question>
-      <spec-question status="open">
-        <h3>Duplicate name scope</h3>
-        <dl>
-          <dt>Question</dt> <dd data-field="body">Does "no duplicate group names" apply across the whole sidebar, or only among groups that share a parent?</dd>
-          <dt>Context</dt> <dd data-field="context">The user asked for no duplicates unless there is a good use case. One use case, now that groups nest: projects that each hold the same stages, such as "Acme" holding "Staging" and "Production" and "Globex" holding its own "Staging" and "Production". Unique names in the whole sidebar would force "Acme Staging" and "Globex Staging".</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>Unique among groups that share a parent; the same name is allowed under different parents</li>
-            <li>Unique across the whole sidebar</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Unique among groups that share a parent.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Not empty after trimming spaces and at most 60 characters. Duplicate names are allowed, because groups are told apart by an internal id, never by name (the user, 2026-11-16).</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -289,13 +262,6 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <dl>
           <dt>Question</dt> <dd data-field="body">How does a machine get assigned to a group?</dd>
           <dt>Resolution</dt> <dd data-field="resolution">All in the sidebar: a new-group button beside the Spaces "+", drag and drop to move and reorder machines, a sort choice of custom, alphabetical, or reverse alphabetical, collapsible groups, an icon and a banner per group, all kept by Herdr so it survives restarts.</dd>
-        </dl>
-      </spec-question>
-      <spec-question status="resolved" resolved-on="2026-11-16">
-        <h3>Session rename scope</h3>
-        <dl>
-          <dt>Question</dt> <dd data-field="body">Is renaming a session Herdr's own rename, or a name only this mod shows?</dd>
-          <dt>Resolution</dt> <dd data-field="resolution">Herdr's own tab rename (the <code>tab.rename</code> command), so the name shows everywhere Herdr shows that tab.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -373,7 +339,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <h3>One sorting concept</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Are the group sort and the machine sort two features, or one?</dd>
-          <dt>Resolution</dt> <dd data-field="resolution">One. A single sort order (custom, alphabetical, reverse alphabetical) works on any list of named items, so groups and machines use it now and sessions can use it later.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">One. A single sort order (custom, alphabetical, reverse alphabetical) works on any list of named items, so groups and machines use it now and other nerd-herd mods, such as the Agents mod, can use it later.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -402,27 +368,6 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <dl>
           <dt>Question</dt> <dd data-field="body">Where does "This computer" go now that groups exist?</dd>
           <dt>Resolution</dt> <dd data-field="resolution">It is treated like any other machine: the user groups it however they like.</dd>
-        </dl>
-      </spec-question>
-      <spec-question status="open">
-        <h3>Agents grouping</h3>
-        <dl>
-          <dt>Question</dt> <dd data-field="body">How is the Agents list organized?</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>One header per machine; groups ignored</li>
-            <li>Group, then machine, then sessions, matching Spaces</li>
-            <li>Herdr's two existing views, plus this as a third choice in its sort menu</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Group, then machine, then sessions.</dd>
-          <dt>Waits on</dt> <dd data-field="waits-on">The Agents mod, which comes after the first build.</dd>
-        </dl>
-      </spec-question>
-      <spec-question status="resolved" resolved-on="2026-11-16">
-        <h3>First build scope</h3>
-        <dl>
-          <dt>Question</dt> <dd data-field="body">Which mod is built first?</dd>
-          <dt>Resolution</dt> <dd data-field="resolution">The Spaces mod with groups. The Agents mod comes after it.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -464,11 +409,8 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
   sidebar --> model["Group model computes the new groups"]
   model --> store["Herdr shared state saves them"]
   store --> render["Herdr redraws every mod"]
-  render --> spaces["Spaces shows groups, machines, spaces"]
-  render --> agents["Agents shows machines and their sessions"]
-  rename["Dannel renames a session"] --> herdr["Herdr tab.rename"]
-  herdr --> render</pre>
-        <figcaption>Every change goes through Herdr: groups through its shared state, names through its tab rename, so both sections redraw from the same data.</figcaption>
+  render --> spaces["Spaces shows groups, machines, spaces"]</pre>
+        <figcaption>Every change goes through Herdr’s shared state, so the Spaces section always redraws from what Herdr saved.</figcaption>
       </figure>
     </details>
   </section>
@@ -485,18 +427,6 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dd data-field="input">The saved groups, Herdr's machines, and one action (make, rename, delete, move a machine, nest a group, reorder, fold, set a sort, set icon, set banner link).</dd>
           <dt>Output <code>SavedGroups</code>, <code>SpacesRow[]</code></dt>
           <dd data-field="output">The new saved groups, and the rows to draw.</dd>
-        </dl>
-      </spec-module>
-      <spec-module>
-        <h3>Session list model</h3>
-        <dl>
-          <dt>Responsibility</dt> <dd data-field="responsibility">Groups Herdr's agents under the machine they run on and picks each row's subject text.</dd>
-          <dt>Owns</dt> <dd data-field="owns">Grouping and row text.</dd>
-          <dt>Delegates</dt> <dd data-field="delegates">Nothing. Data in, data out.</dd>
-          <dt>Input <code>Agent[]</code>, <code>Space[]</code></dt>
-          <dd data-field="input">Herdr's agents and spaces.</dd>
-          <dt>Output <code>AgentsRow[]</code></dt>
-          <dd data-field="output">The rows to draw.</dd>
         </dl>
       </spec-module>
       <spec-module>
@@ -548,14 +478,6 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Delegates</dt> <dd data-field="delegates">Rules to Group model; saving to Saved group store; display words to Sidebar settings; space commands to Herdr.</dd>
         </dl>
       </spec-module>
-      <spec-module>
-        <h3>Agents sidebar mod</h3>
-        <dl>
-          <dt>Responsibility</dt> <dd data-field="responsibility">Draws the Agents rows and turns clicks into Herdr commands.</dd>
-          <dt>Owns</dt> <dd data-field="owns">Layout, wrapping, the rename control.</dd>
-          <dt>Delegates</dt> <dd data-field="delegates">Grouping to Session list model; renaming to Herdr <code>tab.rename</code>; focusing to Herdr <code>pane.focus</code>.</dd>
-        </dl>
-      </spec-module>
     </details>
   </section>
 
@@ -564,7 +486,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       <ul>
         <li><strong>Saved groups read from Herdr's shared state</strong> are external data: another mod, a hand edit, or an older nerd-herd version may have written them. Saved group store checks their shape on every read. Data that fails the check is kept under a backup key, Spaces starts with no groups, and an error card says so (<a href="#spec-question-damaged-saved-data">Damaged saved data</a>).</li>
         <li><strong>Herdr's machines, spaces, and agents</strong> come typed from <code>herdr.d.ts</code>. A group may name a machine Herdr no longer lists, so Group model treats a missing machine as data, not an error.</li>
-        <li><strong>Group names and icons typed by the user</strong> are checked when entered: a name is not empty after trimming spaces, is at most 60 characters, and no other group has it (<a href="#spec-question-group-name-rules">Group name rules</a>). An icon is saved with its kind, and the only kind accepted today is emoji.</li>
+        <li><strong>Group names and icons typed by the user</strong> are checked when entered: a name is not empty after trimming spaces, and is at most 60 characters; two groups may share a name (<a href="#spec-question-group-name-rules">Group name rules</a>). An icon is saved with its kind, and the only kind accepted today is emoji.</li>
         <li><strong>Sidebar settings read from Herdr's shared state</strong> are external data too. Sidebar settings checks them on every read and fills each missing value from its one declared default.</li>
       </ul>
     </details>
@@ -572,11 +494,10 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
 
   <section class="ambiguity-resolution">
     <details open><summary><h2>Ambiguity Resolution</h2></summary>
-      <p>"Session" means a Herdr tab that runs an agent. Herdr's Agents section already labels each row from its tab name when the tab is named, so renaming a session means renaming its tab (<code>tab.rename</code>), which also follows the standing rule to use Herdr's own features.</p>
       <p>"Stored with Herdr" means Herdr's shared mod state, which Herdr saves to <code>~/.config/herdr-app/shared.json</code> on this computer and loads at start (<a href="#spec-question-group-storage-scope">Group storage scope</a>).</p>
       <p>"Machine" means any machine Herdr lists, this computer included. The code never says "remote": most machines are remote, but this computer is a machine like the rest, and the user groups this computer like any other (<a href="#spec-question-this-computer-in-groups">This computer in groups</a>). Herdr leaves out temporary machines, and so does nerd-herd.</p>
       <p>"Group" is the code's word. The word the user sees comes from Sidebar settings, "Groups" by default, so a test that checks displayed text supplies its own settings rather than relying on the default.</p>
-      <p>The shipped <code>spaces</code> and <code>agents</code> mods belong to Herdr. Herdr's guide says to copy them with <code>mod.clone</code> before changing them, and to copy a layout with <code>layout.clone</code>, so nerd-herd's mods go into a copied layout and the user's <code>main</code> layout stays as it is.</p>
+      <p>The shipped <code>spaces</code> mod belongs to Herdr. Herdr's guide says to copy them with <code>mod.clone</code> before changing them, and to copy a layout with <code>layout.clone</code>, so nerd-herd's mods go into a copied layout and the user's <code>main</code> layout stays as it is.</p>
     </details>
   </section>
 
@@ -592,7 +513,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The saved groups equal the saved groups before the action: Work at the top level, holding Clients</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A group name that is empty, longer than 60 characters, or already used is refused with a message saying why" covers-module="Group model" status="pending">
+        <test-case traces-to="A group name that is empty or longer than 60 characters is refused with a message saying why" covers-module="Group model" status="pending">
           <h4>An empty group name is refused</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">No groups</dd>
@@ -600,7 +521,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">It throws a group-name error with <code>userAction</code> fix and reason "empty", and the saved groups are unchanged</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A group name that is empty, longer than 60 characters, or already used is refused with a message saying why" covers-module="Group model" status="pending">
+        <test-case traces-to="A group name that is empty or longer than 60 characters is refused with a message saying why" covers-module="Group model" status="pending">
           <h4>A 61-character group name is refused</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">No groups</dd>
@@ -608,20 +529,12 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">It throws a group-name error with <code>userAction</code> fix, reason "too long", limit 60, and length 61, and the saved groups are unchanged</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A group name that is empty, longer than 60 characters, or already used is refused with a message saying why" covers-module="Group model" status="pending">
-          <h4>A group name already used beside it is refused</h4>
-          <dl>
-            <dt>Given</dt> <dd data-field="given">Acme holds a group named Staging</dd>
-            <dt>When</dt> <dd data-field="when">The make-group action runs inside Acme with the name "Staging"</dd>
-            <dt>Then</dt> <dd data-field="then">It throws a group-name error with <code>userAction</code> fix, reason "taken", and Acme as the parent, and the saved groups are unchanged</dd>
-          </dl>
-        </test-case>
-        <test-case traces-to="A group name that is empty, longer than 60 characters, or already used is refused with a message saying why" covers-module="Spaces sidebar mod" status="pending">
+        <test-case traces-to="A group name that is empty or longer than 60 characters is refused with a message saying why" covers-module="Spaces sidebar mod" status="pending">
           <h4>A refused name explains itself in the chosen group word</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">The group word is Environment and Environments, and Acme holds an environment named Staging</dd>
-            <dt>When</dt> <dd data-field="when">Dannel names a new environment inside Acme "Staging"</dd>
-            <dt>Then</dt> <dd data-field="then">The name field shows "Acme already has an environment named Staging. Choose another name."</dd>
+            <dt>Given</dt> <dd data-field="given">The group word is Environment and Environments</dd>
+            <dt>When</dt> <dd data-field="when">Dannel names a new environment with a 61-character name</dd>
+            <dt>Then</dt> <dd data-field="then">The name field shows "Environment names can be at most 60 characters. This one has 61."</dd>
           </dl>
         </test-case>
         <test-case traces-to="Damaged saved groups are kept as a backup and Spaces shows Herdr's usual list with an error card" covers-module="Saved group store" status="pending">
@@ -678,14 +591,6 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Given</dt> <dd data-field="given">laptop-travel is in Personal, second of two, and Herdr reports it unreachable</dd>
             <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
             <dt>Then</dt> <dd data-field="then">laptop-travel is the second row inside Personal, marked unreachable</dd>
-          </dl>
-        </test-case>
-        <test-case traces-to="Renaming a session to an empty name returns it to its automatic name" covers-module="Agents sidebar mod" status="pending">
-          <h4>Clearing a session's name restores its automatic name</h4>
-          <dl>
-            <dt>Given</dt> <dd data-field="given">A session whose tab is named "NAS drive health"</dd>
-            <dt>When</dt> <dd data-field="when">Dannel renames it to an empty name</dd>
-            <dt>Then</dt> <dd data-field="then">Herdr receives <code>tab.rename</code> with an empty name, and the row shows the session's automatic name (Herdr documents an empty name as returning a tab to its number)</dd>
           </dl>
         </test-case>
       </test-group>
@@ -905,38 +810,6 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The new-group button's label reads "New environment"</dd>
           </dl>
         </test-case>
-        <test-case traces-to="Agents lists each session under the machine it runs on" covers-module="Session list model" status="pending">
-          <h4>Sessions group under their machine</h4>
-          <dl>
-            <dt>Given</dt> <dd data-field="given">Agents on desk-client, this computer, and desk-home</dd>
-            <dt>When</dt> <dd data-field="when">Agents rows are computed</dd>
-            <dt>Then</dt> <dd data-field="then">Each agent's row follows the header of the machine it runs on</dd>
-          </dl>
-        </test-case>
-        <test-case traces-to="A session row shows the session's subject wrapped onto more lines when it is longer than one line" covers-module="Session list model" status="pending">
-          <h4>A session row carries the whole subject</h4>
-          <dl>
-            <dt>Given</dt> <dd data-field="given">An agent whose title is "π 🧵 THRD: Reset leader election"</dd>
-            <dt>When</dt> <dd data-field="when">Agents rows are computed</dd>
-            <dt>Then</dt> <dd data-field="then">The row's subject is "π 🧵 THRD: Reset leader election", with no characters dropped</dd>
-          </dl>
-        </test-case>
-        <test-case traces-to="Renaming a session from its row gives its Herdr tab that name" covers-module="Agents sidebar mod" status="pending">
-          <h4>Renaming a session runs Herdr's tab rename</h4>
-          <dl>
-            <dt>Given</dt> <dd data-field="given">A session in tab T</dd>
-            <dt>When</dt> <dd data-field="when">Dannel renames it "NAS drive health" from its row</dd>
-            <dt>Then</dt> <dd data-field="then">Herdr's tab T is named "NAS drive health"</dd>
-          </dl>
-        </test-case>
-        <test-case traces-to="Clicking a session row focuses that session's pane" covers-module="Agents sidebar mod" status="pending">
-          <h4>Clicking a session row focuses its pane</h4>
-          <dl>
-            <dt>Given</dt> <dd data-field="given">A session in pane P, and another pane focused</dd>
-            <dt>When</dt> <dd data-field="when">Dannel clicks the session's row</dd>
-            <dt>Then</dt> <dd data-field="then">Herdr reports pane P as focused</dd>
-          </dl>
-        </test-case>
       </test-group>
       <test-group category="ux-validation">
         <h3>UX validation</h3>
@@ -948,16 +821,6 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then (experience)</dt> <dd data-field="then" data-aspect="experience">The screenshot shows a folded "💼 Work" header with count 2 above desk-home, and a "New environment" button</dd>
             <dt>Then (technical)</dt> <dd data-field="then" data-aspect="technical">The isolated home's saved shared state holds Work with desk-work and this computer, folded, and the group word Environment and Environments</dd>
             <dt>Incremental</dt> <dd data-field="incremental">Testable once the Spaces mod saves through the store, and the harness question is answered</dd>
-          </dl>
-        </test-case>
-        <test-case traces-to="Renaming a session from its row gives its Herdr tab that name" covers-module="Agents sidebar mod" status="pending" browser-test>
-          <h4>Reading and renaming a session by machine</h4>
-          <dl>
-            <dt>Given</dt> <dd data-field="given">An isolated Herdr window with an agent on a machine whose subject is longer than the sidebar is wide</dd>
-            <dt>When</dt> <dd data-field="when">Rename that session "NAS drive health" from its row</dd>
-            <dt>Then (experience)</dt> <dd data-field="then" data-aspect="experience">The screenshot shows the session under its machine's header, its row reading "NAS drive health"</dd>
-            <dt>Then (technical)</dt> <dd data-field="then" data-aspect="technical"><code>herdr-app ls</code> lists the tab named "NAS drive health"</dd>
-            <dt>Incremental</dt> <dd data-field="incremental">Testable once the Agents mod is in the copied layout</dd>
           </dl>
         </test-case>
       </test-group>
@@ -993,13 +856,6 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
         </dl>
       </spec-phase>
-      <spec-phase depends-on="Skeleton re-walk" parallel-safe="no" agent-suitable="no">
-        <h3>Session list model</h3>
-        <dl>
-          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">src/sessions/*</li></ul></dd>
-          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
-        </dl>
-      </spec-phase>
       <spec-phase depends-on="Group model" parallel-safe="no" agent-suitable="no">
         <h3>Sidebar settings</h3>
         <dl>
@@ -1028,13 +884,6 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
         </dl>
       </spec-phase>
-      <spec-phase depends-on="Session list model" parallel-safe="no" agent-suitable="no">
-        <h3>Agents sidebar mod</h3>
-        <dl>
-          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">mods/nerd-herd-agents/*</li></ul></dd>
-          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
-        </dl>
-      </spec-phase>
       <spec-phase depends-on="Spaces sidebar mod" parallel-safe="no" agent-suitable="no">
         <h3>Skeleton re-walk</h3>
         <dl>
@@ -1053,7 +902,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <li><h4>A security scan runs clean</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
       </ol>
-      <execution-plan>First build: Walking skeleton &rarr; Sort order &rarr; Group model &rarr; Sidebar settings &rarr; Banner cache &rarr; Saved group store &rarr; Spaces sidebar mod &rarr; Skeleton re-walk. After it: Session list model &rarr; Agents sidebar mod.</execution-plan>
+      <execution-plan>Walking skeleton &rarr; Sort order &rarr; Group model &rarr; Sidebar settings &rarr; Banner cache &rarr; Saved group store &rarr; Spaces sidebar mod &rarr; Skeleton re-walk</execution-plan>
     </details>
   </section>
 </main>
