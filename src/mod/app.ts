@@ -1,5 +1,5 @@
 import { createBannerCache } from "../core/banners/bannerCache";
-import { groupRows } from "../core/groups/groupModel";
+import { computeRows } from "../core/groups/groupModel";
 import type { ModAction } from "../core/modAction";
 import { readSettings } from "../core/settings/sidebarSettings";
 import { createGroupStore } from "../core/store/savedGroupStore";
@@ -17,5 +17,5 @@ export const compose = (actions: readonly ModAction[]): string[] =>
     `store ${store.load().groups.length} groups (${actions.length} actions)`,
     `settings ${readSettings(actions).groupWord.plural} (${actions.length} actions)`,
     `banners ${actions.filter((link) => banners.lookup(link).kind !== "none").length} of ${actions.length}`,
-    groupRows(actions),
+    `rows ${computeRows(store.load(), [], readSettings(actions)).length} (${actions.length} actions)`,
   ].map((line) => `STUB app > ${line}`);

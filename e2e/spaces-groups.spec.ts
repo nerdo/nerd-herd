@@ -66,8 +66,8 @@ test("step 2 of 7, banner branch: the banner cache is real in shape and has no b
   expect(drawn(beforeRestart)).toContain("STUB view > STUB app > banners 0 of 9");
 });
 
-test("step 1 of 7, groups branch: sort order is real in shape and returns no items for the 9 actions", () => {
-  expect(drawn(beforeRestart)).toContain("STUB view > STUB app > STUB groups > sorted 0 of 9");
+test("step 5 of 7, groups branch: the group model is real in shape and computes no rows for the 9 actions", () => {
+  expect(drawn(beforeRestart)).toContain("STUB view > STUB app > rows 0 (9 actions)");
 });
 
 test("step 4 of 7, after the restart: the saved group store holds no groups and no action is remembered", () => {
