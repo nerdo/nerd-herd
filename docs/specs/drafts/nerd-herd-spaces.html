@@ -409,11 +409,12 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Resolution</dt> <dd data-field="resolution">Yes. Herdr's built-in shared mod state, saved to <code>~/.config/herdr-app/shared.json</code> on this computer.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open" data-roles="build qa">
+      <spec-question status="resolved" resolved-on="2026-11-16" data-roles="build qa">
         <h3>End-to-end test harness</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Can a second, isolated Herdr window run beside the real one so the whole mod is tested without touching the real window or its settings?</dd>
-          <dt>Context</dt> <dd data-field="context">Herdr documents <code>HERDR_APP_HOME</code> for selecting a different settings folder and running window, <code>herdr-app do</code> for running commands, and <code>herdr-app shot</code> for screenshots. Its manual says never to automate the mouse or keyboard on the person's real display. Whether two app instances run at once is not documented. This is research for the walking skeleton phase, not a choice for the user.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Partly. A second window started with <code>HERDR_APP_HOME</code> set to <code>.e2e-home/</code> in this repository runs beside the real one with its own settings, mods, layouts, and saved mod state (<code>shared.json</code>), and answers <code>herdr-app status</code>, <code>ls</code>, and <code>shot</code> on its own. It shares the real herdr-core, so it shows the real spaces, machines, and live terminals. Tests may therefore change nerd-herd’s saved groups and settings freely, and may select spaces (focus is per window), but must run no command that changes spaces, tabs, or terminals.</dd>
+          <dt>Evidence</dt> <dd data-field="evidence">2026-11-16: the test window’s <code>herdr-app ls</code> listed the same space ids as the real window’s (for example <code>sp9d62280b490bfa27ed8988c2a952e5e0</code>, a-project), while its <code>status</code> showed its own zoom (1.2) and its own welcome overlay. A first try from the session scratch folder failed with <code>path must be shorter than SUN_LEN</code>: the window’s control socket path must stay under the macOS limit, so the test home has to be a short path.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16" data-roles="build">
