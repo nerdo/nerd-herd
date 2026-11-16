@@ -165,11 +165,11 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
 </nav>
 <main id="content">
   <h1>nerd-herd: a clearer Herdr sidebar</h1>
-  <p>nerd-herd is a pair of Herdr mods that replace the sidebar's Spaces and Agents sections. Spaces gains folders that group remote machines (for example Personal and Work). Agents lists each remote's sessions under that remote, with subjects that wrap instead of being cut off. The first build is the Spaces mod with folders; the Agents mod comes after it. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
+  <p>nerd-herd is a pair of Herdr mods that replace the sidebar's Spaces and Agents sections. Spaces gains groups that gather machines (for example Personal and Work). Agents lists each machine's sessions under that machine, with subjects that wrap instead of being cut off. The first build is the Spaces mod with groups; the Agents mod comes after it. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
   <dl class="spec-meta">
     <dt>Stage</dt> <dd data-field="stage">drafts</dd>
-    <dt>Complexity</dt> <dd data-field="complexity">4 / 10 for the first build &mdash; one mod, a folder model, drag and drop, and a test harness for a native app not yet proven</dd>
-    <dt>First build</dt> <dd data-field="first-build">Spaces and folders. Agents waits (from the user, 2026-11-16).</dd>
+    <dt>Complexity</dt> <dd data-field="complexity">4 / 10 for the first build &mdash; one mod, a group model, drag and drop, and a test harness for a native app not yet proven</dd>
+    <dt>First build</dt> <dd data-field="first-build">Spaces and groups. Agents waits (from the user, 2026-11-16).</dd>
     <dt>Toolchain</dt> <dd data-field="toolchain">TypeScript on Bun. <code>bun build</code> compiles each mod into one ES module with <code>herdr</code>, <code>gpui-kit</code>, and <code>gpui-base</code> left as imports; a probe built this way passed <code>herdr-app check</code> on 2026-11-16.</dd>
     <dt>Herdr version</dt> <dd data-field="herdr-version">0.1.16 (app), read from <code>/Applications/Herdr.app/Contents/Info.plist</code></dd>
     <dt>Standing rule</dt> <dd data-field="standing-rule">Where Herdr already provides a feature, use it, unless the idea does not fit it (from the user, 2026-11-16).</dd>
@@ -182,37 +182,43 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
 
   <section class="narrative">
     <details open><summary><h2>Narrative</h2></summary>
-      <p class="skeleton-journey">Dannel makes a Work folder with an icon in the Herdr sidebar, drags desk-work into it, sorts and folds the folders, and after Herdr restarts sees that remote's spaces still inside the folded Work folder in their custom order.</p>
+      <p class="skeleton-journey">Dannel renames the sidebar's word for groups to "Environments", makes a Work environment with an emoji icon, drags desk-work and This computer into it, sorts and folds the environments, and after Herdr restarts sees those machines' spaces still inside the folded Work environment in their custom order.</p>
 
-      <h3>Organizing remotes into folders</h3>
+      <h3>Organizing machines into groups</h3>
       <details open class="claims"><summary>Claims</summary>
         <ol>
-          <li>The new-folder button in Spaces adds an empty folder that Dannel names</li>
-          <li>Dropping a remote on a folder lists that remote's spaces inside the folder</li>
-          <li>Dropping a remote between two remotes puts it at that position</li>
-          <li>Choosing alphabetical or reverse alphabetical sorts remotes by name, and choosing custom again restores the dragged order</li>
-          <li>Folding a folder hides its remotes and keeps its header with the folder's name and remote count</li>
-          <li>A folder shows its chosen icon and banner in its header</li>
-          <li>Folders, their remotes, the order, the fold state, and the look are the same after Herdr restarts</li>
-          <li>An unreachable remote stays in its folder and says it is unreachable</li>
+          <li>The new-group button in Spaces adds an empty group that Dannel names</li>
+          <li>Dropping a machine on a group lists that machine's spaces inside the group</li>
+          <li>Dropping a machine between two machines puts it at that position</li>
+          <li>Choosing alphabetical or reverse alphabetical sorts machines by name, and choosing custom again restores the dragged order</li>
+          <li>Folding a group hides its machines and keeps its header with the group's name and machine count</li>
+          <li>A group shows its chosen icon and banner in its header</li>
+          <li>Groups, their machines, the order, the fold state, and the look are the same after Herdr restarts</li>
+          <li>An unreachable machine stays in its group and says it is unreachable</li>
+          <li>This computer can be dropped into a group like any machine</li>
+          <li>Groups have their own sort, custom by default, with alphabetical and reverse alphabetical as the other choices</li>
+          <li>Deleting a group moves its machines to the ungrouped machines below the groups</li>
+          <li>Ungrouped machines show below the groups with no header, or under a header when that setting is on</li>
+          <li>Changing the word for groups to Environments shows Environments wherever the sidebar names groups</li>
         </ol>
       </details>
-      <p>Dannel works on a personal machine and on remotes for two contexts: their own projects and their job at Job. The Spaces section lists five remotes in name order, so personal and work remotes are mixed together. They click the new-folder button beside the Spaces "+" button, and a folder appears with its name ready to edit. They type "Work" and pick an icon for it.</p>
-      <p>They drag desk-work from the list and drop it on the Work folder. The remote and its spaces now sit inside Work. They make a Personal folder the same way, drop desk-home and ai-sandbox into it, and drag ai-sandbox above desk-home. Later they switch the sort to alphabetical to find a remote by name. Then they switch back to custom, and their dragged order returns.</p>
-      <p>When they focus on personal work, they fold Work. Its header stays, showing "Work" and how many remotes it holds. laptop-travel is switched off today, and it stays in Personal marked as unreachable. The next morning Herdr restarts after an update, and the sidebar shows the same folders, order, folds, and icons as the evening before.</p>
+      <p>Dannel works on a personal machine and on machines for two contexts: their own projects and their job at Job. The Spaces section lists five machines in name order, so personal and work machines are mixed together. They click the new-group button beside the Spaces "+" button, and a group appears with its name ready to edit. They type "Work" and pick an icon for it.</p>
+      <p>They drag desk-work from the list and drop it on the Work group. The machine and its spaces now sit inside Work. They make a Personal group the same way, drop desk-home and ai-sandbox into it, and drag ai-sandbox above desk-home. Later they switch the sort to alphabetical to find a machine by name. Then they switch back to custom, and their dragged order returns.</p>
+      <p>When they focus on personal work, they fold Work. Its header stays, showing "Work" and how many machines it holds. laptop-travel is switched off today, and it stays in Personal marked as unreachable. The next morning Herdr restarts after an update, and the sidebar shows the same groups, order, folds, and icons as the evening before.</p>
+      <p>"Groups" is not quite how Dannel thinks of these, so they change the sidebar's word for them to "Environments". The new-group button, the headers, and the menus now say "environment" instead. They drag This computer into Personal too, because it is a personal machine like the others. They try a temporary "Scratch" environment, holding ai-sandbox, then delete it; ai-sandbox moves down to the ungrouped machines below the environments. Last, they set the environments to sort alphabetically, so Personal shows above Work, while the machines inside each one keep their own sort.</p>
 
-      <h3>Reading and renaming sessions by remote</h3>
+      <h3>Reading and renaming sessions by machine</h3>
       <details open class="claims"><summary>Claims</summary>
         <ol>
-          <li>Agents lists each session under the remote it runs on</li>
+          <li>Agents lists each session under the machine it runs on</li>
           <li>A session row shows the session's subject wrapped onto more lines when it is longer than one line</li>
           <li>Renaming a session from its row gives its Herdr tab that name</li>
           <li>Renaming a session to an empty name returns it to its automatic name</li>
           <li>Clicking a session row focuses that session's pane</li>
         </ol>
       </details>
-      <p>Dannel has three agent sessions running: one on desk-client working on "THRD: Reset leader election", one on this computer fixing a Python virtual environment, and one on desk-home about NAS hardware. Today the Agents section shows them in one list, cut off at the right edge, with the remote's name in tiny text.</p>
-      <p>With nerd-herd, Agents shows a header for each remote and the sessions running there beneath it. The desk-client session's full subject, "π 🧵 THRD: Reset leader election", wraps onto a second line instead of ending in "…". The two sessions both called "sandbox" are easy to tell apart because each sits under its own remote.</p>
+      <p>Dannel has three agent sessions running: one on desk-client working on "THRD: Reset leader election", one on this computer fixing a Python virtual environment, and one on desk-home about NAS hardware. Today the Agents section shows them in one list, cut off at the right edge, with the machine's name in tiny text.</p>
+      <p>With nerd-herd, Agents shows a header for each machine and the sessions running there beneath it. The desk-client session's full subject, "π 🧵 THRD: Reset leader election", wraps onto a second line instead of ending in "…". The two sessions both called "sandbox" are easy to tell apart because each sits under its own machine.</p>
       <p>One session still has a vague automatic subject, so they rename it "NAS drive health" from its row, and the row and the Herdr tab bar both show the new name. Later they clear the name, and the session goes back to its automatic name. They click a row, and Herdr focuses that session's pane.</p>
     </details>
   </section>
@@ -227,10 +233,10 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
-        <h3>How remotes are put in folders</h3>
+        <h3>How machines are put in groups</h3>
         <dl>
-          <dt>Question</dt> <dd data-field="body">How does a remote get assigned to a folder?</dd>
-          <dt>Resolution</dt> <dd data-field="resolution">All in the sidebar: a new-folder button beside the Spaces "+", drag and drop to move and reorder remotes, a sort choice of custom, alphabetical, or reverse alphabetical, collapsible folders, an icon and a banner per folder, all kept by Herdr so it survives restarts.</dd>
+          <dt>Question</dt> <dd data-field="body">How does a machine get assigned to a group?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">All in the sidebar: a new-group button beside the Spaces "+", drag and drop to move and reorder machines, a sort choice of custom, alphabetical, or reverse alphabetical, collapsible groups, an icon and a banner per group, all kept by Herdr so it survives restarts.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -240,23 +246,52 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Resolution</dt> <dd data-field="resolution">Herdr's own tab rename (the <code>tab.rename</code> command), so the name shows everywhere Herdr shows that tab.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
-        <h3>Folder icon source</h3>
+      <spec-question status="resolved" resolved-on="2026-11-16">
+        <h3>Group icon source</h3>
         <dl>
-          <dt>Question</dt> <dd data-field="body">Where does a folder's icon come from?</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>An emoji or short text typed in: simplest, and works in light and dark themes</li>
-            <li>A pick list of the icons Herdr ships: matches Herdr's look but limits the choice</li>
-            <li>An image link or file: the most freedom, but may clash with a theme</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">An emoji or short text.</dd>
+          <dt>Question</dt> <dd data-field="body">Where does a group's icon come from?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">An emoji for now. The saved icon records its kind (emoji today), so icon sets such as the Noun Project can be added later as another kind without changing saved emoji icons.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-16">
+        <h3>Group nomenclature</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">What does the sidebar call a group?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">"Groups" by default, changeable by the user (for example "Environments" or "Projects"). The code always says "group"; every word shown to the user comes from settings data.</dd>
         </dl>
       </spec-question>
       <spec-question status="open">
-        <h3>Folder banner source</h3>
+        <h3>Changing the group word</h3>
         <dl>
-          <dt>Question</dt> <dd data-field="body">Where does a folder's banner come from?</dd>
+          <dt>Question</dt> <dd data-field="body">Where does the user change the word for groups, and does the setting hold a singular and a plural form?</dd>
+          <dt>Context</dt> <dd data-field="context">The sidebar needs both forms: "Environments" as a header and "New environment" on the button. English plurals are irregular ("Property", "Properties"), so deriving one form from the other fails for some words.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>A settings popup opened from the Spaces header, with separate singular and plural fields</li>
+            <li>The same popup, with one field and the plural made by adding "s"</li>
+            <li>Hand-edited settings only, no popup</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">A settings popup with singular and plural fields, which can also hold the ungrouped-header switch.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Ungrouped header wording</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">When the ungrouped-header setting is on, what does that header say?</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>"Ungrouped", fixed</li>
+            <li>Built from the group word, for example "No environment"</li>
+            <li>A third word the user sets</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Built from the group word, so a changed word changes it too.</dd>
+          <dt>Related</dt> <dd data-field="related"><a href="#spec-question-changing-the-group-word">Changing the group word</a>: the setting form decides which word is available.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Group banner source</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Where does a group's banner come from?</dd>
           <dt>Context</dt> <dd data-field="context">Herdr's guide documents mods showing images from files under <code>~/.config/herdr-app</code>. Showing an image straight from a web link is not documented, so a link may need to be downloaded to a file first.</dd>
           <dt>Options</dt>
           <dd data-field="options"><ul>
@@ -268,55 +303,57 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         </dl>
       </spec-question>
       <spec-question status="open">
-        <h3>Folder nesting</h3>
+        <h3>Group nesting</h3>
         <dl>
-          <dt>Question</dt> <dd data-field="body">Can a folder hold other folders?</dd>
+          <dt>Question</dt> <dd data-field="body">Can a group hold other groups?</dd>
           <dt>Options</dt>
-          <dd data-field="options"><ul><li>No, one level only</li><li>Yes, folders inside folders</li></ul></dd>
+          <dd data-field="options"><ul><li>No, one level only</li><li>Yes, groups inside groups</li></ul></dd>
           <dt>Recommendation</dt> <dd data-field="recommendation">One level only.</dd>
         </dl>
       </spec-question>
       <spec-question status="open">
         <h3>Sort scope</h3>
         <dl>
-          <dt>Question</dt> <dd data-field="body">Does the sort choice apply to the whole Spaces section, or does each folder get its own?</dd>
+          <dt>Question</dt> <dd data-field="body">Does the machines' sort choice apply to every group at once, or does each group get its own?</dd>
+          <dt>Context</dt> <dd data-field="context">Groups have their own sort, separate from the machines' sort (see <a href="#spec-question-group-order-under-sorting">Group order under sorting</a>). This question is about the machines inside groups.</dd>
           <dt>Options</dt>
-          <dd data-field="options"><ul><li>One choice for the whole section</li><li>One choice per folder</li></ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">One choice for the whole section.</dd>
+          <dd data-field="options"><ul><li>One machine sort for every group</li><li>One machine sort per group</li></ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">One machine sort for every group.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
-        <h3>Folder order under sorting</h3>
+      <spec-question status="resolved" resolved-on="2026-11-16">
+        <h3>One sorting concept</h3>
         <dl>
-          <dt>Question</dt> <dd data-field="body">When the sort is alphabetical, are the folders themselves also sorted by name, or only the remotes inside them?</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul><li>Folders and remotes both sorted</li><li>Folders keep their dragged order; only remotes are sorted</li></ul></dd>
+          <dt>Question</dt> <dd data-field="body">Are the group sort and the machine sort two features, or one?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">One. A single sort order (custom, alphabetical, reverse alphabetical) works on any list of named items, so groups and machines use it now and sessions can use it later.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
-        <h3>Remotes outside any folder</h3>
+      <spec-question status="resolved" resolved-on="2026-11-16">
+        <h3>Group order under sorting</h3>
         <dl>
-          <dt>Question</dt> <dd data-field="body">Where does a remote that is in no folder show, including a remote added later?</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul><li>Below the folders, with no header</li><li>Under an "Ungrouped" header below the folders</li><li>Above the folders</li></ul></dd>
+          <dt>Question</dt> <dd data-field="body">When the sort is alphabetical, are the groups themselves also sorted by name, or only the machines inside them?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Groups have their own sort, separate from the machines' sort: custom (the order the user arranges) by default, alphabetical, or reverse alphabetical.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
-        <h3>Deleting a folder</h3>
+      <spec-question status="resolved" resolved-on="2026-11-16">
+        <h3>Machines outside any group</h3>
         <dl>
-          <dt>Question</dt> <dd data-field="body">What happens to a folder's remotes when the folder is deleted?</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul><li>They move to wherever remotes outside any folder show</li><li>Deleting is refused while the folder holds remotes</li></ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">They move out of the folder.</dd>
+          <dt>Question</dt> <dd data-field="body">Where does a machine that is in no group show, including a machine added later?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Below the groups with no header by default. A setting puts them under a header instead.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
-        <h3>This computer in folders</h3>
+      <spec-question status="resolved" resolved-on="2026-11-16">
+        <h3>Deleting a group</h3>
         <dl>
-          <dt>Question</dt> <dd data-field="body">Where does "This computer" go now that folders exist?</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul><li>Always at the top, outside any folder, as Herdr shows it today</li><li>Movable into a folder like any remote</li></ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Always at the top.</dd>
+          <dt>Question</dt> <dd data-field="body">What happens to a group's machines when the group is deleted?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">They move to the ungrouped machines below the groups.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-16">
+        <h3>This computer in groups</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Where does "This computer" go now that groups exist?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">It is treated like any other machine: the user groups it however they like.</dd>
         </dl>
       </spec-question>
       <spec-question status="open">
@@ -325,11 +362,11 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Question</dt> <dd data-field="body">How is the Agents list organized?</dd>
           <dt>Options</dt>
           <dd data-field="options"><ul>
-            <li>One header per machine; folders ignored</li>
-            <li>Folder, then machine, then sessions, matching Spaces</li>
+            <li>One header per machine; groups ignored</li>
+            <li>Group, then machine, then sessions, matching Spaces</li>
             <li>Herdr's two existing views, plus this as a third choice in its sort menu</li>
           </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Folder, then machine, then sessions.</dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Group, then machine, then sessions.</dd>
           <dt>Waits on</dt> <dd data-field="waits-on">The Agents mod, which comes after the first build.</dd>
         </dl>
       </spec-question>
@@ -337,20 +374,20 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <h3>First build scope</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Which mod is built first?</dd>
-          <dt>Resolution</dt> <dd data-field="resolution">The Spaces mod with folders. The Agents mod comes after it.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">The Spaces mod with groups. The Agents mod comes after it.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Header size</h3>
         <dl>
-          <dt>Question</dt> <dd data-field="body">Are bigger, higher-contrast section, folder, and machine headers part of the first build?</dd>
+          <dt>Question</dt> <dd data-field="body">Are bigger, higher-contrast section, group, and machine headers part of the first build?</dd>
           <dt>Resolution</dt> <dd data-field="resolution">No. Headers keep Herdr's current size (11 to 11.5 pixel text) for now.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
-        <h3>Folder storage scope</h3>
+        <h3>Group storage scope</h3>
         <dl>
-          <dt>Question</dt> <dd data-field="body">Is it enough that folders are kept on this computer only?</dd>
+          <dt>Question</dt> <dd data-field="body">Is it enough that groups are kept on this computer only?</dd>
           <dt>Resolution</dt> <dd data-field="resolution">Yes. Herdr's built-in shared mod state, saved to <code>~/.config/herdr-app/shared.json</code> on this computer.</dd>
         </dl>
       </spec-question>
@@ -375,15 +412,15 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
     <details open><summary><h2>Process Flow</h2></summary>
       <figure>
         <pre class="mermaid">flowchart TD
-  click["Dannel clicks new folder or drags a remote"] --> sidebar["Spaces sidebar mod"]
-  sidebar --> model["Folder model computes the new folders"]
+  click["Dannel clicks new group or drags a machine"] --> sidebar["Spaces sidebar mod"]
+  sidebar --> model["Group model computes the new groups"]
   model --> store["Herdr shared state saves them"]
   store --> render["Herdr redraws every mod"]
-  render --> spaces["Spaces shows folders, remotes, spaces"]
-  render --> agents["Agents shows remotes and their sessions"]
+  render --> spaces["Spaces shows groups, machines, spaces"]
+  render --> agents["Agents shows machines and their sessions"]
   rename["Dannel renames a session"] --> herdr["Herdr tab.rename"]
   herdr --> render</pre>
-        <figcaption>Every change goes through Herdr: folders through its shared state, names through its tab rename, so both sections redraw from the same data.</figcaption>
+        <figcaption>Every change goes through Herdr: groups through its shared state, names through its tab rename, so both sections redraw from the same data.</figcaption>
       </figure>
     </details>
   </section>
@@ -391,15 +428,15 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
   <section class="module-definitions" data-roles="build">
     <details open><summary><h2>Module Definitions</h2></summary>
       <spec-module>
-        <h3>Folder model</h3>
+        <h3>Group model</h3>
         <dl>
-          <dt>Responsibility</dt> <dd data-field="responsibility">Turns saved folders, the sort choice, and Herdr's machine list into the ordered rows Spaces shows, and applies a folder action to saved folders.</dd>
-          <dt>Owns</dt> <dd data-field="owns">Folder membership, custom order, sort rules, fold state.</dd>
-          <dt>Delegates</dt> <dd data-field="delegates">Nothing. Data in, data out.</dd>
-          <dt>Input <code>SavedFolders</code>, <code>Machine[]</code>, <code>FolderAction</code></dt>
-          <dd data-field="input">The saved folders, Herdr's machines, and one action (make, rename, move, reorder, fold, sort, restyle).</dd>
-          <dt>Output <code>SavedFolders</code>, <code>SpacesRow[]</code></dt>
-          <dd data-field="output">The new saved folders, and the rows to draw.</dd>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Turns saved groups, the group sort, the machine sort, and Herdr's machine list (this computer included) into the ordered rows Spaces shows, and applies a group action to saved groups.</dd>
+          <dt>Owns</dt> <dd data-field="owns">Group membership, custom order of groups and of machines, sort rules, fold state, where ungrouped machines go.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Ordering to Sort order. Otherwise data in, data out. It never holds a display word: rows name groups by id, and Spaces sidebar mod picks the words.</dd>
+          <dt>Input <code>SavedGroups</code>, <code>Machine[]</code>, <code>GroupAction</code></dt>
+          <dd data-field="input">The saved groups, Herdr's machines, and one action (make, rename, delete, move, reorder, fold, sort groups, sort machines, set icon).</dd>
+          <dt>Output <code>SavedGroups</code>, <code>SpacesRow[]</code></dt>
+          <dd data-field="output">The new saved groups, and the rows to draw.</dd>
         </dl>
       </spec-module>
       <spec-module>
@@ -415,21 +452,41 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         </dl>
       </spec-module>
       <spec-module>
-        <h3>Saved folder store</h3>
+        <h3>Saved group store</h3>
         <dl>
-          <dt>Responsibility</dt> <dd data-field="responsibility">Reads and writes saved folders through Herdr's shared state.</dd>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Reads and writes saved groups through Herdr's shared state.</dd>
           <dt>Owns</dt> <dd data-field="owns">The shared-state key and the check that what was read has the expected shape.</dd>
           <dt>Delegates</dt> <dd data-field="delegates">Saving to Herdr (<code>shared</code> and <code>setShared</code>).</dd>
           <dt>Input <code>unknown</code></dt> <dd data-field="input">Whatever is stored under the key.</dd>
-          <dt>Output <code>SavedFolders</code></dt> <dd data-field="output">Checked saved folders.</dd>
+          <dt>Output <code>SavedGroups</code></dt> <dd data-field="output">Checked saved groups.</dd>
+        </dl>
+      </spec-module>
+      <spec-module>
+        <h3>Sort order</h3>
+        <dl>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Orders any list of named items by one sort choice: custom (the order given), alphabetical, or reverse alphabetical.</dd>
+          <dt>Owns</dt> <dd data-field="owns">The sort choices and how each one orders items.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Nothing. It knows names and order, not groups or machines.</dd>
+          <dt>Input <code>SortChoice</code>, <code>Named[]</code></dt> <dd data-field="input">A sort choice and items, each with a name, in their custom order.</dd>
+          <dt>Output <code>Named[]</code></dt> <dd data-field="output">The same items in the chosen order. The custom order itself is never changed.</dd>
+        </dl>
+      </spec-module>
+      <spec-module>
+        <h3>Sidebar settings</h3>
+        <dl>
+          <dt>Responsibility</dt> <dd data-field="responsibility">The one typed, validated place for user-changeable sidebar settings, each with one default declared beside it.</dd>
+          <dt>Owns</dt> <dd data-field="owns">The word for groups (default "Group" and "Groups"), whether ungrouped machines get a header (default off), and the settings' shared-state key.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Saving to Herdr (<code>shared</code> and <code>setShared</code>).</dd>
+          <dt>Input <code>unknown</code></dt> <dd data-field="input">Whatever is stored under the settings key.</dd>
+          <dt>Output <code>SidebarSettings</code></dt> <dd data-field="output">Checked settings with every default applied.</dd>
         </dl>
       </spec-module>
       <spec-module>
         <h3>Spaces sidebar mod</h3>
         <dl>
-          <dt>Responsibility</dt> <dd data-field="responsibility">Draws the Spaces rows and turns clicks and drops into folder actions.</dd>
-          <dt>Owns</dt> <dd data-field="owns">Layout, drag and drop, the new-folder button.</dd>
-          <dt>Delegates</dt> <dd data-field="delegates">Rules to Folder model; saving to Saved folder store; space commands to Herdr.</dd>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Draws the Spaces rows and turns clicks and drops into group actions.</dd>
+          <dt>Owns</dt> <dd data-field="owns">Layout, drag and drop, the new-group button.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Rules to Group model; saving to Saved group store; display words to Sidebar settings; space commands to Herdr.</dd>
         </dl>
       </spec-module>
       <spec-module>
@@ -446,9 +503,10 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
   <section class="validation-boundaries" data-roles="build">
     <details open><summary><h2>Validation Boundaries</h2></summary>
       <ul>
-        <li><strong>Saved folders read from Herdr's shared state</strong> are external data: another mod, a hand edit, or an older nerd-herd version may have written them. Saved folder store checks their shape on every read. What happens to data that fails the check is not decided yet.</li>
-        <li><strong>Herdr's machines, spaces, and agents</strong> come typed from <code>herdr.d.ts</code>. A folder may name a machine Herdr no longer lists, so Folder model treats a missing machine as data, not an error.</li>
-        <li><strong>Folder names and icons typed by the user</strong> are checked when entered. Limits (length, allowed characters) are not decided yet.</li>
+        <li><strong>Saved groups read from Herdr's shared state</strong> are external data: another mod, a hand edit, or an older nerd-herd version may have written them. Saved group store checks their shape on every read. What happens to data that fails the check is not decided yet.</li>
+        <li><strong>Herdr's machines, spaces, and agents</strong> come typed from <code>herdr.d.ts</code>. A group may name a machine Herdr no longer lists, so Group model treats a missing machine as data, not an error.</li>
+        <li><strong>Group names and icons typed by the user</strong> are checked when entered. Limits (length, allowed characters) are not decided yet. An icon is saved with its kind, and the only kind accepted today is emoji.</li>
+        <li><strong>Sidebar settings read from Herdr's shared state</strong> are external data too. Sidebar settings checks them on every read and fills each missing value from its one declared default.</li>
       </ul>
     </details>
   </section>
@@ -456,8 +514,9 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
   <section class="ambiguity-resolution">
     <details open><summary><h2>Ambiguity Resolution</h2></summary>
       <p>"Session" means a Herdr tab that runs an agent. Herdr's Agents section already labels each row from its tab name when the tab is named, so renaming a session means renaming its tab (<code>tab.rename</code>), which also follows the standing rule to use Herdr's own features.</p>
-      <p>"Stored with Herdr" means Herdr's shared mod state, which Herdr saves to disk and loads at start. Whether that reach is enough is the open question <a href="#spec-question-folder-storage-scope">Folder storage scope</a>.</p>
-      <p>"Remote" means a machine from <code>hc machine ls</code> other than this computer. Herdr leaves out temporary machines, and so does nerd-herd.</p>
+      <p>"Stored with Herdr" means Herdr's shared mod state, which Herdr saves to <code>~/.config/herdr-app/shared.json</code> on this computer and loads at start (<a href="#spec-question-group-storage-scope">Group storage scope</a>).</p>
+      <p>"Machine" means any machine Herdr lists, this computer included. The code never says "remote": most machines are remote, but this computer is a machine like the rest, and the user groups this computer like any other (<a href="#spec-question-this-computer-in-groups">This computer in groups</a>). Herdr leaves out temporary machines, and so does nerd-herd.</p>
+      <p>"Group" is the code's word. The word the user sees comes from Sidebar settings, "Groups" by default, so a test that checks displayed text supplies its own settings rather than relying on the default.</p>
       <p>The shipped <code>spaces</code> and <code>agents</code> mods belong to Herdr. Herdr's guide says to copy them with <code>mod.clone</code> before changing them, and to copy a layout with <code>layout.clone</code>, so nerd-herd's mods go into a copied layout and the user's <code>main</code> layout stays as it is.</p>
     </details>
   </section>
@@ -466,8 +525,8 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
     <details open><summary><h2>Test Cases</h2></summary>
       <test-group category="error-scenarios">
         <h3>Error scenarios</h3>
-        <test-case traces-to="An unreachable remote stays in its folder and says it is unreachable" covers-module="Folder model" status="pending">
-          <h4>An unreachable remote keeps its folder place</h4>
+        <test-case traces-to="An unreachable machine stays in its group and says it is unreachable" covers-module="Group model" status="pending">
+          <h4>An unreachable machine keeps its group place</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">laptop-travel is in Personal, second of two, and Herdr reports it unreachable</dd>
             <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
@@ -485,86 +544,150 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       </test-group>
       <test-group category="recovery-paths">
         <h3>Recovery paths</h3>
-        <test-case traces-to="Folders, their remotes, the order, the fold state, and the look are the same after Herdr restarts" covers-module="Saved folder store" status="pending">
-          <h4>Saved folders read back after a restart</h4>
+        <test-case traces-to="Groups, their machines, the order, the fold state, and the look are the same after Herdr restarts" covers-module="Saved group store" status="pending">
+          <h4>Saved groups read back after a restart</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">Work holds desk-work, Personal holds ai-sandbox then desk-home, Work is folded, Work's icon is set</dd>
-            <dt>When</dt> <dd data-field="when">The saved folders are written and then read by a fresh store</dd>
-            <dt>Then</dt> <dd data-field="then">The read folders equal the written folders</dd>
+            <dt>When</dt> <dd data-field="when">The saved groups are written and then read by a fresh store</dd>
+            <dt>Then</dt> <dd data-field="then">The read groups equal the written groups</dd>
           </dl>
         </test-case>
       </test-group>
       <test-group category="edge-cases">
         <h3>Edge cases</h3>
-        <test-case traces-to="The new-folder button in Spaces adds an empty folder that Dannel names" covers-module="Folder model" status="pending">
-          <h4>A new folder starts empty</h4>
+        <test-case traces-to="The new-group button in Spaces adds an empty group that Dannel names" covers-module="Group model" status="pending">
+          <h4>A new group starts empty</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">No folders</dd>
-            <dt>When</dt> <dd data-field="when">The make-folder action runs with the name "Work"</dd>
-            <dt>Then</dt> <dd data-field="then">One folder named "Work" with zero remotes</dd>
+            <dt>Given</dt> <dd data-field="given">No groups</dd>
+            <dt>When</dt> <dd data-field="when">The make-group action runs with the name "Work"</dd>
+            <dt>Then</dt> <dd data-field="then">One group named "Work" with zero machines</dd>
           </dl>
         </test-case>
-        <test-case traces-to="Folding a folder hides its remotes and keeps its header with the folder's name and remote count" covers-module="Folder model" status="pending">
-          <h4>A folded folder shows only its header</h4>
+        <test-case traces-to="Folding a group hides its machines and keeps its header with the group's name and machine count" covers-module="Group model" status="pending">
+          <h4>A folded group shows only its header</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">Work holds desk-work and is folded</dd>
             <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
             <dt>Then</dt> <dd data-field="then">One row for Work showing "Work" and "1", and no rows for desk-work or its spaces</dd>
           </dl>
         </test-case>
+        <test-case traces-to="Deleting a group moves its machines to the ungrouped machines below the groups" covers-module="Group model" status="pending">
+          <h4>Deleting a group returns its machines to the ungrouped list</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Groups Personal and Scratch; Scratch holds ai-sandbox; desk-home is in no group</dd>
+            <dt>When</dt> <dd data-field="when">The delete action removes Scratch</dd>
+            <dt>Then</dt> <dd data-field="then">The groups are Personal only, and the ungrouped machines below it are ai-sandbox and desk-home</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Ungrouped machines show below the groups with no header, or under a header when that setting is on" covers-module="Group model" status="pending">
+          <h4>Ungrouped machines follow the groups with no header by default</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Personal holds desk-home; ai-sandbox is in no group; the ungrouped-header setting is off</dd>
+            <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">The rows after Personal's are ai-sandbox and its spaces, with no header row between</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Ungrouped machines show below the groups with no header, or under a header when that setting is on" covers-module="Group model" status="pending">
+          <h4>Ungrouped machines get a header when the setting is on</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Personal holds desk-home; ai-sandbox is in no group; the ungrouped-header setting is on</dd>
+            <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">One ungrouped header row comes after Personal's rows, followed by ai-sandbox and its spaces</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Groups have their own sort, custom by default, with alphabetical and reverse alphabetical as the other choices" covers-module="Sidebar settings" status="pending">
+          <h4>Fresh settings sort groups in custom order</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Nothing saved under the settings key</dd>
+            <dt>When</dt> <dd data-field="when">Settings are read</dd>
+            <dt>Then</dt> <dd data-field="then">The group sort is custom</dd>
+          </dl>
+        </test-case>
       </test-group>
       <test-group category="happy-paths">
         <h3>Happy paths</h3>
-        <test-case traces-to="Dropping a remote on a folder lists that remote's spaces inside the folder" covers-module="Folder model" status="pending">
-          <h4>Dropping a remote on a folder moves it in</h4>
+        <test-case traces-to="Dropping a machine on a group lists that machine's spaces inside the group" covers-module="Group model" status="pending">
+          <h4>Dropping a machine on a group moves it in</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">An empty Work folder and desk-work in no folder</dd>
+            <dt>Given</dt> <dd data-field="given">An empty Work group and desk-work in no group</dd>
             <dt>When</dt> <dd data-field="when">The move action puts desk-work in Work</dd>
             <dt>Then</dt> <dd data-field="then">Work's rows are desk-work followed by its spaces</dd>
           </dl>
         </test-case>
-        <test-case traces-to="Dropping a remote between two remotes puts it at that position" covers-module="Folder model" status="pending">
-          <h4>Dropping between two remotes reorders</h4>
+        <test-case traces-to="Dropping a machine between two machines puts it at that position" covers-module="Group model" status="pending">
+          <h4>Dropping between two machines reorders</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">Personal holds desk-home then ai-sandbox, sort is custom</dd>
             <dt>When</dt> <dd data-field="when">ai-sandbox is dropped before desk-home</dd>
-            <dt>Then</dt> <dd data-field="then">Personal's remotes are ai-sandbox then desk-home</dd>
+            <dt>Then</dt> <dd data-field="then">Personal's machines are ai-sandbox then desk-home</dd>
           </dl>
         </test-case>
-        <test-case traces-to="Choosing alphabetical or reverse alphabetical sorts remotes by name, and choosing custom again restores the dragged order" covers-module="Folder model" status="pending">
-          <h4>Alphabetical sort orders remotes by name</h4>
+        <test-case traces-to="Choosing alphabetical or reverse alphabetical sorts machines by name, and choosing custom again restores the dragged order" covers-module="Sort order" status="pending">
+          <h4>Alphabetical sort orders machines by name</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">Personal holds desk-home then ai-sandbox in custom order</dd>
             <dt>When</dt> <dd data-field="when">The sort is set to alphabetical</dd>
-            <dt>Then</dt> <dd data-field="then">Personal's remotes are ai-sandbox then desk-home</dd>
+            <dt>Then</dt> <dd data-field="then">Personal's machines are ai-sandbox then desk-home</dd>
           </dl>
         </test-case>
-        <test-case traces-to="Choosing alphabetical or reverse alphabetical sorts remotes by name, and choosing custom again restores the dragged order" covers-module="Folder model" status="pending">
-          <h4>Reverse alphabetical sort orders remotes by name, last first</h4>
+        <test-case traces-to="Choosing alphabetical or reverse alphabetical sorts machines by name, and choosing custom again restores the dragged order" covers-module="Sort order" status="pending">
+          <h4>Reverse alphabetical sort orders machines by name, last first</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">Personal holds ai-sandbox then desk-home in custom order</dd>
             <dt>When</dt> <dd data-field="when">The sort is set to reverse alphabetical</dd>
-            <dt>Then</dt> <dd data-field="then">Personal's remotes are desk-home then ai-sandbox</dd>
+            <dt>Then</dt> <dd data-field="then">Personal's machines are desk-home then ai-sandbox</dd>
           </dl>
         </test-case>
-        <test-case traces-to="Choosing alphabetical or reverse alphabetical sorts remotes by name, and choosing custom again restores the dragged order" covers-module="Folder model" status="pending">
+        <test-case traces-to="Choosing alphabetical or reverse alphabetical sorts machines by name, and choosing custom again restores the dragged order" covers-module="Sort order" status="pending">
           <h4>Returning to custom sort restores the dragged order</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">Personal's custom order is desk-home then ai-sandbox, sort is alphabetical</dd>
             <dt>When</dt> <dd data-field="when">The sort is set to custom</dd>
-            <dt>Then</dt> <dd data-field="then">Personal's remotes are desk-home then ai-sandbox</dd>
+            <dt>Then</dt> <dd data-field="then">Personal's machines are desk-home then ai-sandbox</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A folder shows its chosen icon and banner in its header" covers-module="Folder model" status="pending">
-          <h4>A folder header carries its icon and banner</h4>
+        <test-case traces-to="A group shows its chosen icon and banner in its header" covers-module="Group model" status="pending">
+          <h4>A group header carries its icon and banner</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">Work's icon and banner are set (their kind waits on the icon and banner questions)</dd>
             <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
             <dt>Then</dt> <dd data-field="then">Work's header row carries that icon and that banner</dd>
           </dl>
         </test-case>
-        <test-case traces-to="Agents lists each session under the remote it runs on" covers-module="Session list model" status="pending">
-          <h4>Sessions group under their remote</h4>
+        <test-case traces-to="This computer can be dropped into a group like any machine" covers-module="Group model" status="pending">
+          <h4>This computer moves into a group</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Personal holds desk-home; this computer is in no group</dd>
+            <dt>When</dt> <dd data-field="when">The move action puts this computer in Personal after desk-home</dd>
+            <dt>Then</dt> <dd data-field="then">Personal's machines are desk-home then this computer</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Groups have their own sort, custom by default, with alphabetical and reverse alphabetical as the other choices" covers-module="Group model" status="pending">
+          <h4>Alphabetical group sort orders groups by name</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Groups Work then Personal in custom order; the machine sort is custom</dd>
+            <dt>When</dt> <dd data-field="when">The group sort is set to alphabetical</dd>
+            <dt>Then</dt> <dd data-field="then">The groups are Personal then Work, and each group's machines keep their custom order</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Groups have their own sort, custom by default, with alphabetical and reverse alphabetical as the other choices" covers-module="Group model" status="pending">
+          <h4>Reverse alphabetical group sort orders groups by name, last first</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Groups Personal then Work in custom order</dd>
+            <dt>When</dt> <dd data-field="when">The group sort is set to reverse alphabetical</dd>
+            <dt>Then</dt> <dd data-field="then">The groups are Work then Personal</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Changing the word for groups to Environments shows Environments wherever the sidebar names groups" covers-module="Spaces sidebar mod" status="pending">
+          <h4>The new-group button uses the chosen word</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Settings whose group word is "Environment" and "Environments"</dd>
+            <dt>When</dt> <dd data-field="when">The Spaces section is drawn</dd>
+            <dt>Then</dt> <dd data-field="then">The new-group button's label reads "New environment"</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Agents lists each session under the machine it runs on" covers-module="Session list model" status="pending">
+          <h4>Sessions group under their machine</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">Agents on desk-client, this computer, and desk-home</dd>
             <dt>When</dt> <dd data-field="when">Agents rows are computed</dd>
@@ -598,22 +721,22 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       </test-group>
       <test-group category="ux-validation">
         <h3>UX validation</h3>
-        <test-case traces-to="Folders, their remotes, the order, the fold state, and the look are the same after Herdr restarts" covers-module="Spaces sidebar mod" status="pending" browser-test>
-          <h4>Organizing remotes survives a restart</h4>
+        <test-case traces-to="Groups, their machines, the order, the fold state, and the look are the same after Herdr restarts" covers-module="Spaces sidebar mod" status="pending" browser-test>
+          <h4>Organizing machines survives a restart</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">An isolated Herdr window with nerd-herd's layout and remotes desk-work and desk-home</dd>
-            <dt>When</dt> <dd data-field="when">Make Work, move desk-work into it, fold it, restart Herdr</dd>
-            <dt>Then (experience)</dt> <dd data-field="then" data-aspect="experience">The screenshot shows a folded Work header with count 1 above desk-home</dd>
-            <dt>Then (technical)</dt> <dd data-field="then" data-aspect="technical">The isolated home's saved shared state holds Work with desk-work, folded</dd>
+            <dt>Given</dt> <dd data-field="given">An isolated Herdr window with nerd-herd's layout, this computer, and machines desk-work and desk-home</dd>
+            <dt>When</dt> <dd data-field="when">Set the group word to Environment and Environments, make Work with the 💼 icon, move desk-work and this computer into it, fold it, restart Herdr</dd>
+            <dt>Then (experience)</dt> <dd data-field="then" data-aspect="experience">The screenshot shows a folded "💼 Work" header with count 2 above desk-home, and a "New environment" button</dd>
+            <dt>Then (technical)</dt> <dd data-field="then" data-aspect="technical">The isolated home's saved shared state holds Work with desk-work and this computer, folded, and the group word Environment and Environments</dd>
             <dt>Incremental</dt> <dd data-field="incremental">Testable once the Spaces mod saves through the store, and the harness question is answered</dd>
           </dl>
         </test-case>
         <test-case traces-to="Renaming a session from its row gives its Herdr tab that name" covers-module="Agents sidebar mod" status="pending" browser-test>
-          <h4>Reading and renaming a session by remote</h4>
+          <h4>Reading and renaming a session by machine</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">An isolated Herdr window with an agent on a remote whose subject is longer than the sidebar is wide</dd>
+            <dt>Given</dt> <dd data-field="given">An isolated Herdr window with an agent on a machine whose subject is longer than the sidebar is wide</dd>
             <dt>When</dt> <dd data-field="when">Rename that session "NAS drive health" from its row</dd>
-            <dt>Then (experience)</dt> <dd data-field="then" data-aspect="experience">The screenshot shows the session under its remote's header, its row reading "NAS drive health"</dd>
+            <dt>Then (experience)</dt> <dd data-field="then" data-aspect="experience">The screenshot shows the session under its machine's header, its row reading "NAS drive health"</dd>
             <dt>Then (technical)</dt> <dd data-field="then" data-aspect="technical"><code>herdr-app ls</code> lists the tab named "NAS drive health"</dd>
             <dt>Incremental</dt> <dd data-field="incremental">Testable once the Agents mod is in the copied layout</dd>
           </dl>
@@ -638,9 +761,16 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         </dl>
       </spec-phase>
       <spec-phase depends-on="Walking skeleton" parallel-safe="no" agent-suitable="no">
-        <h3>Folder model</h3>
+        <h3>Sort order</h3>
         <dl>
-          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">src/folders/*</li></ul></dd>
+          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">src/sorting/*</li></ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Sort order" parallel-safe="no" agent-suitable="no">
+        <h3>Group model</h3>
+        <dl>
+          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">src/groups/*</li></ul></dd>
           <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
         </dl>
       </spec-phase>
@@ -651,14 +781,21 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
         </dl>
       </spec-phase>
-      <spec-phase depends-on="Folder model" parallel-safe="no" agent-suitable="no">
-        <h3>Saved folder store</h3>
+      <spec-phase depends-on="Group model" parallel-safe="no" agent-suitable="no">
+        <h3>Sidebar settings</h3>
+        <dl>
+          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">src/settings/*</li></ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Sidebar settings" parallel-safe="no" agent-suitable="no">
+        <h3>Saved group store</h3>
         <dl>
           <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">src/store/*</li></ul></dd>
           <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
         </dl>
       </spec-phase>
-      <spec-phase depends-on="Saved folder store" parallel-safe="no" agent-suitable="no">
+      <spec-phase depends-on="Saved group store" parallel-safe="no" agent-suitable="no">
         <h3>Spaces sidebar mod</h3>
         <dl>
           <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">mods/nerd-herd-spaces/*</li></ul></dd>
@@ -685,12 +822,12 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
         <li><h4>herdr-app check passes for the Spaces mod</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
-        <li><h4>The folders journey walked by hand in the running Herdr window, with screenshots</h4>
+        <li><h4>The groups journey walked by hand in the running Herdr window, with screenshots</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
         <li><h4>A security scan runs clean</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
       </ol>
-      <execution-plan>First build: Walking skeleton &rarr; Folder model &rarr; Saved folder store &rarr; Spaces sidebar mod &rarr; Skeleton re-walk. After it: Session list model &rarr; Agents sidebar mod.</execution-plan>
+      <execution-plan>First build: Walking skeleton &rarr; Sort order &rarr; Group model &rarr; Sidebar settings &rarr; Saved group store &rarr; Spaces sidebar mod &rarr; Skeleton re-walk. After it: Session list model &rarr; Agents sidebar mod.</execution-plan>
     </details>
   </section>
 </main>
