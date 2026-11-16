@@ -5,5 +5,12 @@ export interface Named {
   readonly name: ItemName;
 }
 
-// CROSSING (walking skeleton): real in shape, orders nothing yet.
-export const sortOrder = <T extends Named>(_choice: SortChoice, _items: readonly T[]): T[] => [];
+const byName = (a: Named, b: Named) =>
+  a.name.localeCompare(b.name, undefined, { sensitivity: "base", numeric: true });
+
+/** Returns the items in the chosen order, as a new list; the items' own order is never changed. */
+export const sortOrder = <T extends Named>(choice: SortChoice, items: readonly T[]): T[] => {
+  if (choice === "alphabetical") return [...items].sort(byName);
+  if (choice === "reverseAlphabetical") return [...items].sort((a, b) => byName(b, a));
+  return [...items];
+};
