@@ -214,6 +214,11 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <li>Dropping a machine below the groups takes it out of its group</li>
           <li>A banner link that does not start with https is refused with a message saying why</li>
           <li>Everything Herdr’s own Spaces section does still works for every machine, inside groups or not</li>
+          <li>Right-clicking a group header opens its menu, and its cog opens its settings</li>
+          <li>Deleting a group moves its subgroups up to its place</li>
+          <li>Rows can be moved, folded, and renamed from the keyboard</li>
+          <li>Cutting a row and pasting it onto a group moves the row into that group</li>
+          <li>A banner download larger than 2 MB shows the error card</li>
           <li>Inside a group, its subgroups come before its machines, the subgroups ordered by its subgroup sort and the machines by its machine sort</li>
           <li>A group name that is empty or longer than 60 characters is refused with a message saying why</li>
           <li>Each group's folded count shows every machine inside by default, or only direct machines, or all direct items</li>
@@ -330,44 +335,32 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Resolution</dt> <dd data-field="resolution">A choice on each group: the left edge (the default, clipping the right side) or the center (clipping both sides equally).</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Where group options are set</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Where does the user set a group’s own options: icon, banner links, clip side, subgroup and machine sorts, and folded count?</dd>
-          <dt>Context</dt> <dd data-field="context">Spaces settings (the cog) holds options for the whole section. Nothing yet says where one group’s options are changed.</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul><li>Right-click a group header for a menu: Rename, Delete, and an options popup for that group</li><li>A small options button that appears on the group header when the pointer is over it</li><li>Both</li></ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Right-click a group header, matching how Herdr’s own Spaces section offers space actions.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Both: right-clicking a group header opens a menu (Rename, Delete, Move to…, Settings), and a cog button on the group header, the same cog icon Spaces uses for its own settings, opens that group’s settings: icon, banner links, clip side, subgroup and machine sorts, and folded count.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Deleting a group with subgroups</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">When a deleted group holds other groups, what happens to them?</dd>
-          <dt>Context</dt> <dd data-field="context">Deleting moves a group’s machines to the ungrouped machines. Subgroups are not covered.</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul><li>Its subgroups move up to where the deleted group was, keeping their contents</li><li>Its subgroups are deleted too, and every machine inside moves to the ungrouped machines</li></ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Move them up to the deleted group’s place, so deleting never discards structure the user built.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Its subgroups move up to the deleted group’s place, keeping their contents. Its machines move to the ungrouped machines.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Keyboard use</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Must groups work from the keyboard as well as the mouse?</dd>
-          <dt>Context</dt> <dd data-field="context">Drag and drop is mouse-only. Herdr mods can take the keyboard (<code>"focusable": true</code> in <code>mod.json</code>), and a keyboard path also gives assistive technology a way in.</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul><li>Yes: arrow keys move between rows, Enter folds and unfolds, F2 renames, and the group menu has “Move to…” as the keyboard way to move</li><li>Mouse only for now</li></ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Yes, using the same group menu for “Move to…”.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Yes. Arrow keys move between rows, Enter folds and unfolds, F2 renames, the group menu’s “Move to…” moves a row, and cut and paste move a row: Cmd+X and Cmd+V on macOS, Ctrl+X and Ctrl+V on Windows and Linux. The keys are bindings in the <code>mod:nerd-herd-spaces</code> section of Herdr’s <code>keys.json</code>, so the user can rebind them and they apply only while the Spaces mod has the keyboard (Herdr’s guide: a <code>mod:&lt;name&gt;</code> section applies while that mod has focus), leaving Ctrl+X to terminal programs elsewhere. The Spaces mod opts in to the keyboard with <code>"focusable": true</code> in its <code>mod.json</code>.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Banner size limit</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">What is the largest banner file nerd-herd downloads?</dd>
-          <dt>Context</dt> <dd data-field="context">Banners show at their own pixel size and are kept as files, so a very large image costs disk space and drawing time. A download over the limit would show the error card.</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul><li>10 MB</li><li>2 MB</li><li>No limit</li></ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">10 MB, the size limit used in the user’s data standard for image uploads.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">2 MB. A larger download shows the error card.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -633,6 +626,14 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">It throws a banner error with <code>userAction</code> fix and the message "Banner links must start with https://. Use the https version of the link.", and the fetcher is never called</dd>
           </dl>
         </test-case>
+        <test-case traces-to="A banner download larger than 2 MB shows the error card" covers-module="Banner cache" status="pending">
+          <h4>A banner over 2 MB is refused</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A fetcher that answers <code>https://example.test/huge.png</code> with a 3 MB PNG</dd>
+            <dt>When</dt> <dd data-field="when">Banner cache is given that link</dd>
+            <dt>Then</dt> <dd data-field="then">It throws a banner error with <code>userAction</code> fix, limit 2 MB, and size 3 MB, with the message "The banner image is 3 MB; banners can be at most 2 MB. Use a smaller image.", and writes no file</dd>
+          </dl>
+        </test-case>
         <test-case traces-to="A banner link that fails to load shows an error card in the banner's place saying why" covers-module="Banner cache" status="pending">
           <h4>A banner link answering 404 reports Not Found</h4>
           <dl>
@@ -800,6 +801,62 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Given</dt> <dd data-field="given">Work holds desk-work</dd>
             <dt>When</dt> <dd data-field="when">desk-work is dropped below the groups</dd>
             <dt>Then</dt> <dd data-field="then">Work holds no machines, and desk-work is among the ungrouped machines</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Deleting a group moves its subgroups up to its place" covers-module="Group model" status="pending">
+          <h4>Deleting a group lifts its subgroups into its place</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The top level holds Work then Personal; Work holds the group Clients and the machine desk-work; Clients holds ai-sandbox</dd>
+            <dt>When</dt> <dd data-field="when">The delete action removes Work</dd>
+            <dt>Then</dt> <dd data-field="then">The top level holds Clients then Personal; Clients still holds ai-sandbox; desk-work is among the ungrouped machines</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Cutting a row and pasting it onto a group moves the row into that group" covers-module="Group model" status="pending">
+          <h4>Pasting a cut machine onto a group moves it in</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work holds desk-work; Personal is empty; desk-work is cut</dd>
+            <dt>When</dt> <dd data-field="when">The paste action targets Personal</dd>
+            <dt>Then</dt> <dd data-field="then">Personal holds desk-work, Work holds no machines, and nothing is cut any more</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Cutting a row and pasting it onto a group moves the row into that group" covers-module="Group model" status="pending">
+          <h4>Pasting a cut group into its own subgroup changes nothing</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work holds the group Clients; Work is cut</dd>
+            <dt>When</dt> <dd data-field="when">The paste action targets Clients</dd>
+            <dt>Then</dt> <dd data-field="then">The saved groups equal the saved groups before the action, and Work is still cut</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Right-clicking a group header opens its menu, and its cog opens its settings" covers-module="Spaces sidebar mod" status="pending">
+          <h4>Right-clicking a group header opens its menu</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The Spaces section shows Work</dd>
+            <dt>When</dt> <dd data-field="when">Dannel right-clicks Work’s header</dd>
+            <dt>Then</dt> <dd data-field="then">A menu opens listing Rename, Delete, Move to…, and Settings</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Right-clicking a group header opens its menu, and its cog opens its settings" covers-module="Spaces sidebar mod" status="pending">
+          <h4>A group’s cog opens that group’s settings</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The Spaces section shows Work</dd>
+            <dt>When</dt> <dd data-field="when">Dannel clicks the cog on Work’s header</dd>
+            <dt>Then</dt> <dd data-field="then">Work’s settings open, showing its icon, banner links, clip side, subgroup sort, machine sort, and folded count</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Rows can be moved, folded, and renamed from the keyboard" covers-module="Spaces sidebar mod" status="pending">
+          <h4>Enter folds the focused group</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The Spaces mod has the keyboard and Work, which is open, is the focused row</dd>
+            <dt>When</dt> <dd data-field="when">Dannel presses Enter</dd>
+            <dt>Then</dt> <dd data-field="then">Work is folded</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Rows can be moved, folded, and renamed from the keyboard" covers-module="Spaces sidebar mod" status="pending">
+          <h4>The cut and paste keys follow the platform</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">nerd-herd’s key bindings for macOS and for Windows and Linux</dd>
+            <dt>When</dt> <dd data-field="when">They are read</dd>
+            <dt>Then</dt> <dd data-field="then">macOS binds cmd-x and cmd-v, and Windows and Linux bind ctrl-x and ctrl-v, to the Spaces mod’s cut and paste commands, all in the <code>mod:nerd-herd-spaces</code> section</dd>
           </dl>
         </test-case>
         <test-case traces-to="Dropping a machine between two machines puts it at that position" covers-module="Group model" status="pending">
