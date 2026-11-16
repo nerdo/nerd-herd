@@ -49,14 +49,14 @@ test.fail(
   },
 );
 
-// Step tests: the stub chain the view draws. The composition root is real from step 6 on.
-// Text recognition reads the digit 0 as the letter O; no stub text holds a capital O, so a read O counts as 0.
-const drawn = (lines: ScreenLines) => lines.join(" ").replaceAll("O", "0");
+// Step tests: every seam is real in shape from step 7 on, and no domain rule is computed yet,
+// so the sidebar draws only the new-group button with the default word.
+const drawn = (lines: ScreenLines) => lines.join(" ");
 
-test("step 6 of 7, before the restart: the composition root is real and its view model holds no rows for the 9 actions", () => {
-  expect(drawn(beforeRestart)).toContain("STUB view > 0 rows, Groups (9 actions)");
+test("step 7 of 7, before the restart: the view is real and draws the new-group button with the default word", () => {
+  expect(drawn(beforeRestart)).toContain("New Group");
 });
 
-test("step 6 of 7, after the restart: the view model holds no rows and no action is remembered", () => {
-  expect(drawn(foldedAfterRestart)).toContain("STUB view > 0 rows, Groups (0 actions)");
+test("step 7 of 7, after the restart: the view draws the new-group button with the default word", () => {
+  expect(drawn(foldedAfterRestart)).toContain("New Group");
 });

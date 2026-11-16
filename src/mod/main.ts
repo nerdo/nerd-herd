@@ -1,26 +1,24 @@
 import { v_flex } from "gpui-base";
 import { type AsyncContext, div, View } from "gpui-kit";
 import { checking, nextCommand, theme } from "herdr";
-import type { ModAction } from "../core/modAction";
+import type { SpacesRow } from "../core/groups/groupModel";
 import { type App, createApp } from "./app";
 import { herdrHost } from "./herdrHost";
 import { themeColor } from "./themeColor";
 
-// STUB (walking skeleton): the Spaces mod view. Hands each action to the app, counts what it
-// received, and draws what the app's view model holds, prefixed with its own name.
+const rowLabel = (row: SpacesRow): string =>
+  row.kind === "group" ? row.id : (row.name ?? "This computer");
+
+/** The nerd-herd Spaces view: hands each action to the app and draws the app's view model. */
 export default class SpacesView extends View {
   app: App;
-  actions: ModAction[];
 
   init(_props: unknown, cx: AsyncContext): void {
     this.app = createApp(herdrHost);
-    this.actions = [];
     if (checking()) return;
     cx.spawn(async (cx) => {
       for (;;) {
-        const action = await nextCommand();
-        this.actions.push(action);
-        this.app.apply(action);
+        this.app.apply(await nextCommand());
         cx.notify();
       }
     });
@@ -36,10 +34,7 @@ export default class SpacesView extends View {
       .gap(6)
       .text_size(12)
       .text_color(themeColor(t, "foreground"))
-      .child(
-        div().child(
-          `STUB view > ${vm.rows.length} rows, ${vm.settings.groupWord.plural} (${this.actions.length} actions)`,
-        ),
-      );
+      .child(div().child(`New ${vm.settings.groupWord.singular}`))
+      .children(vm.rows.map((row) => div().child(rowLabel(row))));
   }
 }
