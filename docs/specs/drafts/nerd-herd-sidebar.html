@@ -168,7 +168,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
   <p>nerd-herd is a pair of Herdr mods that replace the sidebar's Spaces and Agents sections. Spaces gains groups that gather machines (for example Personal and Work). Agents lists each machine's sessions under that machine, with subjects that wrap instead of being cut off. The first build is the Spaces mod with groups; the Agents mod comes after it. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
   <dl class="spec-meta">
     <dt>Stage</dt> <dd data-field="stage">drafts</dd>
-    <dt>Complexity</dt> <dd data-field="complexity">4 / 10 for the first build &mdash; one mod, a group model, drag and drop, and a test harness for a native app not yet proven</dd>
+    <dt>Complexity</dt> <dd data-field="complexity">6 / 10 for the first build &mdash; one mod with nested groups, drag and drop, per-group sorts, settings, downloaded banners with error cards, and a test harness for a native app not yet proven</dd>
     <dt>First build</dt> <dd data-field="first-build">Spaces and groups. Agents waits (from the user, 2026-11-16).</dd>
     <dt>Toolchain</dt> <dd data-field="toolchain">TypeScript on Bun. <code>bun build</code> compiles each mod into one ES module with <code>herdr</code>, <code>gpui-kit</code>, and <code>gpui-base</code> left as imports; a probe built this way passed <code>herdr-app check</code> on 2026-11-16.</dd>
     <dt>Herdr version</dt> <dd data-field="herdr-version">0.1.16 (app), read from <code>/Applications/Herdr.app/Contents/Info.plist</code></dd>
@@ -238,6 +238,55 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <dl>
           <dt>Question</dt> <dd data-field="body">Is this design worked out in a spec, or built straight from the request?</dd>
           <dt>Resolution</dt> <dd data-field="resolution">A spec in <code>docs/specs/</code>, because the design still needs back and forth.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-16">
+        <h3>Skeleton sentence</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Does the narrative's skeleton journey say what "it works" means for the first build?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Yes, as written in the Narrative.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Damaged saved data</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">What does Spaces do when the saved groups or settings it reads fail the shape check?</dd>
+          <dt>Context</dt> <dd data-field="context">A hand edit of <code>shared.json</code>, another mod, or an older nerd-herd version can leave data nerd-herd cannot read. Validation Boundaries says the check exists but not what follows it.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>Keep the unreadable data aside under a backup key, start with no groups, and show a card saying the saved groups could not be read and were kept as a backup</li>
+            <li>Keep every part that still reads correctly, drop the rest, and show a card naming what was dropped</li>
+            <li>Show an error card and change nothing until the data is fixed by hand</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Keep it aside as a backup and start fresh, so no data is lost and Spaces still works.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Group name rules</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Which group names are accepted?</dd>
+          <dt>Context</dt> <dd data-field="context">Validation Boundaries says names are checked when entered but sets no limits. The cases that need an answer are an empty name, a very long name, and two groups with the same name.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>Not empty after trimming spaces, at most 60 characters, duplicates allowed (groups are told apart by id, not name)</li>
+            <li>The same, but no two groups with the same name inside one parent</li>
+            <li>Anything goes; an empty name shows as "Untitled"</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Not empty, at most 60 characters, duplicates allowed.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Folded group count</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">With nesting, what number does a folded group's header show?</dd>
+          <dt>Context</dt> <dd data-field="context">The claim says a folded header shows its machine count. If Work holds desk-work and a Clients group holding two machines, the count could be 1, 2, or 3.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>Every machine inside, at any depth (3)</li>
+            <li>Only machines directly inside (1)</li>
+            <li>Direct items, groups and machines together (2)</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Every machine inside, at any depth: it answers "how much is hidden here".</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -650,12 +699,12 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">One ungrouped header row comes after Personal's rows, followed by ai-sandbox and its spaces</dd>
           </dl>
         </test-case>
-        <test-case traces-to="Each group sorts what it holds, custom by default, with alphabetical and reverse alphabetical as the other choices" covers-module="Sidebar settings" status="pending">
-          <h4>Fresh settings sort groups in custom order</h4>
+        <test-case traces-to="Each group sorts what it holds, custom by default, with alphabetical and reverse alphabetical as the other choices" covers-module="Group model" status="pending">
+          <h4>A new group sorts in custom order</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">Nothing saved under the settings key</dd>
-            <dt>When</dt> <dd data-field="when">Settings are read</dd>
-            <dt>Then</dt> <dd data-field="then">The group sort is custom</dd>
+            <dt>Given</dt> <dd data-field="given">No groups</dd>
+            <dt>When</dt> <dd data-field="when">The make-group action runs with the name "Work"</dd>
+            <dt>Then</dt> <dd data-field="then">Work's sort is custom</dd>
           </dl>
         </test-case>
       </test-group>
@@ -768,7 +817,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <test-case traces-to="Each group sorts what it holds, custom by default, with alphabetical and reverse alphabetical as the other choices" covers-module="Group model" status="pending">
           <h4>Alphabetical group sort orders groups by name</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">Groups Work then Personal in custom order; the machine sort is custom</dd>
+            <dt>Given</dt> <dd data-field="given">Groups Work then Personal at the top level in custom order; Work and Personal each sort custom</dd>
             <dt>When</dt> <dd data-field="when">The group sort is set to alphabetical</dd>
             <dt>Then</dt> <dd data-field="then">The groups are Personal then Work, and each group's machines keep their custom order</dd>
           </dl>
