@@ -58,8 +58,8 @@ test("step 1 of 7, store branch: the 9 actions reach the saved group store", () 
   expect(drawn(beforeRestart)).toContain("STUB view > STUB app > STUB store(9 actions)");
 });
 
-test("step 1 of 7, settings branch: the 9 actions reach sidebar settings", () => {
-  expect(drawn(beforeRestart)).toContain("STUB view > STUB app > STUB settings(9 actions)");
+test("step 3 of 7, settings branch: sidebar settings is real in shape and holds its default word for the 9 actions", () => {
+  expect(drawn(beforeRestart)).toContain("STUB view > STUB app > settings Groups (9 actions)");
 });
 
 test("step 2 of 7, banner branch: the banner cache is real in shape and has no banner for the 9 actions", () => {
