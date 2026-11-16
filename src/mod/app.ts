@@ -27,7 +27,7 @@ export function createApp(host: Host): App {
     // CROSSING (walking skeleton): actions change nothing yet.
     apply: () => {},
     view: () => {
-      const settings = readSettings(host.shared.read("nerd-herd.settings"));
+      const { settings } = readSettings(host.shared.read("nerd-herd.settings"));
       return { rows: computeRows(store.load(), host.machines(), settings), settings, banners };
     },
   };

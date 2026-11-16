@@ -1,3 +1,6 @@
+import { type } from "arktype";
+import { SavedDataError } from "../errors/savedDataError";
+
 export type WordForm = string;
 
 export interface GroupWord {
@@ -18,5 +21,27 @@ export const defaultSettings: SidebarSettings = {
   ungroupedName: "Ungrouped",
 };
 
-// CROSSING (walking skeleton): real in shape, returns the defaults whatever was saved.
-export const readSettings = (_saved: unknown): SidebarSettings => defaultSettings;
+/** What may be saved: every setting optional, each checked when present. */
+const SavedSettings = type({
+  "groupWord?": { singular: "string > 0", plural: "string > 0" },
+  "ungroupedHeader?": "boolean",
+  "ungroupedName?": "string > 0",
+});
+
+export interface SettingsRead {
+  readonly settings: SidebarSettings;
+  /** Set when the saved settings could not be read; the defaults are in use. */
+  readonly problem: SavedDataError | null;
+}
+
+/** Reads the saved settings, filling each missing value from its default. */
+export const readSettings = (saved: unknown): SettingsRead => {
+  const parsed = SavedSettings(saved ?? {});
+  if (parsed instanceof type.errors) {
+    return {
+      settings: defaultSettings,
+      problem: new SavedDataError("settings", { cause: parsed }),
+    };
+  }
+  return { settings: { ...defaultSettings, ...parsed }, problem: null };
+};
