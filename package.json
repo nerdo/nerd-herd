@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "specs:serve": "bun scripts/serve-specs.js docs/specs"
+    "specs:serve": "bun scripts/serve-specs.js docs/specs",
+    "specs:check": "bun scripts/check-spec-refs.ts docs/specs/*/*.html"
   }
 }
