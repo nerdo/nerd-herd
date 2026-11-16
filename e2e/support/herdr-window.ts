@@ -39,7 +39,7 @@ export class HerdrWindow {
     this.prepareFakeCurl();
     const r = run(["bun", "run", "start"], this.env());
     if (r.code !== 0) throw new Error(`bun run start failed: ${r.out}\n${r.err}`);
-    this.closeWelcome();
+    this.closeWelcome({ expected: true });
   }
 
   /** Closes the window and starts it again on the same home, as a person restarting Herdr. */
@@ -47,7 +47,7 @@ export class HerdrWindow {
     this.stop();
     const r = run(["bun", "run", "start"], this.env());
     if (r.code !== 0) throw new Error(`bun run start failed: ${r.out}\n${r.err}`);
-    this.closeWelcome();
+    this.closeWelcome({ expected: false });
   }
 
   stop(): void {
@@ -111,15 +111,22 @@ export class HerdrWindow {
     return (width * zoom) / png.readUInt32BE(16);
   }
 
-  /** A fresh or restarted window can show Herdr's welcome screen over the sidebar; a person closes it first. */
-  private closeWelcome(): void {
-    for (let waited = 0; waited < 10_000; waited += 500) {
-      const status = run(["herdr-app", "status"], this.env()).out;
-      if (status.includes("frame-welcome"))
+  /**
+   * A fresh home always opens Herdr's welcome screen over the sidebar, sometimes seconds after the
+   * window answers; a person closes it first. Expected: wait for it (up to 15 s), close it, confirm it
+   * is gone. Not expected (a restart): close it if it shows within 5 s.
+   */
+  private closeWelcome({ expected }: { expected: boolean }): void {
+    const showing = () => run(["herdr-app", "status"], this.env()).out.includes("frame-welcome");
+    let seen = false;
+    for (let waited = 0; waited < (expected ? 15_000 : 5_000); waited += 500) {
+      if (showing()) {
+        seen = true;
         run(["herdr-app", "do", "overlay.close", "--id", "frame-welcome"], this.env());
-      else if (waited >= 2_000) return;
+      } else if (seen) return;
       sleep(500);
     }
+    if (expected && !seen) throw new Error("Herdr's welcome screen never showed on a fresh home");
   }
 
   /** The first reachable machine other than this computer, from herdr-core's own list. */

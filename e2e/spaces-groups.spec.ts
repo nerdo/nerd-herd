@@ -54,8 +54,8 @@ test.fail(
 // Text recognition reads the digit 0 as the letter O; no stub text holds a capital O, so a read O counts as 0.
 const drawn = (lines: ScreenLines) => lines.join(" ").replaceAll("O", "0");
 
-test("step 1 of 7, store branch: the 9 actions reach the saved group store", () => {
-  expect(drawn(beforeRestart)).toContain("STUB view > STUB app > STUB store(9 actions)");
+test("step 4 of 7, store branch: the saved group store is real in shape and holds no groups for the 9 actions", () => {
+  expect(drawn(beforeRestart)).toContain("STUB view > STUB app > store 0 groups (9 actions)");
 });
 
 test("step 3 of 7, settings branch: sidebar settings is real in shape and holds its default word for the 9 actions", () => {
@@ -70,6 +70,6 @@ test("step 1 of 7, groups branch: sort order is real in shape and returns no ite
   expect(drawn(beforeRestart)).toContain("STUB view > STUB app > STUB groups > sorted 0 of 9");
 });
 
-test("step 1 of 7, after the restart: the stub store remembers no action", () => {
-  expect(drawn(foldedAfterRestart)).toContain("STUB view > STUB app > STUB store(0 actions)");
+test("step 4 of 7, after the restart: the saved group store holds no groups and no action is remembered", () => {
+  expect(drawn(foldedAfterRestart)).toContain("STUB view > STUB app > store 0 groups (0 actions)");
 });
