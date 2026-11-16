@@ -353,17 +353,11 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Resolution</dt> <dd data-field="resolution">Subgroups first, then machines, like folders before files in a file browser. The subgroups follow the group's subgroup sort and the machines its machine sort.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Linked sorts</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">While a group's subgroup sort and machine sort are still the same, does changing the subgroup sort change the machine sort too?</dd>
-          <dt>Context</dt> <dd data-field="context">The user wants the two the same by default and separable on request. Both start as custom, so the difference shows only on the first change.</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>Linked: the machine sort follows the subgroup sort until the user sets the machine sort on its own</li>
-            <li>Independent: each sort changes only when the user sets that sort</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Linked, so one change sorts the whole group and splitting them is a deliberate step.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">No. The two sorts are independent; they only happen to start the same (both custom). Each changes only when the user sets that sort.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -791,6 +785,14 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Given</dt> <dd data-field="given">Work holds, in custom order, desk-work, the group Clients, desk-client, and the group Archive; Work's subgroup sort is custom and its machine sort is alphabetical</dd>
             <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
             <dt>Then</dt> <dd data-field="then">Work's rows list Clients, Archive, desk-client, desk-work in that order</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Inside a group, its subgroups come before its machines, the subgroups ordered by its subgroup sort and the machines by its machine sort" covers-module="Group model" status="pending">
+          <h4>Setting a group's subgroup sort keeps its machine sort</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work's subgroup sort and machine sort are both custom</dd>
+            <dt>When</dt> <dd data-field="when">Work's subgroup sort is set to alphabetical</dd>
+            <dt>Then</dt> <dd data-field="then">Work's subgroup sort is alphabetical and its machine sort is custom</dd>
           </dl>
         </test-case>
         <test-case traces-to="Each group sorts what it holds, custom by default, with alphabetical and reverse alphabetical as the other choices" covers-module="Group model" status="pending">
