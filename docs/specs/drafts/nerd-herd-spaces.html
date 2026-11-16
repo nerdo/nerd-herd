@@ -206,9 +206,10 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <li>A banner link is downloaded and shown as the group header's banner</li>
           <li>A group with one banner link shows that banner whether it is folded or open</li>
           <li>A group with an open banner and a folded banner shows the one that matches its state</li>
-          <li>A banner shows at its full banner height in its original proportions, and the sidebar edge clips whatever is wider</li>
+          <li>A banner shows at its image's own pixel size, and the sidebar edge clips whatever is wider</li>
+          <li>A wide banner is clipped on the side its group chose, keeping the left edge by default</li>
           <li>A banner link that fails to load shows an error card in the banner's place saying why</li>
-          <li>Inside a group, its groups come before its machines, each ordered by the group's sort</li>
+          <li>Inside a group, its subgroups come before its machines, the subgroups ordered by its subgroup sort and the machines by its machine sort</li>
           <li>A group name that is empty or longer than 60 characters is refused with a message saying why</li>
           <li>Each group's folded count shows every machine inside by default, or only direct machines, or all direct items</li>
           <li>Damaged saved groups are kept as a backup and Spaces shows Herdr's usual list with an error card</li>
@@ -310,31 +311,18 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Context</dt> <dd data-field="context">Herdr's <code>image(path)</code> loads only a file inside Herdr's app folder (<code>~/.config/herdr-app</code>), per its doc comment in <code>gpui-kit.d.ts</code>. So Banner cache downloads the link with <code>fetch</code> and saves it as a file the sidebar can show. Not yet verified: that this runtime's <code>fetch</code> returns image bytes and that <code>fs/promises</code> can write them; that is research for the Banner cache phase.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Banner height</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">How tall is a banner drawn in the sidebar?</dd>
-          <dt>Context</dt> <dd data-field="context">"Full height" fixes the proportions but not the size: a 1200 by 300 pixel image drawn at its own pixel size is 300 points tall, taller than most of the sidebar's rows put together.</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>The image's own pixel height, however tall</li>
-            <li>One banner height for every group, set in Spaces settings (for example 48 points), with each image scaled to it</li>
-            <li>A banner height on each group, with a default from Spaces settings</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">A banner height on each group, defaulting to one value in Spaces settings, so most groups match and a group can stand out.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">The image's own pixel height, however tall. The user sizes the image to suit.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Banner clip side</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">When a banner is wider than the sidebar, which part stays visible?</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>The left edge: the right side is clipped, and widening the sidebar reveals more to the right</li>
-            <li>The center: both sides are clipped equally</li>
-            <li>A choice on each group, defaulting to the left edge</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">The left edge, which reads naturally with the header text that also starts at the left.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">A choice on each group: the left edge (the default, clipping the right side) or the center (clipping both sides equally).</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -355,14 +343,27 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <h3>Sort scope</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Does one sort choice apply everywhere, or does each group get its own?</dd>
-          <dt>Resolution</dt> <dd data-field="resolution">Each group gets its own sort for what it holds, and the top level of Spaces has one too.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Each group gets its own sorts for what it holds, and the top level of Spaces has them too: a subgroup sort and a machine sort, both custom by default, that the user can set differently.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Groups and machines side by side</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Inside a group that holds both groups and machines, how are the two kinds ordered?</dd>
-          <dt>Resolution</dt> <dd data-field="resolution">Groups first, then machines, each ordered by the group's one sort, like folders before files in a file browser.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Subgroups first, then machines, like folders before files in a file browser. The subgroups follow the group's subgroup sort and the machines its machine sort.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Linked sorts</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">While a group's subgroup sort and machine sort are still the same, does changing the subgroup sort change the machine sort too?</dd>
+          <dt>Context</dt> <dd data-field="context">The user wants the two the same by default and separable on request. Both start as custom, so the difference shows only on the first change.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>Linked: the machine sort follows the subgroup sort until the user sets the machine sort on its own</li>
+            <li>Independent: each sort changes only when the user sets that sort</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Linked, so one change sorts the whole group and splitting them is a deliberate step.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -776,18 +777,26 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The top level holds Work only; Work holds Clients; Clients still holds desk-work</dd>
           </dl>
         </test-case>
-        <test-case traces-to="Inside a group, its groups come before its machines, each ordered by the group's sort" covers-module="Group model" status="pending">
+        <test-case traces-to="Inside a group, its subgroups come before its machines, the subgroups ordered by its subgroup sort and the machines by its machine sort" covers-module="Group model" status="pending">
           <h4>A group lists its groups before its machines</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">Work holds, in custom order, desk-work, the group Clients, desk-client, and the group Archive; Work's sort is alphabetical</dd>
+            <dt>Given</dt> <dd data-field="given">Work holds, in custom order, desk-work, the group Clients, desk-client, and the group Archive; Work's subgroup sort and machine sort are both alphabetical</dd>
             <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
             <dt>Then</dt> <dd data-field="then">Work's rows list Archive, Clients, desk-client, desk-work in that order</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Inside a group, its subgroups come before its machines, the subgroups ordered by its subgroup sort and the machines by its machine sort" covers-module="Group model" status="pending">
+          <h4>A group sorts its subgroups and machines differently</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work holds, in custom order, desk-work, the group Clients, desk-client, and the group Archive; Work's subgroup sort is custom and its machine sort is alphabetical</dd>
+            <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">Work's rows list Clients, Archive, desk-client, desk-work in that order</dd>
           </dl>
         </test-case>
         <test-case traces-to="Each group sorts what it holds, custom by default, with alphabetical and reverse alphabetical as the other choices" covers-module="Group model" status="pending">
           <h4>Two groups keep different sorts</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">Personal holds desk-home then ai-sandbox, sorted alphabetically; Work holds desk-work then desk-client, sorted custom</dd>
+            <dt>Given</dt> <dd data-field="given">Personal holds desk-home then ai-sandbox, with an alphabetical machine sort; Work holds desk-work then desk-client, with a custom machine sort</dd>
             <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
             <dt>Then</dt> <dd data-field="then">Personal's machines are ai-sandbox then desk-home, and Work's are desk-work then desk-client</dd>
           </dl>
@@ -816,7 +825,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">It returns a path inside Herdr's app folder, and the file at that path holds the same bytes</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A banner shows at its full banner height in its original proportions, and the sidebar edge clips whatever is wider" covers-module="Banner cache" status="pending">
+        <test-case traces-to="A banner shows at its image's own pixel size, and the sidebar edge clips whatever is wider" covers-module="Banner cache" status="pending">
           <h4>A downloaded banner reports its pixel size</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">A fetcher that answers <code>https://example.test/wide.png</code> with a 1200 by 300 pixel PNG</dd>
@@ -824,12 +833,20 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The banner file it returns has width 1200 and height 300</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A banner shows at its full banner height in its original proportions, and the sidebar edge clips whatever is wider" covers-module="Spaces sidebar mod" status="pending">
+        <test-case traces-to="A banner shows at its image's own pixel size, and the sidebar edge clips whatever is wider" covers-module="Spaces sidebar mod" status="pending">
           <h4>A wide banner keeps its proportions and is clipped</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">Work's banner is 1200 by 300 pixels, the banner height is H (set by the open question <a href="#spec-question-banner-height">Banner height</a>), and the sidebar is narrower than 4H</dd>
+            <dt>Given</dt> <dd data-field="given">Work's banner is 1200 by 300 pixels, Work's clip side is untouched, and the sidebar is 268 points wide</dd>
             <dt>When</dt> <dd data-field="when">The Spaces section is drawn</dd>
-            <dt>Then</dt> <dd data-field="then">The banner image is drawn H tall and 4H wide, and the header shows only the part that fits the sidebar's width</dd>
+            <dt>Then</dt> <dd data-field="then">The banner image is drawn 300 points tall and 1200 wide, and the header shows its leftmost 268 points</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A wide banner is clipped on the side its group chose, keeping the left edge by default" covers-module="Spaces sidebar mod" status="pending">
+          <h4>A centered banner clips both sides equally</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work's banner is 1200 by 300 pixels, Work's clip side is center, and the sidebar is 268 points wide</dd>
+            <dt>When</dt> <dd data-field="when">The Spaces section is drawn</dd>
+            <dt>Then</dt> <dd data-field="then">The header shows the banner from 466 to 734 points across</dd>
           </dl>
         </test-case>
         <test-case traces-to="A group with one banner link shows that banner whether it is folded or open" covers-module="Group model" status="pending">
@@ -859,8 +876,8 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <test-case traces-to="Each group sorts what it holds, custom by default, with alphabetical and reverse alphabetical as the other choices" covers-module="Group model" status="pending">
           <h4>Alphabetical group sort orders groups by name</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">Groups Work then Personal at the top level in custom order; Work and Personal each sort custom</dd>
-            <dt>When</dt> <dd data-field="when">The group sort is set to alphabetical</dd>
+            <dt>Given</dt> <dd data-field="given">Groups Work then Personal at the top level in custom order; Work and Personal each have custom sorts</dd>
+            <dt>When</dt> <dd data-field="when">The top level's subgroup sort is set to alphabetical</dd>
             <dt>Then</dt> <dd data-field="then">The groups are Personal then Work, and each group's machines keep their custom order</dd>
           </dl>
         </test-case>
@@ -868,7 +885,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <h4>Reverse alphabetical group sort orders groups by name, last first</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">Groups Personal then Work in custom order</dd>
-            <dt>When</dt> <dd data-field="when">The group sort is set to reverse alphabetical</dd>
+            <dt>When</dt> <dd data-field="when">The top level's subgroup sort is set to reverse alphabetical</dd>
             <dt>Then</dt> <dd data-field="then">The groups are Work then Personal</dd>
           </dl>
         </test-case>
