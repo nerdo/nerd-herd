@@ -182,7 +182,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
 
   <section class="narrative">
     <details open><summary><h2>Narrative</h2></summary>
-      <p class="skeleton-journey">Dannel renames the sidebar's word for groups to "Environments", makes a Work environment with an emoji icon, drags desk-work and This computer into it, sorts and folds the environments, and after Herdr restarts sees those machines' spaces still inside the folded Work environment in their custom order.</p>
+      <p class="skeleton-journey">Dannel renames the sidebar's word for groups to "Environments", makes a Work environment with an emoji icon and a banner link, nests a Clients environment inside it, drags desk-work and This computer into Work, sorts and folds the environments, and after Herdr restarts sees those machines' spaces still inside the folded Work environment in their custom order.</p>
 
       <h3>Organizing machines into groups</h3>
       <details open class="claims"><summary>Claims</summary>
@@ -196,16 +196,22 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <li>Groups, their machines, the order, the fold state, and the look are the same after Herdr restarts</li>
           <li>An unreachable machine stays in its group and says it is unreachable</li>
           <li>This computer can be dropped into a group like any machine</li>
-          <li>Groups have their own sort, custom by default, with alphabetical and reverse alphabetical as the other choices</li>
+          <li>Each group sorts what it holds, custom by default, with alphabetical and reverse alphabetical as the other choices</li>
           <li>Deleting a group moves its machines to the ungrouped machines below the groups</li>
           <li>Ungrouped machines show below the groups with no header, or under a header when that setting is on</li>
           <li>Changing the word for groups to Environments shows Environments wherever the sidebar names groups</li>
+          <li>The cog wheel beside the Spaces + opens Spaces settings</li>
+          <li>Dropping a group on another group nests it inside that group</li>
+          <li>Dropping a group into one of its own subgroups leaves every group where it was</li>
+          <li>The Ungrouped header is renamed the same way as any group</li>
+          <li>A banner link is downloaded and shown as the group header's banner</li>
         </ol>
       </details>
       <p>Dannel works on a personal machine and on machines for two contexts: their own projects and their job at Job. The Spaces section lists five machines in name order, so personal and work machines are mixed together. They click the new-group button beside the Spaces "+" button, and a group appears with its name ready to edit. They type "Work" and pick an icon for it.</p>
       <p>They drag desk-work from the list and drop it on the Work group. The machine and its spaces now sit inside Work. They make a Personal group the same way, drop desk-home and ai-sandbox into it, and drag ai-sandbox above desk-home. Later they switch the sort to alphabetical to find a machine by name. Then they switch back to custom, and their dragged order returns.</p>
       <p>When they focus on personal work, they fold Work. Its header stays, showing "Work" and how many machines it holds. laptop-travel is switched off today, and it stays in Personal marked as unreachable. The next morning Herdr restarts after an update, and the sidebar shows the same groups, order, folds, and icons as the evening before.</p>
       <p>"Groups" is not quite how Dannel thinks of these, so they change the sidebar's word for them to "Environments". The new-group button, the headers, and the menus now say "environment" instead. They drag This computer into Personal too, because it is a personal machine like the others. They try a temporary "Scratch" environment, holding ai-sandbox, then delete it; ai-sandbox moves down to the ungrouped machines below the environments. Last, they set the environments to sort alphabetically, so Personal shows above Work, while the machines inside each one keep their own sort.</p>
+      <p>They made that word change in Spaces settings, which the cog wheel beside the Spaces "+" opens. In the same place they turn on the ungrouped header, and the ungrouped machines gather under "Ungrouped". They rename that header "Unsorted" the same way they rename any group. Work grows a "Clients" environment, which they drag onto Work so it nests inside it, with Work's own sort deciding where it sits. When they accidentally drag Work onto Clients, nothing moves. Finally they paste a banner link for Work, and after a moment a wide image runs across Work's header.</p>
 
       <h3>Reading and renaming sessions by machine</h3>
       <details open class="claims"><summary>Claims</summary>
@@ -260,65 +266,80 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Resolution</dt> <dd data-field="resolution">"Groups" by default, changeable by the user (for example "Environments" or "Projects"). The code always says "group"; every word shown to the user comes from settings data.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
-        <h3>Changing the group word</h3>
+      <spec-question status="resolved" resolved-on="2026-11-16">
+        <h3>Spaces settings</h3>
         <dl>
-          <dt>Question</dt> <dd data-field="body">Where does the user change the word for groups, and does the setting hold a singular and a plural form?</dd>
+          <dt>Question</dt> <dd data-field="body">Where does the user change the word for groups and the other Spaces settings?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">A cog wheel next to the Spaces "+" button opens the Spaces settings, and they are changed there.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Group word forms</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Does the group-word setting hold a separate singular and plural form?</dd>
           <dt>Context</dt> <dd data-field="context">The sidebar needs both forms: "Environments" as a header and "New environment" on the button. English plurals are irregular ("Property", "Properties"), so deriving one form from the other fails for some words.</dd>
           <dt>Options</dt>
           <dd data-field="options"><ul>
-            <li>A settings popup opened from the Spaces header, with separate singular and plural fields</li>
-            <li>The same popup, with one field and the plural made by adding "s"</li>
-            <li>Hand-edited settings only, no popup</li>
+            <li>Separate singular and plural fields in Spaces settings</li>
+            <li>One field, with the plural made by adding "s"</li>
           </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">A settings popup with singular and plural fields, which can also hold the ungrouped-header switch.</dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Separate singular and plural fields.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Ungrouped header wording</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">When the ungrouped-header setting is on, what does that header say?</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>"Ungrouped", fixed</li>
-            <li>Built from the group word, for example "No environment"</li>
-            <li>A third word the user sets</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Built from the group word, so a changed word changes it too.</dd>
-          <dt>Related</dt> <dd data-field="related"><a href="#spec-question-changing-the-group-word">Changing the group word</a>: the setting form decides which word is available.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">"Ungrouped" by default, and the user renames it the same way as any other group.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Group banner source</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Where does a group's banner come from?</dd>
-          <dt>Context</dt> <dd data-field="context">Herdr's guide documents mods showing images from files under <code>~/.config/herdr-app</code>. Showing an image straight from a web link is not documented, so a link may need to be downloaded to a file first.</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>A web link (URL)</li>
-            <li>A file on this computer</li>
-            <li>A colored band instead of an image</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">A colored band for the first build, images after.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">A web link (URL).</dd>
+          <dt>Context</dt> <dd data-field="context">Herdr's <code>image(path)</code> loads only a file inside Herdr's app folder (<code>~/.config/herdr-app</code>), per its doc comment in <code>gpui-kit.d.ts</code>. So Banner cache downloads the link with <code>fetch</code> and saves it as a file the sidebar can show. Not yet verified: that this runtime's <code>fetch</code> returns image bytes and that <code>fs/promises</code> can write them; that is research for the Banner cache phase.</dd>
         </dl>
       </spec-question>
       <spec-question status="open">
+        <h3>Banner that fails to load</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">What does a group's header show when its banner link cannot be downloaded or is not an image?</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>The last copy that downloaded, if any; otherwise no banner, and Spaces settings says the link failed</li>
+            <li>No banner and nothing else</li>
+            <li>A placeholder band with a warning mark</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">The last copy that downloaded, else no banner, with the failure shown in Spaces settings.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Group nesting</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Can a group hold other groups?</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul><li>No, one level only</li><li>Yes, groups inside groups</li></ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">One level only.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Yes, groups inside groups.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-16">
+        <h3>Sort scope</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Does one sort choice apply everywhere, or does each group get its own?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Each group gets its own sort for what it holds, and the top level of Spaces has one too.</dd>
         </dl>
       </spec-question>
       <spec-question status="open">
-        <h3>Sort scope</h3>
+        <h3>Groups and machines side by side</h3>
         <dl>
-          <dt>Question</dt> <dd data-field="body">Does the machines' sort choice apply to every group at once, or does each group get its own?</dd>
-          <dt>Context</dt> <dd data-field="context">Groups have their own sort, separate from the machines' sort (see <a href="#spec-question-group-order-under-sorting">Group order under sorting</a>). This question is about the machines inside groups.</dd>
+          <dt>Question</dt> <dd data-field="body">Inside a group that holds both groups and machines, how are the two kinds ordered?</dd>
+          <dt>Context</dt> <dd data-field="context">With nesting, Work could hold a "Clients" group and the machine desk-work at the same level.</dd>
           <dt>Options</dt>
-          <dd data-field="options"><ul><li>One machine sort for every group</li><li>One machine sort per group</li></ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">One machine sort for every group.</dd>
+          <dd data-field="options"><ul>
+            <li>Groups first, then machines, each sorted by the group's sort, like folders before files in a file browser</li>
+            <li>One mixed list sorted together; in custom order the user can drop a machine between two groups</li>
+            <li>Groups first, then machines, with a separate sort choice for each kind</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Groups first, then machines, under one sort per group.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -434,7 +455,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Owns</dt> <dd data-field="owns">Group membership, custom order of groups and of machines, sort rules, fold state, where ungrouped machines go.</dd>
           <dt>Delegates</dt> <dd data-field="delegates">Ordering to Sort order. Otherwise data in, data out. It never holds a display word: rows name groups by id, and Spaces sidebar mod picks the words.</dd>
           <dt>Input <code>SavedGroups</code>, <code>Machine[]</code>, <code>GroupAction</code></dt>
-          <dd data-field="input">The saved groups, Herdr's machines, and one action (make, rename, delete, move, reorder, fold, sort groups, sort machines, set icon).</dd>
+          <dd data-field="input">The saved groups, Herdr's machines, and one action (make, rename, delete, move a machine, nest a group, reorder, fold, set a sort, set icon, set banner link).</dd>
           <dt>Output <code>SavedGroups</code>, <code>SpacesRow[]</code></dt>
           <dd data-field="output">The new saved groups, and the rows to draw.</dd>
         </dl>
@@ -472,10 +493,20 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         </dl>
       </spec-module>
       <spec-module>
+        <h3>Banner cache</h3>
+        <dl>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Turns a group's banner link into a file inside Herdr's app folder that Herdr's <code>image()</code> can show.</dd>
+          <dt>Owns</dt> <dd data-field="owns">Where downloaded banners are kept, and which link each file came from.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Downloading to an injected fetcher; writing to an injected file writer (Herdr's <code>fetch</code> and <code>fs/promises</code> in the real mod).</dd>
+          <dt>Input <code>BannerLink</code></dt> <dd data-field="input">The link the user pasted.</dd>
+          <dt>Output <code>BannerFile</code></dt> <dd data-field="output">The path of the saved image, relative to Herdr's app folder.</dd>
+        </dl>
+      </spec-module>
+      <spec-module>
         <h3>Sidebar settings</h3>
         <dl>
           <dt>Responsibility</dt> <dd data-field="responsibility">The one typed, validated place for user-changeable sidebar settings, each with one default declared beside it.</dd>
-          <dt>Owns</dt> <dd data-field="owns">The word for groups (default "Group" and "Groups"), whether ungrouped machines get a header (default off), and the settings' shared-state key.</dd>
+          <dt>Owns</dt> <dd data-field="owns">The word for groups (default "Group" and "Groups"), whether ungrouped machines get a header (default off), that header's name (default "Ungrouped"), and the settings' shared-state key. The cog wheel beside the Spaces "+" is where the user changes them.</dd>
           <dt>Delegates</dt> <dd data-field="delegates">Saving to Herdr (<code>shared</code> and <code>setShared</code>).</dd>
           <dt>Input <code>unknown</code></dt> <dd data-field="input">Whatever is stored under the settings key.</dd>
           <dt>Output <code>SidebarSettings</code></dt> <dd data-field="output">Checked settings with every default applied.</dd>
@@ -525,6 +556,14 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
     <details open><summary><h2>Test Cases</h2></summary>
       <test-group category="error-scenarios">
         <h3>Error scenarios</h3>
+        <test-case traces-to="Dropping a group into one of its own subgroups leaves every group where it was" covers-module="Group model" status="pending">
+          <h4>Nesting a group inside its own subgroup changes nothing</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work holds the group Clients</dd>
+            <dt>When</dt> <dd data-field="when">The nest action puts Work inside Clients</dd>
+            <dt>Then</dt> <dd data-field="then">The saved groups equal the saved groups before the action: Work at the top level, holding Clients</dd>
+          </dl>
+        </test-case>
         <test-case traces-to="An unreachable machine stays in its group and says it is unreachable" covers-module="Group model" status="pending">
           <h4>An unreachable machine keeps its group place</h4>
           <dl>
@@ -595,7 +634,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">One ungrouped header row comes after Personal's rows, followed by ai-sandbox and its spaces</dd>
           </dl>
         </test-case>
-        <test-case traces-to="Groups have their own sort, custom by default, with alphabetical and reverse alphabetical as the other choices" covers-module="Sidebar settings" status="pending">
+        <test-case traces-to="Each group sorts what it holds, custom by default, with alphabetical and reverse alphabetical as the other choices" covers-module="Sidebar settings" status="pending">
           <h4>Fresh settings sort groups in custom order</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">Nothing saved under the settings key</dd>
@@ -662,7 +701,47 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">Personal's machines are desk-home then this computer</dd>
           </dl>
         </test-case>
-        <test-case traces-to="Groups have their own sort, custom by default, with alphabetical and reverse alphabetical as the other choices" covers-module="Group model" status="pending">
+        <test-case traces-to="Dropping a group on another group nests it inside that group" covers-module="Group model" status="pending">
+          <h4>Dropping a group on another group nests it</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Top-level groups Work and Clients; Clients holds desk-work</dd>
+            <dt>When</dt> <dd data-field="when">The nest action puts Clients inside Work</dd>
+            <dt>Then</dt> <dd data-field="then">The top level holds Work only; Work holds Clients; Clients still holds desk-work</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Each group sorts what it holds, custom by default, with alphabetical and reverse alphabetical as the other choices" covers-module="Group model" status="pending">
+          <h4>Two groups keep different sorts</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Personal holds desk-home then ai-sandbox, sorted alphabetically; Work holds desk-work then desk-client, sorted custom</dd>
+            <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">Personal's machines are ai-sandbox then desk-home, and Work's are desk-work then desk-client</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="The Ungrouped header is renamed the same way as any group" covers-module="Spaces sidebar mod" status="pending">
+          <h4>Renaming the Ungrouped header</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The ungrouped header is on and reads "Ungrouped"</dd>
+            <dt>When</dt> <dd data-field="when">Dannel renames that header "Unsorted" the way they rename a group</dd>
+            <dt>Then</dt> <dd data-field="then">The header reads "Unsorted", and the settings' ungrouped header name is "Unsorted"</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="The cog wheel beside the Spaces + opens Spaces settings" covers-module="Spaces sidebar mod" status="pending">
+          <h4>The cog wheel opens Spaces settings</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The Spaces section is shown and no popup is open</dd>
+            <dt>When</dt> <dd data-field="when">Dannel clicks the cog wheel beside the Spaces "+"</dd>
+            <dt>Then</dt> <dd data-field="then"><code>herdr-app status</code> lists one open overlay belonging to nerd-herd's Spaces settings</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A banner link is downloaded and shown as the group header's banner" covers-module="Banner cache" status="pending">
+          <h4>A banner link becomes a file Herdr can show</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A fetcher that answers <code>https://example.test/work.png</code> with a PNG image's bytes</dd>
+            <dt>When</dt> <dd data-field="when">Banner cache is given that link</dd>
+            <dt>Then</dt> <dd data-field="then">It returns a path inside Herdr's app folder, and the file at that path holds the same bytes</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Each group sorts what it holds, custom by default, with alphabetical and reverse alphabetical as the other choices" covers-module="Group model" status="pending">
           <h4>Alphabetical group sort orders groups by name</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">Groups Work then Personal in custom order; the machine sort is custom</dd>
@@ -670,7 +749,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The groups are Personal then Work, and each group's machines keep their custom order</dd>
           </dl>
         </test-case>
-        <test-case traces-to="Groups have their own sort, custom by default, with alphabetical and reverse alphabetical as the other choices" covers-module="Group model" status="pending">
+        <test-case traces-to="Each group sorts what it holds, custom by default, with alphabetical and reverse alphabetical as the other choices" covers-module="Group model" status="pending">
           <h4>Reverse alphabetical group sort orders groups by name, last first</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">Groups Personal then Work in custom order</dd>
@@ -789,6 +868,13 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         </dl>
       </spec-phase>
       <spec-phase depends-on="Sidebar settings" parallel-safe="no" agent-suitable="no">
+        <h3>Banner cache</h3>
+        <dl>
+          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">src/banners/*</li></ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Banner cache" parallel-safe="no" agent-suitable="no">
         <h3>Saved group store</h3>
         <dl>
           <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">src/store/*</li></ul></dd>
@@ -827,7 +913,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <li><h4>A security scan runs clean</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
       </ol>
-      <execution-plan>First build: Walking skeleton &rarr; Sort order &rarr; Group model &rarr; Sidebar settings &rarr; Saved group store &rarr; Spaces sidebar mod &rarr; Skeleton re-walk. After it: Session list model &rarr; Agents sidebar mod.</execution-plan>
+      <execution-plan>First build: Walking skeleton &rarr; Sort order &rarr; Group model &rarr; Sidebar settings &rarr; Banner cache &rarr; Saved group store &rarr; Spaces sidebar mod &rarr; Skeleton re-walk. After it: Session list model &rarr; Agents sidebar mod.</execution-plan>
     </details>
   </section>
 </main>
