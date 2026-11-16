@@ -40,7 +40,11 @@ export function createApp(host: Host): App {
     apply: () => {},
     view: () => {
       const { settings } = readSettings(host.shared.read("nerd-herd.settings"));
-      return { rows: computeRows(store.load(), host.machines(), settings), settings, banners };
+      return {
+        rows: computeRows(store.load().groups, host.machines(), settings),
+        settings,
+        banners,
+      };
     },
   };
 }
