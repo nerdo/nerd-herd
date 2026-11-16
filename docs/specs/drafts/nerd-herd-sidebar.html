@@ -165,10 +165,12 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
 </nav>
 <main id="content">
   <h1>nerd-herd: a clearer Herdr sidebar</h1>
-  <p>nerd-herd is a pair of Herdr mods that replace the sidebar's Spaces and Agents sections. Spaces gains folders that group remote machines (for example Personal and Work). Agents lists each remote's sessions under that remote, with subjects that wrap instead of being cut off. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
+  <p>nerd-herd is a pair of Herdr mods that replace the sidebar's Spaces and Agents sections. Spaces gains folders that group remote machines (for example Personal and Work). Agents lists each remote's sessions under that remote, with subjects that wrap instead of being cut off. The first build is the Spaces mod with folders; the Agents mod comes after it. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
   <dl class="spec-meta">
     <dt>Stage</dt> <dd data-field="stage">drafts</dd>
-    <dt>Complexity</dt> <dd data-field="complexity">5 / 10 &mdash; two mods, one shared folder model, drag and drop, and a test harness for a native app not yet proven</dd>
+    <dt>Complexity</dt> <dd data-field="complexity">4 / 10 for the first build &mdash; one mod, a folder model, drag and drop, and a test harness for a native app not yet proven</dd>
+    <dt>First build</dt> <dd data-field="first-build">Spaces and folders. Agents waits (from the user, 2026-11-16).</dd>
+    <dt>Toolchain</dt> <dd data-field="toolchain">TypeScript on Bun. <code>bun build</code> compiles each mod into one ES module with <code>herdr</code>, <code>gpui-kit</code>, and <code>gpui-base</code> left as imports; a probe built this way passed <code>herdr-app check</code> on 2026-11-16.</dd>
     <dt>Herdr version</dt> <dd data-field="herdr-version">0.1.16 (app), read from <code>/Applications/Herdr.app/Contents/Info.plist</code></dd>
     <dt>Standing rule</dt> <dd data-field="standing-rule">Where Herdr already provides a feature, use it, unless the idea does not fit it (from the user, 2026-11-16).</dd>
   </dl>
@@ -180,7 +182,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
 
   <section class="narrative">
     <details open><summary><h2>Narrative</h2></summary>
-      <p class="skeleton-journey">Dannel makes a Work folder in the Herdr sidebar, drags desk-work into it, and after Herdr restarts sees that remote's spaces still inside Work in their custom order, while the Agents section lists each remote's sessions under that remote with their full subjects, and renaming one of those sessions there changes its name in Herdr.</p>
+      <p class="skeleton-journey">Dannel makes a Work folder with an icon in the Herdr sidebar, drags desk-work into it, sorts and folds the folders, and after Herdr restarts sees that remote's spaces still inside the folded Work folder in their custom order.</p>
 
       <h3>Organizing remotes into folders</h3>
       <details open class="claims"><summary>Claims</summary>
@@ -328,25 +330,28 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <li>Herdr's two existing views, plus this as a third choice in its sort menu</li>
           </ul></dd>
           <dt>Recommendation</dt> <dd data-field="recommendation">Folder, then machine, then sessions.</dd>
+          <dt>Waits on</dt> <dd data-field="waits-on">The Agents mod, which comes after the first build.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved" resolved-on="2026-11-16">
+        <h3>First build scope</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Which mod is built first?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">The Spaces mod with folders. The Agents mod comes after it.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Header size</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Are bigger, higher-contrast section, folder, and machine headers part of the first build?</dd>
-          <dt>Context</dt> <dd data-field="context">Herdr's shipped headers are 11 to 11.5 pixel text in its dim color (<code>mods/agents/main.js</code>).</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul><li>Yes, in the first build</li><li>No, later</li></ul></dd>
+          <dt>Resolution</dt> <dd data-field="resolution">No. Headers keep Herdr's current size (11 to 11.5 pixel text) for now.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Folder storage scope</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Is it enough that folders are kept on this computer only?</dd>
-          <dt>Context</dt> <dd data-field="context">Herdr's shared mod state is saved to <code>~/.config/herdr-app/shared.json</code> on this computer. Herdr's layouts are kept by each machine's core, but nothing documents a way for a mod to save its own data there. Another computer running Herdr would not see these folders.</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul><li>This computer only (Herdr's shared mod state)</li><li>Shared across computers, which needs research into a storage place Herdr offers</li></ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">This computer only.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Yes. Herdr's built-in shared mod state, saved to <code>~/.config/herdr-app/shared.json</code> on this computer.</dd>
         </dl>
       </spec-question>
       <spec-question status="open" data-roles="build qa">
@@ -356,16 +361,11 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Context</dt> <dd data-field="context">Herdr documents <code>HERDR_APP_HOME</code> for selecting a different settings folder and running window, <code>herdr-app do</code> for running commands, and <code>herdr-app shot</code> for screenshots. Its manual says never to automate the mouse or keyboard on the person's real display. Whether two app instances run at once is not documented. This is research for the walking skeleton phase, not a choice for the user.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open" data-roles="build">
+      <spec-question status="resolved" resolved-on="2026-11-16" data-roles="build">
         <h3>Source language</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Is the mod written as JavaScript checked against Herdr's type files, or as TypeScript compiled to JavaScript?</dd>
-          <dt>Context</dt> <dd data-field="context">Herdr loads <code>main.js</code> and more <code>*.js</code> modules. It ships <code>herdr.d.ts</code>, <code>gpui-kit.d.ts</code>, and a <code>jsconfig.json</code> with <code>checkJs</code> on, so editors type-check plain JavaScript. Herdr does not document loading TypeScript, so TypeScript needs a build step.</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>JavaScript with JSDoc types, checked by the TypeScript compiler: no build step, and what Herdr runs is the file you edit</li>
-            <li>TypeScript compiled into the mod folder: nicer type syntax, but a build step between editing and seeing the change</li>
-          </ul></dd>
+          <dt>Resolution</dt> <dd data-field="resolution">TypeScript on Bun, the user's usual setup, compiled by <code>bun build</code> into the mod's <code>main.js</code>.</dd>
         </dl>
       </spec-question>
     </details>
@@ -631,7 +631,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dd><ul>
             <li data-field="shared-artifact">package.json, biome.json, tsconfig.json</li>
             <li data-field="shared-artifact">e2e test harness</li>
-            <li data-field="shared-artifact">mods/nerd-herd-spaces/*, mods/nerd-herd-agents/*</li>
+            <li data-field="shared-artifact">mods/nerd-herd-spaces/*</li>
             <li data-field="shared-artifact">copied Herdr layout</li>
           </ul></dd>
           <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
@@ -644,7 +644,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
         </dl>
       </spec-phase>
-      <spec-phase depends-on="Walking skeleton" parallel-safe="no" agent-suitable="no">
+      <spec-phase depends-on="Skeleton re-walk" parallel-safe="no" agent-suitable="no">
         <h3>Session list model</h3>
         <dl>
           <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">src/sessions/*</li></ul></dd>
@@ -672,7 +672,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
         </dl>
       </spec-phase>
-      <spec-phase depends-on="Spaces sidebar mod, Agents sidebar mod" parallel-safe="no" agent-suitable="no">
+      <spec-phase depends-on="Spaces sidebar mod" parallel-safe="no" agent-suitable="no">
         <h3>Skeleton re-walk</h3>
         <dl>
           <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">e2e test harness</li></ul></dd>
@@ -683,14 +683,14 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       <ol class="tasks">
         <li><h4>The full testing cycle passes: test, typecheck, test, build</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
-        <li><h4>herdr-app check passes for both mods</h4>
+        <li><h4>herdr-app check passes for the Spaces mod</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
-        <li><h4>Both journeys walked by hand in the running Herdr window, with screenshots</h4>
+        <li><h4>The folders journey walked by hand in the running Herdr window, with screenshots</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
         <li><h4>A security scan runs clean</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
       </ol>
-      <execution-plan>Walking skeleton &rarr; Folder model &rarr; Session list model &rarr; Saved folder store &rarr; Spaces sidebar mod &rarr; Agents sidebar mod &rarr; Skeleton re-walk</execution-plan>
+      <execution-plan>First build: Walking skeleton &rarr; Folder model &rarr; Saved folder store &rarr; Spaces sidebar mod &rarr; Skeleton re-walk. After it: Session list model &rarr; Agents sidebar mod.</execution-plan>
     </details>
   </section>
 </main>
