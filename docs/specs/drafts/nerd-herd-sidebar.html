@@ -205,13 +205,15 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <li>Dropping a group into one of its own subgroups leaves every group where it was</li>
           <li>The Ungrouped header is renamed the same way as any group</li>
           <li>A banner link is downloaded and shown as the group header's banner</li>
+          <li>A banner link that fails to load shows an error card in the banner's place saying why</li>
+          <li>Inside a group, its groups come before its machines, each ordered by the group's sort</li>
         </ol>
       </details>
       <p>Dannel works on a personal machine and on machines for two contexts: their own projects and their job at Job. The Spaces section lists five machines in name order, so personal and work machines are mixed together. They click the new-group button beside the Spaces "+" button, and a group appears with its name ready to edit. They type "Work" and pick an icon for it.</p>
       <p>They drag desk-work from the list and drop it on the Work group. The machine and its spaces now sit inside Work. They make a Personal group the same way, drop desk-home and ai-sandbox into it, and drag ai-sandbox above desk-home. Later they switch the sort to alphabetical to find a machine by name. Then they switch back to custom, and their dragged order returns.</p>
       <p>When they focus on personal work, they fold Work. Its header stays, showing "Work" and how many machines it holds. laptop-travel is switched off today, and it stays in Personal marked as unreachable. The next morning Herdr restarts after an update, and the sidebar shows the same groups, order, folds, and icons as the evening before.</p>
       <p>"Groups" is not quite how Dannel thinks of these, so they change the sidebar's word for them to "Environments". The new-group button, the headers, and the menus now say "environment" instead. They drag This computer into Personal too, because it is a personal machine like the others. They try a temporary "Scratch" environment, holding ai-sandbox, then delete it; ai-sandbox moves down to the ungrouped machines below the environments. Last, they set the environments to sort alphabetically, so Personal shows above Work, while the machines inside each one keep their own sort.</p>
-      <p>They made that word change in Spaces settings, which the cog wheel beside the Spaces "+" opens. In the same place they turn on the ungrouped header, and the ungrouped machines gather under "Ungrouped". They rename that header "Unsorted" the same way they rename any group. Work grows a "Clients" environment, which they drag onto Work so it nests inside it, with Work's own sort deciding where it sits. When they accidentally drag Work onto Clients, nothing moves. Finally they paste a banner link for Work, and after a moment a wide image runs across Work's header.</p>
+      <p>They made that word change in Spaces settings, which the cog wheel beside the Spaces "+" opens. In the same place they turn on the ungrouped header, and the ungrouped machines gather under "Ungrouped". They rename that header "Unsorted" the same way they rename any group. Work grows a "Clients" environment, which they drag onto Work so it nests inside it, with Work's own sort deciding where it sits. When they accidentally drag Work onto Clients, nothing moves. Finally they paste a banner link for Work, and after a moment a wide image runs across Work's header. The link they first tried for Clients was mistyped, and Clients' header showed a card in the banner's place: the link returned 404 Not Found, and they should check it in Spaces settings.</p>
 
       <h3>Reading and renaming sessions by machine</h3>
       <details open class="claims"><summary>Claims</summary>
@@ -273,17 +275,11 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Resolution</dt> <dd data-field="resolution">A cog wheel next to the Spaces "+" button opens the Spaces settings, and they are changed there.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Group word forms</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Does the group-word setting hold a separate singular and plural form?</dd>
-          <dt>Context</dt> <dd data-field="context">The sidebar needs both forms: "Environments" as a header and "New environment" on the button. English plurals are irregular ("Property", "Properties"), so deriving one form from the other fails for some words.</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>Separate singular and plural fields in Spaces settings</li>
-            <li>One field, with the plural made by adding "s"</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Separate singular and plural fields.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Yes: separate singular and plural fields in Spaces settings, because English plurals are irregular ("Property", "Properties").</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -301,17 +297,11 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Context</dt> <dd data-field="context">Herdr's <code>image(path)</code> loads only a file inside Herdr's app folder (<code>~/.config/herdr-app</code>), per its doc comment in <code>gpui-kit.d.ts</code>. So Banner cache downloads the link with <code>fetch</code> and saves it as a file the sidebar can show. Not yet verified: that this runtime's <code>fetch</code> returns image bytes and that <code>fs/promises</code> can write them; that is research for the Banner cache phase.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Banner that fails to load</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">What does a group's header show when its banner link cannot be downloaded or is not an image?</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>The last copy that downloaded, if any; otherwise no banner, and Spaces settings says the link failed</li>
-            <li>No banner and nothing else</li>
-            <li>A placeholder band with a warning mark</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">The last copy that downloaded, else no banner, with the failure shown in Spaces settings.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">An error card in the banner's place with a clear message saying why, such as "404 Not Found". Each failure is its own error type carrying its facts as fields, and the card's message is rendered from those fields with the next step, per the user's error-handling standard.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -328,18 +318,11 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Resolution</dt> <dd data-field="resolution">Each group gets its own sort for what it holds, and the top level of Spaces has one too.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Groups and machines side by side</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Inside a group that holds both groups and machines, how are the two kinds ordered?</dd>
-          <dt>Context</dt> <dd data-field="context">With nesting, Work could hold a "Clients" group and the machine desk-work at the same level.</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>Groups first, then machines, each sorted by the group's sort, like folders before files in a file browser</li>
-            <li>One mixed list sorted together; in custom order the user can drop a machine between two groups</li>
-            <li>Groups first, then machines, with a separate sort choice for each kind</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Groups first, then machines, under one sort per group.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Groups first, then machines, each ordered by the group's one sort, like folders before files in a file browser.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -500,6 +483,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Delegates</dt> <dd data-field="delegates">Downloading to an injected fetcher; writing to an injected file writer (Herdr's <code>fetch</code> and <code>fs/promises</code> in the real mod).</dd>
           <dt>Input <code>BannerLink</code></dt> <dd data-field="input">The link the user pasted.</dd>
           <dt>Output <code>BannerFile</code></dt> <dd data-field="output">The path of the saved image, relative to Herdr's app folder.</dd>
+          <dt>Throws <code>BannerError</code></dt> <dd data-field="throws">One error type per failure, each under the package's root error type with its facts as fields (link, host, HTTP status and reason, content type) and a <code>userAction</code>: an HTTP 4xx answer or a non-image is <code>fix</code> (correct the link); an unreachable host or an HTTP 5xx answer is <code>retry</code> and its message carries the error's reference id.</dd>
         </dl>
       </spec-module>
       <spec-module>
@@ -562,6 +546,38 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Given</dt> <dd data-field="given">Work holds the group Clients</dd>
             <dt>When</dt> <dd data-field="when">The nest action puts Work inside Clients</dd>
             <dt>Then</dt> <dd data-field="then">The saved groups equal the saved groups before the action: Work at the top level, holding Clients</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A banner link that fails to load shows an error card in the banner's place saying why" covers-module="Banner cache" status="pending">
+          <h4>A banner link answering 404 reports Not Found</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A fetcher that answers <code>https://example.test/missing.png</code> with HTTP 404 Not Found</dd>
+            <dt>When</dt> <dd data-field="when">Banner cache is given that link</dd>
+            <dt>Then</dt> <dd data-field="then">It throws a banner error with <code>userAction</code> fix, status 404, and the message "The banner link returned 404 Not Found. Check the link in Spaces settings."</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A banner link that fails to load shows an error card in the banner's place saying why" covers-module="Banner cache" status="pending">
+          <h4>A banner link to a web page reports that it is not an image</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A fetcher that answers <code>https://example.test/page</code> with HTTP 200 and content type <code>text/html</code></dd>
+            <dt>When</dt> <dd data-field="when">Banner cache is given that link</dd>
+            <dt>Then</dt> <dd data-field="then">It throws a banner error with <code>userAction</code> fix, content type <code>text/html</code>, and the message "The banner link opened a web page, not an image. Use a link that ends at the image itself."</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A banner link that fails to load shows an error card in the banner's place saying why" covers-module="Banner cache" status="pending">
+          <h4>A banner link to an unreachable host asks to try again</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A fetcher that cannot connect to <code>example.test</code></dd>
+            <dt>When</dt> <dd data-field="when">Banner cache is given <code>https://example.test/work.png</code></dd>
+            <dt>Then</dt> <dd data-field="then">It throws a banner error with <code>userAction</code> retry, host <code>example.test</code>, the fetcher's failure as its cause, and the message "Couldn't reach example.test to load the banner. Try again in a moment (reference &lt;the error's reference id&gt;)."</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A banner link that fails to load shows an error card in the banner's place saying why" covers-module="Spaces sidebar mod" status="pending">
+          <h4>A failed banner draws an error card</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Clients' banner link failed with the 404 banner error</dd>
+            <dt>When</dt> <dd data-field="when">The Spaces section is drawn</dd>
+            <dt>Then</dt> <dd data-field="then">Clients' header holds a card, in the banner's place, reading "The banner link returned 404 Not Found. Check the link in Spaces settings."</dd>
           </dl>
         </test-case>
         <test-case traces-to="An unreachable machine stays in its group and says it is unreachable" covers-module="Group model" status="pending">
@@ -707,6 +723,14 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Given</dt> <dd data-field="given">Top-level groups Work and Clients; Clients holds desk-work</dd>
             <dt>When</dt> <dd data-field="when">The nest action puts Clients inside Work</dd>
             <dt>Then</dt> <dd data-field="then">The top level holds Work only; Work holds Clients; Clients still holds desk-work</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Inside a group, its groups come before its machines, each ordered by the group's sort" covers-module="Group model" status="pending">
+          <h4>A group lists its groups before its machines</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work holds, in custom order, desk-work, the group Clients, desk-client, and the group Archive; Work's sort is alphabetical</dd>
+            <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">Work's rows list Archive, Clients, desk-client, desk-work in that order</dd>
           </dl>
         </test-case>
         <test-case traces-to="Each group sorts what it holds, custom by default, with alphabetical and reverse alphabetical as the other choices" covers-module="Group model" status="pending">
