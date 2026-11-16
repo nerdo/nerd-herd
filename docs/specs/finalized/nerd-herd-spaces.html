@@ -165,9 +165,9 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
 </nav>
 <main id="content">
   <h1>nerd-herd Spaces mod: groups of machines</h1>
-  <p>nerd-herd is a set of Herdr mods, and its full scope is not settled yet. This spec covers one of them: a Spaces mod that replaces the sidebar’s Spaces section and gathers machines into groups (for example Personal and Work). The Agents section has <a href="nerd-herd-agents.html">its own spec</a>. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
+  <p>nerd-herd is a set of Herdr mods, and its full scope is not settled yet. This spec covers one of them: a Spaces mod that replaces the sidebar’s Spaces section and gathers machines into groups (for example Personal and Work). The Agents section has <a href="../drafts/nerd-herd-agents.html">its own spec</a>. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
   <dl class="spec-meta">
-    <dt>Stage</dt> <dd data-field="stage">drafts</dd>
+    <dt>Stage</dt> <dd data-field="stage">finalized</dd>
     <dt>Complexity</dt> <dd data-field="complexity">6 / 10 for the first build &mdash; one mod with nested groups, drag and drop, per-group sorts, settings, downloaded banners with error cards, and a test harness for a native app not yet proven</dd>
     <dt>Toolchain</dt> <dd data-field="toolchain">TypeScript on Bun. <code>bun build</code> compiles each mod into one ES module with <code>herdr</code>, <code>gpui-kit</code>, and <code>gpui-base</code> left as imports; a probe built this way passed <code>herdr-app check</code> on 2026-11-16.</dd>
     <dt>Herdr version</dt> <dd data-field="herdr-version">0.1.16 (app), read from <code>/Applications/Herdr.app/Contents/Info.plist</code></dd>
@@ -318,7 +318,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <dl>
           <dt>Question</dt> <dd data-field="body">Where does a group's banner come from?</dd>
           <dt>Resolution</dt> <dd data-field="resolution">A web link (URL). A group has no banner, one banner, or two: an open banner and a folded banner. When only one is set, it shows in both states. Each banner shows at its full banner height in its original proportions, and the sidebar clips the part wider than the sidebar.</dd>
-          <dt>Context</dt> <dd data-field="context">Herdr's <code>image(path)</code> loads only a file inside Herdr's app folder (<code>~/.config/herdr-app</code>), per its doc comment in <code>gpui-kit.d.ts</code>. So Banner cache downloads the link with <code>fetch</code> and saves it as a file the sidebar can show. Not yet verified: that this runtime's <code>fetch</code> returns image bytes and that <code>fs/promises</code> can write them; that is research for the Banner cache phase.</dd>
+          <dt>Context</dt> <dd data-field="context">Herdr's <code>image(path)</code> loads only a file inside Herdr's app folder (<code>~/.config/herdr-app</code>), per its doc comment in <code>gpui-kit.d.ts</code>. So Banner cache downloads the link and saves it as a file the sidebar can show. How the download works is <a href="#spec-question-banner-research">Banner research</a>.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -361,6 +361,14 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <dl>
           <dt>Question</dt> <dd data-field="body">What is the largest banner file nerd-herd downloads?</dd>
           <dt>Resolution</dt> <dd data-field="resolution">2 MB. A larger download shows the error card.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-16">
+        <h3>Banner research</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Can a Herdr mod download an image to a file, and draw it at an exact size clipped on the left or in the center?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Yes, with <code>curl</code> through Herdr’s <code>exec</code> for the download, not Herdr’s <code>fetch</code>.</dd>
+          <dt>Evidence</dt> <dd data-field="evidence">2026-11-16, a probe mod in the test window (<code>.e2e-home/</code>): Herdr’s <code>fetch</code> answered status 200 but its response had no <code>arrayBuffer()</code> (<code>TypeError: not a function</code>). <code>fs.writeFile</code> saved a 3-byte <code>Uint8Array</code> and read it back. <code>curl</code> printed <code>200 image/png 13504</code>, and the saved file began with the PNG signature 137,80,78,71. <code>curl --proto =https</code> refused an <code>http</code> link with <code>Protocol "http" disabled</code>. A screenshot showed a 544 by 184 image drawn at that size in a 268-wide <code>overflow_x_hidden</code> box with its right side clipped, and a second box with the image shifted by a negative left margin (<code>ml(-138)</code>) showing its center.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -517,8 +525,8 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <h3>Banner cache</h3>
         <dl>
           <dt>Responsibility</dt> <dd data-field="responsibility">Turns a group's banner link into a file inside Herdr's app folder that Herdr's <code>image()</code> can show.</dd>
-          <dt>Owns</dt> <dd data-field="owns">Where downloaded banners are kept, and which link each file came from. A saved file is named from a hash of its bytes, never from the link, so no part of a pasted link reaches a file path (the user’s security standard). Only <code>https</code> links are fetched (the same standard: HTTPS for all communication). The answer’s status, content type, and size are checked against an ArkType schema before anything is written.</dd>
-          <dt>Delegates</dt> <dd data-field="delegates">Downloading to an injected fetcher; writing to an injected file writer (Herdr's <code>fetch</code> and <code>fs/promises</code> in the real mod).</dd>
+          <dt>Owns</dt> <dd data-field="owns">Where downloaded banners are kept, and which link each file came from. A saved file is named from a hash of its bytes, never from the link, so no part of a pasted link reaches a file path (the user’s security standard). Only <code>https</code> links are downloaded (the same standard: HTTPS for all communication), enforced twice: the link is checked before download, and <code>curl</code> runs with <code>--proto =https</code>. <code>curl</code> also runs with <code>--max-filesize 2097152</code> (2 MB) and reports the status, content type, and size, which are checked against an ArkType schema before the file is kept.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Downloading to an injected downloader; reading and writing files to an injected file store. In the real mod the downloader runs <code>curl</code> through Herdr's <code>exec</code>, and the file store is Herdr's <code>fs/promises</code>. Herdr's <code>fetch</code> cannot be used: its response offers only <code>text()</code> and <code>json()</code>, with no binary body and no headers (<code>ShellFetchResponse</code> in <code>gpui-kit.d.ts</code>).</dd>
           <dt>Input <code>BannerLink</code></dt> <dd data-field="input">The link the user pasted.</dd>
           <dt>Output <code>BannerFile</code></dt> <dd data-field="output">The path of the saved image, relative to Herdr's app folder, and the image's width and height in pixels. Herdr's elements offer no "fit" option for images (no <code>object_fit</code> in <code>gpui-kit.d.ts</code>), so Spaces sidebar mod sizes the image from these numbers and clips it with a container's <code>overflow_x_hidden</code>.</dd>
           <dt>Throws <code>BannerError</code></dt> <dd data-field="throws">One error type per failure, each under the package's root error type with its facts as fields (link, host, HTTP status and reason, content type) and a <code>userAction</code>: an HTTP 4xx answer or a non-image is <code>fix</code> (correct the link); an unreachable host or an HTTP 5xx answer is <code>retry</code> and its message carries the error's reference id.</dd>
@@ -562,6 +570,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       <p>"Machine" means any machine Herdr lists, this computer included. The code never says "remote": most machines are remote, but this computer is a machine like the rest, and the user groups this computer like any other (<a href="#spec-question-this-computer-in-groups">This computer in groups</a>). Herdr leaves out temporary machines, and so does nerd-herd.</p>
       <p>"Group" is the code's word. The word the user sees comes from Sidebar settings, "Groups" by default, so a test that checks displayed text supplies its own settings rather than relying on the default.</p>
       <p>Herdr’s own Spaces section already does a lot that users rely on (selecting spaces, adding a space on a machine, machine status, reordering spaces within a machine, nesting worktree spaces, the narrow rail). nerd-herd’s Spaces mod starts from a copy of that mod made with <code>mod.clone</code>, as Herdr’s guide directs, so those features keep working inside groups.</p>
+      <p>The Spaces mod runs a program (<code>curl</code>) through Herdr’s <code>exec</code>. Herdr’s guide asks that anyone adding a shared mod be told when it runs programs, so a published nerd-herd says so.</p>
       <p>The shipped <code>spaces</code> mod belongs to Herdr. Herdr's guide says to copy them with <code>mod.clone</code> before changing them, and to copy a layout with <code>layout.clone</code>, so nerd-herd's mods go into a copied layout and the user's <code>main</code> layout stays as it is.</p>
     </details>
   </section>
@@ -623,13 +632,13 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dl>
             <dt>Given</dt> <dd data-field="given">No fetch has happened</dd>
             <dt>When</dt> <dd data-field="when">Banner cache is given <code>http://example.test/work.png</code></dd>
-            <dt>Then</dt> <dd data-field="then">It throws a banner error with <code>userAction</code> fix and the message "Banner links must start with https://. Use the https version of the link.", and the fetcher is never called</dd>
+            <dt>Then</dt> <dd data-field="then">It throws a banner error with <code>userAction</code> fix and the message "Banner links must start with https://. Use the https version of the link.", and the downloader is never called</dd>
           </dl>
         </test-case>
         <test-case traces-to="A banner download larger than 2 MB shows the error card" covers-module="Banner cache" status="pending">
           <h4>A banner over 2 MB is refused</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">A fetcher that answers <code>https://example.test/huge.png</code> with a 3 MB PNG</dd>
+            <dt>Given</dt> <dd data-field="given">A downloader that answers <code>https://example.test/huge.png</code> with a 3 MB PNG</dd>
             <dt>When</dt> <dd data-field="when">Banner cache is given that link</dd>
             <dt>Then</dt> <dd data-field="then">It throws a banner error with <code>userAction</code> fix, limit 2 MB, and size 3 MB, with the message "The banner image is 3 MB; banners can be at most 2 MB. Use a smaller image.", and writes no file</dd>
           </dl>
@@ -637,7 +646,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <test-case traces-to="A banner link that fails to load shows an error card in the banner's place saying why" covers-module="Banner cache" status="pending">
           <h4>A banner link answering 404 reports Not Found</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">A fetcher that answers <code>https://example.test/missing.png</code> with HTTP 404 Not Found</dd>
+            <dt>Given</dt> <dd data-field="given">A downloader that answers <code>https://example.test/missing.png</code> with HTTP 404 Not Found</dd>
             <dt>When</dt> <dd data-field="when">Banner cache is given that link</dd>
             <dt>Then</dt> <dd data-field="then">It throws a banner error with <code>userAction</code> fix, status 404, and the message "The banner link returned 404 Not Found. Check the link in Spaces settings."</dd>
           </dl>
@@ -645,7 +654,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <test-case traces-to="A banner link that fails to load shows an error card in the banner's place saying why" covers-module="Banner cache" status="pending">
           <h4>A banner link to a web page reports that it is not an image</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">A fetcher that answers <code>https://example.test/page</code> with HTTP 200 and content type <code>text/html</code></dd>
+            <dt>Given</dt> <dd data-field="given">A downloader that answers <code>https://example.test/page</code> with HTTP 200 and content type <code>text/html</code></dd>
             <dt>When</dt> <dd data-field="when">Banner cache is given that link</dd>
             <dt>Then</dt> <dd data-field="then">It throws a banner error with <code>userAction</code> fix, content type <code>text/html</code>, and the message "The banner link opened a web page, not an image. Use a link that ends at the image itself."</dd>
           </dl>
@@ -653,9 +662,9 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <test-case traces-to="A banner link that fails to load shows an error card in the banner's place saying why" covers-module="Banner cache" status="pending">
           <h4>A banner link to an unreachable host asks to try again</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">A fetcher that cannot connect to <code>example.test</code></dd>
+            <dt>Given</dt> <dd data-field="given">A downloader that cannot connect to <code>example.test</code></dd>
             <dt>When</dt> <dd data-field="when">Banner cache is given <code>https://example.test/work.png</code></dd>
-            <dt>Then</dt> <dd data-field="then">It throws a banner error with <code>userAction</code> retry, host <code>example.test</code>, the fetcher's failure as its cause, and the message "Couldn't reach example.test to load the banner. Try again in a moment (reference &lt;the error's reference id&gt;)."</dd>
+            <dt>Then</dt> <dd data-field="then">It throws a banner error with <code>userAction</code> retry, host <code>example.test</code>, the downloader's failure as its cause, and the message "Couldn't reach example.test to load the banner. Try again in a moment (reference &lt;the error's reference id&gt;)."</dd>
           </dl>
         </test-case>
         <test-case traces-to="A banner link that fails to load shows an error card in the banner's place saying why" covers-module="Spaces sidebar mod" status="pending">
@@ -966,7 +975,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <test-case traces-to="A banner link is downloaded and shown as the group header's banner" covers-module="Banner cache" status="pending">
           <h4>A banner link becomes a file Herdr can show</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">A fetcher that answers <code>https://example.test/work.png</code> with a PNG image's bytes</dd>
+            <dt>Given</dt> <dd data-field="given">A downloader that answers <code>https://example.test/work.png</code> with a PNG image's bytes</dd>
             <dt>When</dt> <dd data-field="when">Banner cache is given that link</dd>
             <dt>Then</dt> <dd data-field="then">It returns a path inside Herdr's app folder, and the file at that path holds the same bytes</dd>
           </dl>
@@ -974,7 +983,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <test-case traces-to="A banner shows at its image's own pixel size, and the sidebar edge clips whatever is wider" covers-module="Banner cache" status="pending">
           <h4>A downloaded banner reports its pixel size</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">A fetcher that answers <code>https://example.test/wide.png</code> with a 1200 by 300 pixel PNG</dd>
+            <dt>Given</dt> <dd data-field="given">A downloader that answers <code>https://example.test/wide.png</code> with a 1200 by 300 pixel PNG</dd>
             <dt>When</dt> <dd data-field="when">Banner cache is given that link</dd>
             <dt>Then</dt> <dd data-field="then">The banner file it returns has width 1200 and height 300</dd>
           </dl>

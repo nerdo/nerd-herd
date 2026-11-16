@@ -165,11 +165,11 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
 </nav>
 <main id="content">
   <h1>nerd-herd Agents mod: sessions by machine</h1>
-  <p>nerd-herd is a set of Herdr mods, and its full scope is not settled yet. This spec covers one of them: an Agents mod that replaces the sidebar’s Agents section, lists each session under the machine it runs on, wraps long subjects instead of cutting them off, and renames sessions with Herdr’s own rename. The Spaces mod has <a href="nerd-herd-spaces.html">its own spec</a>. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
+  <p>nerd-herd is a set of Herdr mods, and its full scope is not settled yet. This spec covers one of them: an Agents mod that replaces the sidebar’s Agents section, lists each session under the machine it runs on, wraps long subjects instead of cutting them off, and renames sessions with Herdr’s own rename. The Spaces mod has <a href="../finalized/nerd-herd-spaces.html">its own spec</a>. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
   <dl class="spec-meta">
     <dt>Stage</dt> <dd data-field="stage">drafts</dd>
     <dt>Complexity</dt> <dd data-field="complexity">3 / 10 &mdash; one mod, a session list model, and Herdr commands it already offers</dd>
-    <dt>Sequence</dt> <dd data-field="sequence">Built after the <a href="nerd-herd-spaces.html">Spaces mod</a>, whose groups the Agents list may reuse (<a href="#spec-question-agents-grouping">Agents grouping</a>)</dd>
+    <dt>Sequence</dt> <dd data-field="sequence">Built after the <a href="../finalized/nerd-herd-spaces.html">Spaces mod</a>, whose groups the Agents list may reuse (<a href="#spec-question-agents-grouping">Agents grouping</a>)</dd>
     <dt>Herdr version</dt> <dd data-field="herdr-version">0.1.16 (app), read from <code>/Applications/Herdr.app/Contents/Info.plist</code></dd>
     <dt>Toolchain</dt> <dd data-field="toolchain">TypeScript on Bun, compiled by <code>bun build</code> into the mod’s <code>main.js</code>, the same as the Spaces mod.</dd>
     <dt>Standing rule</dt> <dd data-field="standing-rule">Where Herdr already provides a feature, use it, unless the idea does not fit it (from the user, 2026-11-16).</dd>
