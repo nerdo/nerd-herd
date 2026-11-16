@@ -54,24 +54,22 @@ test.fail(
 // Text recognition reads the digit 0 as the letter O; no stub text holds a capital O, so a read O counts as 0.
 const drawn = (lines: ScreenLines) => lines.join(" ").replaceAll("O", "0");
 
-test("step 0 of 7, store branch: the 9 actions reach the saved group store", () => {
+test("step 1 of 7, store branch: the 9 actions reach the saved group store", () => {
   expect(drawn(beforeRestart)).toContain("STUB view > STUB app > STUB store(9 actions)");
 });
 
-test("step 0 of 7, settings branch: the 9 actions reach sidebar settings", () => {
+test("step 1 of 7, settings branch: the 9 actions reach sidebar settings", () => {
   expect(drawn(beforeRestart)).toContain("STUB view > STUB app > STUB settings(9 actions)");
 });
 
-test("step 0 of 7, banner branch: the 9 actions reach the banner cache", () => {
+test("step 1 of 7, banner branch: the 9 actions reach the banner cache", () => {
   expect(drawn(beforeRestart)).toContain("STUB view > STUB app > STUB banners(9 actions)");
 });
 
-test("step 0 of 7, groups branch: the 9 actions reach sort order through the group model", () => {
-  expect(drawn(beforeRestart)).toContain(
-    "STUB view > STUB app > STUB groups > STUB sort(9 actions)",
-  );
+test("step 1 of 7, groups branch: sort order is real in shape and returns no items for the 9 actions", () => {
+  expect(drawn(beforeRestart)).toContain("STUB view > STUB app > STUB groups > sorted 0 of 9");
 });
 
-test("step 0 of 7, after the restart: the stub store remembers no action", () => {
+test("step 1 of 7, after the restart: the stub store remembers no action", () => {
   expect(drawn(foldedAfterRestart)).toContain("STUB view > STUB app > STUB store(0 actions)");
 });
