@@ -1,21 +1,33 @@
-import { createBannerCache } from "../core/banners/bannerCache";
-import { computeRows } from "../core/groups/groupModel";
+import { type BannerCache, createBannerCache } from "../core/banners/bannerCache";
+import { computeRows, type SpacesRow } from "../core/groups/groupModel";
 import type { ModAction } from "../core/modAction";
-import { readSettings } from "../core/settings/sidebarSettings";
+import { readSettings, type SidebarSettings } from "../core/settings/sidebarSettings";
 import { createGroupStore } from "../core/store/savedGroupStore";
+import type { Host } from "./herdrHost";
 
-const banners = createBannerCache();
-const memory = new Map<string, unknown>();
-const store = createGroupStore({
-  read: (key) => memory.get(key),
-  write: (key, value) => memory.set(key, value),
-});
+/** Everything the Spaces view draws, computed from what Herdr saved. */
+export interface SpacesViewModel {
+  readonly rows: readonly SpacesRow[];
+  readonly settings: SidebarSettings;
+  readonly banners: BannerCache;
+}
 
-// STUB (walking skeleton): the composition root. Passes the actions to each branch and prefixes its name.
-export const compose = (actions: readonly ModAction[]): string[] =>
-  [
-    `store ${store.load().groups.length} groups (${actions.length} actions)`,
-    `settings ${readSettings(actions).groupWord.plural} (${actions.length} actions)`,
-    `banners ${actions.filter((link) => banners.lookup(link).kind !== "none").length} of ${actions.length}`,
-    `rows ${computeRows(store.load(), [], readSettings(actions)).length} (${actions.length} actions)`,
-  ].map((line) => `STUB app > ${line}`);
+export interface App {
+  /** Applies one action sent to the mod. */
+  apply(action: ModAction): void;
+  view(): SpacesViewModel;
+}
+
+/** The composition root: wires the core units to Herdr. */
+export function createApp(host: Host): App {
+  const store = createGroupStore(host.shared);
+  const banners = createBannerCache();
+  return {
+    // CROSSING (walking skeleton): actions change nothing yet.
+    apply: () => {},
+    view: () => {
+      const settings = readSettings(host.shared.read("nerd-herd.settings"));
+      return { rows: computeRows(store.load(), host.machines(), settings), settings, banners };
+    },
+  };
+}

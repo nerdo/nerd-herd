@@ -49,27 +49,14 @@ test.fail(
   },
 );
 
-// Step tests: the stub chain each branch of the thread draws. The composition root calls the
-// store, settings, banner cache, and group model; the group model calls sort order.
+// Step tests: the stub chain the view draws. The composition root is real from step 6 on.
 // Text recognition reads the digit 0 as the letter O; no stub text holds a capital O, so a read O counts as 0.
 const drawn = (lines: ScreenLines) => lines.join(" ").replaceAll("O", "0");
 
-test("step 4 of 7, store branch: the saved group store is real in shape and holds no groups for the 9 actions", () => {
-  expect(drawn(beforeRestart)).toContain("STUB view > STUB app > store 0 groups (9 actions)");
+test("step 6 of 7, before the restart: the composition root is real and its view model holds no rows for the 9 actions", () => {
+  expect(drawn(beforeRestart)).toContain("STUB view > 0 rows, Groups (9 actions)");
 });
 
-test("step 3 of 7, settings branch: sidebar settings is real in shape and holds its default word for the 9 actions", () => {
-  expect(drawn(beforeRestart)).toContain("STUB view > STUB app > settings Groups (9 actions)");
-});
-
-test("step 2 of 7, banner branch: the banner cache is real in shape and has no banner for the 9 actions", () => {
-  expect(drawn(beforeRestart)).toContain("STUB view > STUB app > banners 0 of 9");
-});
-
-test("step 5 of 7, groups branch: the group model is real in shape and computes no rows for the 9 actions", () => {
-  expect(drawn(beforeRestart)).toContain("STUB view > STUB app > rows 0 (9 actions)");
-});
-
-test("step 4 of 7, after the restart: the saved group store holds no groups and no action is remembered", () => {
-  expect(drawn(foldedAfterRestart)).toContain("STUB view > STUB app > store 0 groups (0 actions)");
+test("step 6 of 7, after the restart: the view model holds no rows and no action is remembered", () => {
+  expect(drawn(foldedAfterRestart)).toContain("STUB view > 0 rows, Groups (0 actions)");
 });
