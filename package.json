@@ -4,7 +4,23 @@
   "type": "module",
   "scripts": {
     "specs:serve": "bun scripts/serve-specs.js docs/specs",
-    "specs:check": "bun scripts/check-spec-refs.ts docs/specs/*/*.html"
+    "specs:check": "bun scripts/check-spec-refs.ts docs/specs/*/*.html",
+    "herdr:types": "mkdir -p types/herdr && cp \"${HERDR_APP_HOME:-$HOME/.config/herdr-app}/herdr.d.ts\" \"${HERDR_APP_HOME:-$HOME/.config/herdr-app}/gpui-kit.d.ts\" types/herdr/",
+    "lint": "biome lint .",
+    "format": "biome format . --write",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.mod.json",
+    "test": "bun test src",
+    "test:watch": "bun test --watch src",
+    "test:coverage": "bun test --coverage src",
+    "test:e2e": "bun run e2e:tools && playwright test",
+    "check:boundaries": "fallow dead-code --boundary-violations",
+    "check:expected-failures": "! grep -rnE \"(test|it)\\.(fail|failing)\\(\" src e2e",
+    "start": "bun scripts/start.ts",
+    "dev": "bun scripts/start.ts",
+    "build": "bun build src/mod/main.ts --outdir dist/mods/nerd-herd-spaces --entry-naming main.js --format esm --target browser --external herdr --external gpui-kit --external gpui-base --external fs/promises && cp src/mod/mod.json dist/mods/nerd-herd-spaces/",
+    "check:mod": "bun run build && herdr-app check dist/mods/nerd-herd-spaces",
+    "check:all": "bun run lint && bun run typecheck && bun run test && bun run check:boundaries && bun run check:expected-failures && bun run build",
+    "e2e:tools": "mkdir -p .e2e-bin && swiftc -O e2e/support/read-text.swift -o .e2e-bin/read-text"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.8",

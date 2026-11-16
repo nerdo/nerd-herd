@@ -4,7 +4,11 @@
 
 const strip = (s: string): string => s.replace(/<[^>]+>/g, "").trim();
 const slug = (s: string): string =>
-  s.trim().toLowerCase().replace(/[^\w]+/g, "-").replace(/^-|-$/g, "");
+  s
+    .trim()
+    .toLowerCase()
+    .replace(/[^\w]+/g, "-")
+    .replace(/^-|-$/g, "");
 const all = (h: string, re: RegExp): string[] => [...h.matchAll(re)].map((m) => m[1] ?? "");
 
 type SpecReport = {
@@ -17,12 +21,18 @@ type SpecReport = {
 };
 
 function check(spec: string, h: string): SpecReport {
-  const claimLists = [...h.matchAll(/<details open class="claims">[\s\S]*?<\/details>/g)].map((m) => m[0]);
+  const claimLists = [...h.matchAll(/<details open class="claims">[\s\S]*?<\/details>/g)].map(
+    (m) => m[0],
+  );
   const claims = new Set(
-    claimLists.flatMap((list) => all(list, /<li>([\s\S]*?)<\/li>/g).map((c) => strip(c).toLowerCase())),
+    claimLists.flatMap((list) =>
+      all(list, /<li>([\s\S]*?)<\/li>/g).map((c) => strip(c).toLowerCase()),
+    ),
   );
   const modules = new Set(all(h, /<spec-module>\s*<h3>([^<]+)<\/h3>/g).map((m) => m.toLowerCase()));
-  const phases = new Set(all(h, /<spec-phase[^>]*>\s*<h3>([^<]+)<\/h3>/g).map((p) => p.toLowerCase()));
+  const phases = new Set(
+    all(h, /<spec-phase[^>]*>\s*<h3>([^<]+)<\/h3>/g).map((p) => p.toLowerCase()),
+  );
   const titles = all(h, /<spec-question[^>]*>\s*<h3>([^<]+)/g);
   const questionIds = new Set(titles.map((t) => slug(`spec-question-${t}`)));
   const traces = all(h, /traces-to="([^"]+)"/g);
@@ -56,7 +66,10 @@ const reports = await Promise.all(
 );
 for (const r of reports) console.log(r);
 const failed = reports.some(
-  (r) => r.unresolved.length > 0 || r.claimsWithNoCase.length > 0 || r.duplicateQuestionTitles.length > 0,
+  (r) =>
+    r.unresolved.length > 0 ||
+    r.claimsWithNoCase.length > 0 ||
+    r.duplicateQuestionTitles.length > 0,
 );
 process.exit(failed ? 1 : 0);
 

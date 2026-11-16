@@ -1,0 +1,21 @@
+{
+  "// why": "The Herdr mod adapter, checked against the type files Herdr ships (copied into types/herdr by `bun run herdr:types`). Views assign their state in init(), which TypeScript cannot see as definite assignment, so strictPropertyInitialization is off here only.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "types": [],
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "paths": {
+      "herdr": ["./types/herdr/herdr.d.ts"]
+    }
+  },
+  "files": ["types/herdr/gpui-kit.d.ts", "types/runtime/crypto.d.ts"],
+  "include": ["src/mod/**/*.ts", "src/core/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
+}

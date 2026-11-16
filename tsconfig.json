@@ -1,0 +1,15 @@
+{
+  "// why": "Core logic, unit tests, end-to-end tests, and scripts run under Bun. The Herdr mod adapter has its own config (tsconfig.mod.json), because Herdr's type files declare their own fetch and process, which clash with Bun's.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "types": ["bun"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/core/**/*.ts", "e2e/**/*.ts", "scripts/**/*.ts", "*.config.ts"]
+}

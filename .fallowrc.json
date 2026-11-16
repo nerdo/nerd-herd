@@ -1,0 +1,9 @@
+{
+  "boundaries": {
+    "zones": [
+      { "name": "core", "patterns": ["src/core/**"] },
+      { "name": "mod", "patterns": ["src/mod/**"] }
+    ],
+    "rules": [{ "from": "core", "allow": [] }, { "from": "mod", "allow": ["core"] }]
+  }
+}
