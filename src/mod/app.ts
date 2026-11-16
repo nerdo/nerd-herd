@@ -1,5 +1,6 @@
 import { type BannerCache, createBannerCache } from "../core/banners/bannerCache";
-import { computeRows, type SpacesRow } from "../core/groups/groupModel";
+import type { SpacesRow } from "../core/groups/groupModel";
+import { computeRows } from "../core/groups/groupRows";
 import type { ModAction } from "../core/modAction";
 import { readSettings, type SidebarSettings } from "../core/settings/sidebarSettings";
 import { createGroupStore } from "../core/store/savedGroupStore";

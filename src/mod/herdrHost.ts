@@ -15,5 +15,5 @@ export const herdrHost: Host = {
       setShared(key, value);
     },
   },
-  machines: () => machines().map((m) => ({ name: m.name })),
+  machines: () => machines().map((m) => ({ name: m.name, reachable: m.layout !== "unavailable" })),
 };
