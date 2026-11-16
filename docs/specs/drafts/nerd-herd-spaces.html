@@ -209,6 +209,11 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <li>A banner shows at its image's own pixel size, and the sidebar edge clips whatever is wider</li>
           <li>A wide banner is clipped on the side its group chose, keeping the left edge by default</li>
           <li>A banner link that fails to load shows an error card in the banner's place saying why</li>
+          <li>Renaming a group changes its name and keeps everything inside it</li>
+          <li>Dropping a group at the top level or between two groups moves it there</li>
+          <li>Dropping a machine below the groups takes it out of its group</li>
+          <li>A banner link that does not start with https is refused with a message saying why</li>
+          <li>Everything Herdr’s own Spaces section does still works for every machine, inside groups or not</li>
           <li>Inside a group, its subgroups come before its machines, the subgroups ordered by its subgroup sort and the machines by its machine sort</li>
           <li>A group name that is empty or longer than 60 characters is refused with a message saying why</li>
           <li>Each group's folded count shows every machine inside by default, or only direct machines, or all direct items</li>
@@ -323,6 +328,46 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <dl>
           <dt>Question</dt> <dd data-field="body">When a banner is wider than the sidebar, which part stays visible?</dd>
           <dt>Resolution</dt> <dd data-field="resolution">A choice on each group: the left edge (the default, clipping the right side) or the center (clipping both sides equally).</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Where group options are set</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Where does the user set a group’s own options: icon, banner links, clip side, subgroup and machine sorts, and folded count?</dd>
+          <dt>Context</dt> <dd data-field="context">Spaces settings (the cog) holds options for the whole section. Nothing yet says where one group’s options are changed.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul><li>Right-click a group header for a menu: Rename, Delete, and an options popup for that group</li><li>A small options button that appears on the group header when the pointer is over it</li><li>Both</li></ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Right-click a group header, matching how Herdr’s own Spaces section offers space actions.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Deleting a group with subgroups</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">When a deleted group holds other groups, what happens to them?</dd>
+          <dt>Context</dt> <dd data-field="context">Deleting moves a group’s machines to the ungrouped machines. Subgroups are not covered.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul><li>Its subgroups move up to where the deleted group was, keeping their contents</li><li>Its subgroups are deleted too, and every machine inside moves to the ungrouped machines</li></ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Move them up to the deleted group’s place, so deleting never discards structure the user built.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Keyboard use</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Must groups work from the keyboard as well as the mouse?</dd>
+          <dt>Context</dt> <dd data-field="context">Drag and drop is mouse-only. Herdr mods can take the keyboard (<code>"focusable": true</code> in <code>mod.json</code>), and a keyboard path also gives assistive technology a way in.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul><li>Yes: arrow keys move between rows, Enter folds and unfolds, F2 renames, and the group menu has “Move to…” as the keyboard way to move</li><li>Mouse only for now</li></ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Yes, using the same group menu for “Move to…”.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Banner size limit</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">What is the largest banner file nerd-herd downloads?</dd>
+          <dt>Context</dt> <dd data-field="context">Banners show at their own pixel size and are kept as files, so a very large image costs disk space and drawing time. A download over the limit would show the error card.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul><li>10 MB</li><li>2 MB</li><li>No limit</li></ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">10 MB, the size limit used in the user’s data standard for image uploads.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -479,7 +524,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <h3>Banner cache</h3>
         <dl>
           <dt>Responsibility</dt> <dd data-field="responsibility">Turns a group's banner link into a file inside Herdr's app folder that Herdr's <code>image()</code> can show.</dd>
-          <dt>Owns</dt> <dd data-field="owns">Where downloaded banners are kept, and which link each file came from.</dd>
+          <dt>Owns</dt> <dd data-field="owns">Where downloaded banners are kept, and which link each file came from. A saved file is named from a hash of its bytes, never from the link, so no part of a pasted link reaches a file path (the user’s security standard). Only <code>https</code> links are fetched (the same standard: HTTPS for all communication). The answer’s status, content type, and size are checked against an ArkType schema before anything is written.</dd>
           <dt>Delegates</dt> <dd data-field="delegates">Downloading to an injected fetcher; writing to an injected file writer (Herdr's <code>fetch</code> and <code>fs/promises</code> in the real mod).</dd>
           <dt>Input <code>BannerLink</code></dt> <dd data-field="input">The link the user pasted.</dd>
           <dt>Output <code>BannerFile</code></dt> <dd data-field="output">The path of the saved image, relative to Herdr's app folder, and the image's width and height in pixels. Herdr's elements offer no "fit" option for images (no <code>object_fit</code> in <code>gpui-kit.d.ts</code>), so Spaces sidebar mod sizes the image from these numbers and clips it with a container's <code>overflow_x_hidden</code>.</dd>
@@ -510,7 +555,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
   <section class="validation-boundaries" data-roles="build">
     <details open><summary><h2>Validation Boundaries</h2></summary>
       <ul>
-        <li><strong>Saved groups read from Herdr's shared state</strong> are external data: another mod, a hand edit, or an older nerd-herd version may have written them. Saved group store checks their shape on every read. Data that fails the check is kept under a backup key, Spaces starts with no groups, and an error card says so (<a href="#spec-question-damaged-saved-data">Damaged saved data</a>).</li>
+        <li><strong>Saved groups read from Herdr's shared state</strong> are external data: another mod, a hand edit, or an older nerd-herd version may have written them. Saved group store checks them on every read against an ArkType schema, which is also the single source of their TypeScript types (the user’s data standard). Each group has a ULID as its internal id. Data that fails the check is kept under a backup key, Spaces starts with no groups, and an error card says so (<a href="#spec-question-damaged-saved-data">Damaged saved data</a>).</li>
         <li><strong>Herdr's machines, spaces, and agents</strong> come typed from <code>herdr.d.ts</code>. A group may name a machine Herdr no longer lists, so Group model treats a missing machine as data, not an error.</li>
         <li><strong>Group names and icons typed by the user</strong> are checked when entered: a name is not empty after trimming spaces, and is at most 60 characters; two groups may share a name (<a href="#spec-question-group-name-rules">Group name rules</a>). An icon is saved with its kind, and the only kind accepted today is emoji.</li>
         <li><strong>Sidebar settings read from Herdr's shared state</strong> are external data too. Sidebar settings checks them on every read and fills each missing value from its one declared default.</li>
@@ -523,6 +568,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       <p>"Stored with Herdr" means Herdr's shared mod state, which Herdr saves to <code>~/.config/herdr-app/shared.json</code> on this computer and loads at start (<a href="#spec-question-group-storage-scope">Group storage scope</a>).</p>
       <p>"Machine" means any machine Herdr lists, this computer included. The code never says "remote": most machines are remote, but this computer is a machine like the rest, and the user groups this computer like any other (<a href="#spec-question-this-computer-in-groups">This computer in groups</a>). Herdr leaves out temporary machines, and so does nerd-herd.</p>
       <p>"Group" is the code's word. The word the user sees comes from Sidebar settings, "Groups" by default, so a test that checks displayed text supplies its own settings rather than relying on the default.</p>
+      <p>Herdr’s own Spaces section already does a lot that users rely on (selecting spaces, adding a space on a machine, machine status, reordering spaces within a machine, nesting worktree spaces, the narrow rail). nerd-herd’s Spaces mod starts from a copy of that mod made with <code>mod.clone</code>, as Herdr’s guide directs, so those features keep working inside groups.</p>
       <p>The shipped <code>spaces</code> mod belongs to Herdr. Herdr's guide says to copy them with <code>mod.clone</code> before changing them, and to copy a layout with <code>layout.clone</code>, so nerd-herd's mods go into a copied layout and the user's <code>main</code> layout stays as it is.</p>
     </details>
   </section>
@@ -577,6 +623,14 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Given</dt> <dd data-field="given">No groups, and Herdr lists desk-work, this computer, and ai-sandbox</dd>
             <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
             <dt>Then</dt> <dd data-field="then">The machine rows are this computer, ai-sandbox, desk-work, with no header rows</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A banner link that does not start with https is refused with a message saying why" covers-module="Banner cache" status="pending">
+          <h4>An http banner link is refused</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">No fetch has happened</dd>
+            <dt>When</dt> <dd data-field="when">Banner cache is given <code>http://example.test/work.png</code></dd>
+            <dt>Then</dt> <dd data-field="then">It throws a banner error with <code>userAction</code> fix and the message "Banner links must start with https://. Use the https version of the link.", and the fetcher is never called</dd>
           </dl>
         </test-case>
         <test-case traces-to="A banner link that fails to load shows an error card in the banner's place saying why" covers-module="Banner cache" status="pending">
@@ -714,6 +768,38 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Given</dt> <dd data-field="given">An empty Work group and desk-work in no group</dd>
             <dt>When</dt> <dd data-field="when">The move action puts desk-work in Work</dd>
             <dt>Then</dt> <dd data-field="then">Work's rows are desk-work followed by its spaces</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Renaming a group changes its name and keeps everything inside it" covers-module="Group model" status="pending">
+          <h4>Renaming a group keeps its contents</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work holds desk-work and the group Clients</dd>
+            <dt>When</dt> <dd data-field="when">The rename action renames Work to "Job"</dd>
+            <dt>Then</dt> <dd data-field="then">The group with Work’s id is named Job and still holds desk-work and Clients</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Dropping a group at the top level or between two groups moves it there" covers-module="Group model" status="pending">
+          <h4>A nested group moves back to the top level</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work holds the group Clients</dd>
+            <dt>When</dt> <dd data-field="when">Clients is dropped at the top level after Work</dd>
+            <dt>Then</dt> <dd data-field="then">The top level holds Work then Clients, and Work no longer holds Clients</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Dropping a group at the top level or between two groups moves it there" covers-module="Group model" status="pending">
+          <h4>Dropping a group between two groups reorders them</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The top level holds Work, Personal, Archive in custom order</dd>
+            <dt>When</dt> <dd data-field="when">Archive is dropped between Work and Personal</dd>
+            <dt>Then</dt> <dd data-field="then">The top level holds Work, Archive, Personal</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Dropping a machine below the groups takes it out of its group" covers-module="Group model" status="pending">
+          <h4>Dropping a machine below the groups ungroups it</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work holds desk-work</dd>
+            <dt>When</dt> <dd data-field="when">desk-work is dropped below the groups</dd>
+            <dt>Then</dt> <dd data-field="then">Work holds no machines, and desk-work is among the ungrouped machines</dd>
           </dl>
         </test-case>
         <test-case traces-to="Dropping a machine between two machines puts it at that position" covers-module="Group model" status="pending">
@@ -903,6 +989,16 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       </test-group>
       <test-group category="ux-validation">
         <h3>UX validation</h3>
+        <test-case traces-to="Everything Herdr’s own Spaces section does still works for every machine, inside groups or not" covers-module="Spaces sidebar mod" status="pending" browser-test>
+          <h4>Herdr’s Spaces features work inside a group</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The test window with nerd-herd’s layout; Work holds this computer; a space on this computer is a git worktree of another space’s repository</dd>
+            <dt>When</dt> <dd data-field="when">Click a space under Work; drag that space below its sibling; narrow the sidebar below 160 points and widen it again</dd>
+            <dt>Then (experience)</dt> <dd data-field="then" data-aspect="experience">Screenshots show the clicked space selected; the dragged space below its sibling; the worktree space nested under its repository’s space with its branch shown; the machine’s status dot and its “New space there” control; and the narrow rail, then the full sidebar again</dd>
+            <dt>Then (technical)</dt> <dd data-field="then" data-aspect="technical">The test window’s <code>herdr-app status</code> names the clicked space as its space. No space, tab, or terminal was created or renamed (the harness rule).</dd>
+            <dt>Incremental</dt> <dd data-field="incremental">Testable once the Spaces mod draws machines inside groups</dd>
+          </dl>
+        </test-case>
         <test-case traces-to="Groups, their machines, the order, the fold state, and the look are the same after Herdr restarts" covers-module="Spaces sidebar mod" status="pending" browser-test>
           <h4>Organizing machines survives a restart</h4>
           <dl>
