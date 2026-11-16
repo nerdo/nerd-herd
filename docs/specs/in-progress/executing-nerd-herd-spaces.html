@@ -1095,6 +1095,48 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           </ul></dd>
           <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
         </dl>
+        <ol class="tasks">
+          <li><h4>Take the skeleton sentence from the Narrative</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>Write the outer walk at the test-window seam, its description carrying the sentence</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>Name the seams on the thread: view, composition root, store, settings, banner cache, group model, sort order</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>Scaffold one stub per seam, each naming itself and passing the journey’s input inward</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>Declare the fallow zones (core imports only core; mod imports core) and prove the check fails on a deliberate violation</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>Write the forecast, run the walk, and compare received against forecast</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>Sort order is real in shape and orders nothing</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>Re-walk the skeleton after: sort order is real in shape and orders nothing</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">re-walk</dd></dl></li>
+          <li><h4>Group model is real in shape and computes no rows</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>Re-walk the skeleton after: group model is real in shape and computes no rows</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">re-walk</dd></dl></li>
+          <li><h4>Banner cache is real in shape and downloads nothing</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>Re-walk the skeleton after: banner cache is real in shape and downloads nothing</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">re-walk</dd></dl></li>
+          <li><h4>Sidebar settings is real in shape and holds only its defaults</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>Re-walk the skeleton after: sidebar settings is real in shape and holds only its defaults</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">re-walk</dd></dl></li>
+          <li><h4>Saved group store is real in shape and saves nothing</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>Re-walk the skeleton after: saved group store is real in shape and saves nothing</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">re-walk</dd></dl></li>
+          <li><h4>The composition root wires the real units</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>Re-walk the skeleton after: the composition root wires the real units</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">re-walk</dd></dl></li>
+          <li><h4>The Spaces mod view draws the rows it is given</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>Re-walk the skeleton after: the spaces mod view draws the rows it is given</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">re-walk</dd></dl></li>
+        </ol>
       </spec-phase>
       <spec-phase depends-on="Walking skeleton" parallel-safe="no" agent-suitable="no">
         <h3>Sort order</h3>
@@ -1147,14 +1189,24 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       </spec-phase>
       <h3>Definition of Done</h3>
       <ol class="tasks">
-        <li><h4>The full testing cycle passes: test, typecheck, test, build</h4>
-          <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
-        <li><h4>herdr-app check passes for the Spaces mod</h4>
-          <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
-        <li><h4>The groups journey walked by hand in the running Herdr window, with screenshots</h4>
-          <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
-        <li><h4>A security scan runs clean</h4>
-          <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+          <li><h4>The full testing cycle passes: test, typecheck, test, boundary check, build</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+          <li><h4>The project’s start command runs and opens the Spaces mod</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+          <li><h4>The groups journey walked by hand in the running Herdr window against the expectation list, with screenshots</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+          <li><h4>A production-path probe shows the running mod uses the new code</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+          <li><h4>The skeleton walk is current: the extended walk’s runner output after the last structural change</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+          <li><h4>A clean run at every level after the last change: unit suite, end-to-end suite, probe, user pass</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+          <li><h4>No expected-to-fail marker left standing: the marker-check script’s output</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+          <li><h4>herdr-app check passes for the Spaces mod</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+          <li><h4>A security scan runs clean</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
       </ol>
       <execution-plan>Walking skeleton &rarr; Sort order &rarr; Group model &rarr; Sidebar settings &rarr; Banner cache &rarr; Saved group store &rarr; Spaces sidebar mod &rarr; Skeleton re-walk</execution-plan>
     </details>
