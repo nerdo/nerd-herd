@@ -1,0 +1,1034 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spec: nerd-herd sidebar</title>
+<style>
+:root { color-scheme: light dark;
+        --ink:#1a1a1a; --bg:#fff; --muted:#595959; --rule:#d4d4d4; --ok:#2e7d32; --warn:#b34700;
+        --bg-soft:#f4f4f4; --link:#0b5fa5; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+        --ink:#e8e8e8; --bg:#16181c; --muted:#a8a8a8; --rule:#3a3d44; --ok:#7bc47f; --warn:#ffa04d;
+        --bg-soft:#22252b; --link:#7ab8f5; } }
+:root[data-theme="dark"] {
+        --ink:#e8e8e8; --bg:#16181c; --muted:#a8a8a8; --rule:#3a3d44; --ok:#7bc47f; --warn:#ffa04d;
+        --bg-soft:#22252b; --link:#7ab8f5; }
+* { box-sizing: border-box; }
+body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.55; color: var(--ink);
+       background: var(--bg); margin: 0; display: grid; grid-template-columns: 17rem minmax(0,46rem);
+       gap: 2.5rem; justify-content: center; padding: 2rem 1.25rem; }
+@media (max-width: 62rem) { body { grid-template-columns: minmax(0,1fr); gap: 1rem; } }
+a { color: var(--link); }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-radius: 2px; }
+.skip { position: absolute; left: -9999px; }
+.skip:focus { position: static; display: inline-block; margin-bottom: 1rem; }
+/* Prose holds to 60-75 characters per line; tables, figures and code use the full column. */
+main p, main li, dd { max-width: 68ch; }
+
+/* Contents panel and toolbar */
+#toc { position: sticky; top: 2rem; align-self: start; max-height: calc(100vh - 4rem); overflow-y: auto;
+       font-size: .9rem; border-right: 1px solid var(--rule); padding-right: 1rem; }
+@media (max-width: 62rem) { #toc { position: static; max-height: none; border-right: 0;
+       border-bottom: 1px solid var(--rule); padding: 0 0 1rem 0; } }
+#toc > h2 { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+            margin: 0 0 .5rem; border: 0; padding: 0; }
+#toc ol { list-style: none; margin: 0; padding: 0; }
+#toc a { color: var(--muted); text-decoration: none; display: block; padding: .15rem .4rem;
+         border-left: 2px solid transparent; border-radius: 0 3px 3px 0; }
+#toc a:hover { background: var(--bg-soft); color: var(--ink); }
+#toc a[aria-current] { color: var(--ink); font-weight: 600; border-left-color: var(--ink); background: var(--bg-soft); }
+#toc .count { color: var(--muted); font-weight: 400; font-size: .85em; }
+#toc li.for-you > a { border-left-color: var(--ok); color: var(--ink); }
+#toc li.not-yours > a { opacity: .5; }
+#toolbar { display: flex; flex-wrap: wrap; gap: .3rem; margin: 0 0 .75rem; }
+#toolbar fieldset { border: 0; margin: 0; padding: 0; display: contents; }
+#toolbar legend { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+                  color: var(--muted); width: 100%; padding: 0; }
+#toolbar button, #toolbar label { font: inherit; font-size: .8rem; cursor: pointer; color: var(--muted);
+       background: transparent; border: 1px solid var(--rule); border-radius: 999px; padding: .1rem .6rem; }
+#toolbar [aria-pressed="true"], #toolbar input:checked + span {
+       color: var(--ink); border-color: var(--ink); background: var(--bg-soft); font-weight: 600; }
+#toolbar input { position: absolute; opacity: 0; width: 0; height: 0; }
+#toolbar input:focus-visible + span { outline: 2px solid var(--link); outline-offset: 2px; }
+#toolbar label span { display: inline-block; border-radius: 999px; padding: .1rem .6rem;
+       border: 1px solid var(--rule); }
+#toolbar label { border: 0; padding: 0; }
+
+/* Prose */
+h1 { border-bottom: 2px solid var(--ink); padding-bottom: .4rem; margin-top: 0; }
+h2, h3, h4 { scroll-margin-top: 1rem; }
+h2 { margin-top: 2.25rem; border-bottom: 1px solid var(--rule); padding-bottom: .25rem; }
+h3 { margin: 1.75rem 0 .5rem; font-size: 1.15rem; }
+h4 { margin: 0 0 .4rem; font-size: 1rem; }
+code { background: var(--bg-soft); padding: .1rem .3rem; border-radius: 3px; font-size: .92em; }
+pre { background: var(--bg-soft); padding: .75rem; border-radius: 4px; overflow-x: auto; }
+pre.mermaid { background: transparent; text-align: center; }
+figcaption { color: var(--muted); font-size: .9em; text-align: center; }
+table { border-collapse: collapse; width: 100%; margin: .75rem 0; }
+th, td { border: 1px solid var(--rule); padding: .4rem .6rem; text-align: left; vertical-align: top; }
+th { background: var(--bg-soft); }
+.anchor { color: var(--muted); text-decoration: none; opacity: 0; padding-left: .4rem; font-weight: 400; }
+:hover > .anchor, .anchor:focus-visible { opacity: 1; }
+details.backlinks { font-size: .85em; color: var(--muted); margin: .25rem 0 .5rem; }
+details.backlinks > summary { cursor: pointer; width: fit-content; }
+details.backlinks > ul { margin: .25rem 0 0; padding-left: 1.25rem; }
+details.claims { margin: .25rem 0 .75rem; }
+details.claims > summary { cursor: pointer; width: fit-content; color: var(--muted); font-weight: 600; }
+details.claims > ol { margin: .35rem 0 0; padding-left: 1.6rem; }
+details.claims li { margin: .2rem 0; scroll-margin-top: 1rem; }
+dl.checked-by { font-size: .85em; gap: 0 .5rem; margin: .1rem 0 .35rem; }
+dl.checked-by > :is(dt, dd) { margin: 0; }
+dl.checked-by > dd { grid-column: -2; }   /* every case beside the one label */
+.badge { font-size: .7em; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+         border: 1px solid currentColor; border-radius: 3px; padding: 0 .35em; margin-left: .5em;
+         vertical-align: middle; white-space: nowrap; }
+.badge.is-ok { color: var(--ok); }
+.badge.is-warn { color: var(--warn); }
+.unresolved-ref { color: var(--warn); font-weight: 600; }
+details.source { margin-top: .5rem; font-size: .9em; }
+details.source > summary { cursor: pointer; color: var(--muted); width: fit-content; }
+details.source > pre { margin-top: .4rem; }
+spec-roles { display: none; }
+
+/* Labeled fields: one rule set styles every block's fields identically. */
+dl { display: grid; grid-template-columns: max-content 1fr; gap: .25rem .75rem; margin: .5rem 0 0; }
+dt { font-weight: 600; color: var(--muted); }
+dd { margin: 0; }
+dd > ul { margin: 0; padding-left: 1.1rem; }
+@media (max-width: 46rem) { dl { grid-template-columns: 1fr; gap: 0; }
+  dt { margin-top: .5rem; } dd { margin-bottom: .25rem; } }
+
+/* Domain blocks: the container is named, the structure inside it is HTML. */
+spec-question, test-case, spec-phase, spec-module {
+  display: block; border: 1px solid var(--rule); border-radius: 4px; margin: .75rem 0;
+  padding: .6rem .85rem; scroll-margin-top: 1rem; }
+ol.tasks { margin: .6rem 0 0; padding-left: 1.6rem; }
+ol.tasks > li { margin: .5rem 0; }
+ol.tasks h4 { margin: 0 0 .2rem; font-size: 1rem; }
+spec-question[status="open"] { border-left: 4px solid var(--warn); }
+spec-question[status="resolved"]   { border-left: 4px solid var(--ok); }
+spec-phase[parallel-safe="yes"] { border-left: 4px solid var(--ok); }
+spec-phase[parallel-safe="no"]  { border-left: 4px solid var(--warn); }
+test-group { display: block; margin: 1.25rem 0; }
+
+/* Section disclosure: the title stays visible whatever the body is doing. */
+section > details > summary { list-style: none; cursor: pointer; }
+section > details > summary::-webkit-details-marker { display: none; }
+section > details > summary > h2 { display: inline-block; width: calc(100% - 1.5rem); }
+section > details > summary::after { content: "\25BE"; color: var(--muted); margin-left: .35rem; }
+section > details:not([open]) > summary::after { content: "\25B8"; }
+section > details:not([open]) > summary > h2 { color: var(--muted); border-bottom-style: dashed; }
+
+/* Reader modes fold what is not yours; the "for you" marker is written into the
+   document by the behavior script, never generated here. */
+[data-roles].not-yours > details:not(.backlinks) > summary { opacity: .6; }
+
+/* Facet filters dim non-matching items in place. */
+.facets { display: flex; flex-direction: column; gap: .35rem; margin: .5rem 0 1.25rem; }
+.facets .facet { display: flex; flex-wrap: wrap; gap: .3rem; align-items: baseline; }
+.facets .facet-name { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--muted); min-width: 7rem; }
+.facets button { font: inherit; font-size: .78rem; cursor: pointer; color: var(--muted);
+  background: transparent; border: 1px solid var(--rule); border-radius: 999px; padding: .05rem .55rem; }
+.facets button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink);
+  background: var(--bg-soft); font-weight: 600; }
+.facets .facet-count { opacity: .7; font-variant-numeric: tabular-nums; }
+.filtered-out > :is(h3, h4) { opacity: .5; }
+
+/* A folded block keeps its heading and hides only its body. `hidden="until-found"`
+   leaves that body reachable by the browser's find, and nothing moves in the DOM. */
+.folded > :is(h3, h4)::after { content: "\2026"; color: var(--muted); margin-left: .4rem; }
+
+/* Print renders the document complete: everything expanded, undimmed, no chrome. */
+@media print {
+  body { display: block; padding: 0; color: #000; background: #fff; }
+  #toc { position: static; max-height: none; border: 0; padding: 0; margin-bottom: 1.5rem; }
+  #toolbar, .skip, .anchor { display: none; }
+  [data-roles].not-yours > details:not(.backlinks) > summary, .filtered-out > :is(h3, h4) { opacity: 1; }
+  [hidden] { display: revert !important; }   /* a printed spec is complete */
+  .facets { display: none; }
+  section > details > summary::after { content: none; }
+  .folded > :is(h3, h4)::after { content: none; }
+  a { color: #000; }
+  spec-question, test-case, spec-phase, spec-module, ol.tasks > li, figure, details.source { break-inside: avoid; }
+  h2, h3, h4 { break-after: avoid; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<nav id="toc" aria-labelledby="toc-heading">
+  <h2 id="toc-heading">Contents</h2>
+  <div id="toolbar"></div>
+  <ol></ol>
+</nav>
+<main id="content">
+  <h1>nerd-herd: a clearer Herdr sidebar</h1>
+  <p>nerd-herd is a pair of Herdr mods that replace the sidebar's Spaces and Agents sections. Spaces gains folders that group remote machines (for example Personal and Work). Agents lists each remote's sessions under that remote, with subjects that wrap instead of being cut off. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
+  <dl class="spec-meta">
+    <dt>Stage</dt> <dd data-field="stage">drafts</dd>
+    <dt>Complexity</dt> <dd data-field="complexity">5 / 10 &mdash; two mods, one shared folder model, drag and drop, and a test harness for a native app not yet proven</dd>
+    <dt>Herdr version</dt> <dd data-field="herdr-version">0.1.16 (app), read from <code>/Applications/Herdr.app/Contents/Info.plist</code></dd>
+    <dt>Standing rule</dt> <dd data-field="standing-rule">Where Herdr already provides a feature, use it, unless the idea does not fit it (from the user, 2026-11-16).</dd>
+  </dl>
+  <spec-roles>
+    <spec-role id="design">Design reviewer</spec-role>
+    <spec-role id="build">Implementation lead</spec-role>
+    <spec-role id="qa">Test reviewer</spec-role>
+  </spec-roles>
+
+  <section class="narrative">
+    <details open><summary><h2>Narrative</h2></summary>
+      <p class="skeleton-journey">Dannel makes a Work folder in the Herdr sidebar, drags desk-work into it, and after Herdr restarts sees that remote's spaces still inside Work in their custom order, while the Agents section lists each remote's sessions under that remote with their full subjects, and renaming one of those sessions there changes its name in Herdr.</p>
+
+      <h3>Organizing remotes into folders</h3>
+      <details open class="claims"><summary>Claims</summary>
+        <ol>
+          <li>The new-folder button in Spaces adds an empty folder that Dannel names</li>
+          <li>Dropping a remote on a folder lists that remote's spaces inside the folder</li>
+          <li>Dropping a remote between two remotes puts it at that position</li>
+          <li>Choosing alphabetical or reverse alphabetical sorts remotes by name, and choosing custom again restores the dragged order</li>
+          <li>Folding a folder hides its remotes and keeps its header with the folder's name and remote count</li>
+          <li>A folder shows its chosen icon and banner in its header</li>
+          <li>Folders, their remotes, the order, the fold state, and the look are the same after Herdr restarts</li>
+          <li>An unreachable remote stays in its folder and says it is unreachable</li>
+        </ol>
+      </details>
+      <p>Dannel works on a personal machine and on remotes for two contexts: their own projects and their job at Job. The Spaces section lists five remotes in name order, so personal and work remotes are mixed together. They click the new-folder button beside the Spaces "+" button, and a folder appears with its name ready to edit. They type "Work" and pick an icon for it.</p>
+      <p>They drag desk-work from the list and drop it on the Work folder. The remote and its spaces now sit inside Work. They make a Personal folder the same way, drop desk-home and ai-sandbox into it, and drag ai-sandbox above desk-home. Later they switch the sort to alphabetical to find a remote by name. Then they switch back to custom, and their dragged order returns.</p>
+      <p>When they focus on personal work, they fold Work. Its header stays, showing "Work" and how many remotes it holds. laptop-travel is switched off today, and it stays in Personal marked as unreachable. The next morning Herdr restarts after an update, and the sidebar shows the same folders, order, folds, and icons as the evening before.</p>
+
+      <h3>Reading and renaming sessions by remote</h3>
+      <details open class="claims"><summary>Claims</summary>
+        <ol>
+          <li>Agents lists each session under the remote it runs on</li>
+          <li>A session row shows the session's subject wrapped onto more lines when it is longer than one line</li>
+          <li>Renaming a session from its row gives its Herdr tab that name</li>
+          <li>Renaming a session to an empty name returns it to its automatic name</li>
+          <li>Clicking a session row focuses that session's pane</li>
+        </ol>
+      </details>
+      <p>Dannel has three agent sessions running: one on desk-client working on "THRD: Reset leader election", one on this computer fixing a Python virtual environment, and one on desk-home about NAS hardware. Today the Agents section shows them in one list, cut off at the right edge, with the remote's name in tiny text.</p>
+      <p>With nerd-herd, Agents shows a header for each remote and the sessions running there beneath it. The desk-client session's full subject, "π 🧵 THRD: Reset leader election", wraps onto a second line instead of ending in "…". The two sessions both called "sandbox" are easy to tell apart because each sits under its own remote.</p>
+      <p>One session still has a vague automatic subject, so they rename it "NAS drive health" from its row, and the row and the Herdr tab bar both show the new name. Later they clear the name, and the session goes back to its automatic name. They click a row, and Herdr focuses that session's pane.</p>
+    </details>
+  </section>
+
+  <section class="questions" data-roles="design build">
+    <details open><summary><h2>Questions</h2></summary>
+      <spec-question status="resolved" resolved-on="2026-11-16">
+        <h3>Spec or build order</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Is this design worked out in a spec, or built straight from the request?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">A spec in <code>docs/specs/</code>, because the design still needs back and forth.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-16">
+        <h3>How remotes are put in folders</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">How does a remote get assigned to a folder?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">All in the sidebar: a new-folder button beside the Spaces "+", drag and drop to move and reorder remotes, a sort choice of custom, alphabetical, or reverse alphabetical, collapsible folders, an icon and a banner per folder, all kept by Herdr so it survives restarts.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-16">
+        <h3>Session rename scope</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Is renaming a session Herdr's own rename, or a name only this mod shows?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Herdr's own tab rename (the <code>tab.rename</code> command), so the name shows everywhere Herdr shows that tab.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Folder icon source</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Where does a folder's icon come from?</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>An emoji or short text typed in: simplest, and works in light and dark themes</li>
+            <li>A pick list of the icons Herdr ships: matches Herdr's look but limits the choice</li>
+            <li>An image link or file: the most freedom, but may clash with a theme</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">An emoji or short text.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Folder banner source</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Where does a folder's banner come from?</dd>
+          <dt>Context</dt> <dd data-field="context">Herdr's guide documents mods showing images from files under <code>~/.config/herdr-app</code>. Showing an image straight from a web link is not documented, so a link may need to be downloaded to a file first.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>A web link (URL)</li>
+            <li>A file on this computer</li>
+            <li>A colored band instead of an image</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">A colored band for the first build, images after.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Folder nesting</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Can a folder hold other folders?</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul><li>No, one level only</li><li>Yes, folders inside folders</li></ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">One level only.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Sort scope</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Does the sort choice apply to the whole Spaces section, or does each folder get its own?</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul><li>One choice for the whole section</li><li>One choice per folder</li></ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">One choice for the whole section.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Folder order under sorting</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">When the sort is alphabetical, are the folders themselves also sorted by name, or only the remotes inside them?</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul><li>Folders and remotes both sorted</li><li>Folders keep their dragged order; only remotes are sorted</li></ul></dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Remotes outside any folder</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Where does a remote that is in no folder show, including a remote added later?</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul><li>Below the folders, with no header</li><li>Under an "Ungrouped" header below the folders</li><li>Above the folders</li></ul></dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Deleting a folder</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">What happens to a folder's remotes when the folder is deleted?</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul><li>They move to wherever remotes outside any folder show</li><li>Deleting is refused while the folder holds remotes</li></ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">They move out of the folder.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>This computer in folders</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Where does "This computer" go now that folders exist?</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul><li>Always at the top, outside any folder, as Herdr shows it today</li><li>Movable into a folder like any remote</li></ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Always at the top.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Agents grouping</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">How is the Agents list organized?</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>One header per machine; folders ignored</li>
+            <li>Folder, then machine, then sessions, matching Spaces</li>
+            <li>Herdr's two existing views, plus this as a third choice in its sort menu</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Folder, then machine, then sessions.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Header size</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Are bigger, higher-contrast section, folder, and machine headers part of the first build?</dd>
+          <dt>Context</dt> <dd data-field="context">Herdr's shipped headers are 11 to 11.5 pixel text in its dim color (<code>mods/agents/main.js</code>).</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul><li>Yes, in the first build</li><li>No, later</li></ul></dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Folder storage scope</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Is it enough that folders are kept on this computer only?</dd>
+          <dt>Context</dt> <dd data-field="context">Herdr's shared mod state is saved to <code>~/.config/herdr-app/shared.json</code> on this computer. Herdr's layouts are kept by each machine's core, but nothing documents a way for a mod to save its own data there. Another computer running Herdr would not see these folders.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul><li>This computer only (Herdr's shared mod state)</li><li>Shared across computers, which needs research into a storage place Herdr offers</li></ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">This computer only.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open" data-roles="build qa">
+        <h3>End-to-end test harness</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Can a second, isolated Herdr window run beside the real one so the whole mod is tested without touching the real window or its settings?</dd>
+          <dt>Context</dt> <dd data-field="context">Herdr documents <code>HERDR_APP_HOME</code> for selecting a different settings folder and running window, <code>herdr-app do</code> for running commands, and <code>herdr-app shot</code> for screenshots. Its manual says never to automate the mouse or keyboard on the person's real display. Whether two app instances run at once is not documented. This is research for the walking skeleton phase, not a choice for the user.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open" data-roles="build">
+        <h3>Source language</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Is the mod written as JavaScript checked against Herdr's type files, or as TypeScript compiled to JavaScript?</dd>
+          <dt>Context</dt> <dd data-field="context">Herdr loads <code>main.js</code> and more <code>*.js</code> modules. It ships <code>herdr.d.ts</code>, <code>gpui-kit.d.ts</code>, and a <code>jsconfig.json</code> with <code>checkJs</code> on, so editors type-check plain JavaScript. Herdr does not document loading TypeScript, so TypeScript needs a build step.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>JavaScript with JSDoc types, checked by the TypeScript compiler: no build step, and what Herdr runs is the file you edit</li>
+            <li>TypeScript compiled into the mod folder: nicer type syntax, but a build step between editing and seeing the change</li>
+          </ul></dd>
+        </dl>
+      </spec-question>
+    </details>
+  </section>
+
+  <section class="process-flow">
+    <details open><summary><h2>Process Flow</h2></summary>
+      <figure>
+        <pre class="mermaid">flowchart TD
+  click["Dannel clicks new folder or drags a remote"] --> sidebar["Spaces sidebar mod"]
+  sidebar --> model["Folder model computes the new folders"]
+  model --> store["Herdr shared state saves them"]
+  store --> render["Herdr redraws every mod"]
+  render --> spaces["Spaces shows folders, remotes, spaces"]
+  render --> agents["Agents shows remotes and their sessions"]
+  rename["Dannel renames a session"] --> herdr["Herdr tab.rename"]
+  herdr --> render</pre>
+        <figcaption>Every change goes through Herdr: folders through its shared state, names through its tab rename, so both sections redraw from the same data.</figcaption>
+      </figure>
+    </details>
+  </section>
+
+  <section class="module-definitions" data-roles="build">
+    <details open><summary><h2>Module Definitions</h2></summary>
+      <spec-module>
+        <h3>Folder model</h3>
+        <dl>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Turns saved folders, the sort choice, and Herdr's machine list into the ordered rows Spaces shows, and applies a folder action to saved folders.</dd>
+          <dt>Owns</dt> <dd data-field="owns">Folder membership, custom order, sort rules, fold state.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Nothing. Data in, data out.</dd>
+          <dt>Input <code>SavedFolders</code>, <code>Machine[]</code>, <code>FolderAction</code></dt>
+          <dd data-field="input">The saved folders, Herdr's machines, and one action (make, rename, move, reorder, fold, sort, restyle).</dd>
+          <dt>Output <code>SavedFolders</code>, <code>SpacesRow[]</code></dt>
+          <dd data-field="output">The new saved folders, and the rows to draw.</dd>
+        </dl>
+      </spec-module>
+      <spec-module>
+        <h3>Session list model</h3>
+        <dl>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Groups Herdr's agents under the machine they run on and picks each row's subject text.</dd>
+          <dt>Owns</dt> <dd data-field="owns">Grouping and row text.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Nothing. Data in, data out.</dd>
+          <dt>Input <code>Agent[]</code>, <code>Space[]</code></dt>
+          <dd data-field="input">Herdr's agents and spaces.</dd>
+          <dt>Output <code>AgentsRow[]</code></dt>
+          <dd data-field="output">The rows to draw.</dd>
+        </dl>
+      </spec-module>
+      <spec-module>
+        <h3>Saved folder store</h3>
+        <dl>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Reads and writes saved folders through Herdr's shared state.</dd>
+          <dt>Owns</dt> <dd data-field="owns">The shared-state key and the check that what was read has the expected shape.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Saving to Herdr (<code>shared</code> and <code>setShared</code>).</dd>
+          <dt>Input <code>unknown</code></dt> <dd data-field="input">Whatever is stored under the key.</dd>
+          <dt>Output <code>SavedFolders</code></dt> <dd data-field="output">Checked saved folders.</dd>
+        </dl>
+      </spec-module>
+      <spec-module>
+        <h3>Spaces sidebar mod</h3>
+        <dl>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Draws the Spaces rows and turns clicks and drops into folder actions.</dd>
+          <dt>Owns</dt> <dd data-field="owns">Layout, drag and drop, the new-folder button.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Rules to Folder model; saving to Saved folder store; space commands to Herdr.</dd>
+        </dl>
+      </spec-module>
+      <spec-module>
+        <h3>Agents sidebar mod</h3>
+        <dl>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Draws the Agents rows and turns clicks into Herdr commands.</dd>
+          <dt>Owns</dt> <dd data-field="owns">Layout, wrapping, the rename control.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Grouping to Session list model; renaming to Herdr <code>tab.rename</code>; focusing to Herdr <code>pane.focus</code>.</dd>
+        </dl>
+      </spec-module>
+    </details>
+  </section>
+
+  <section class="validation-boundaries" data-roles="build">
+    <details open><summary><h2>Validation Boundaries</h2></summary>
+      <ul>
+        <li><strong>Saved folders read from Herdr's shared state</strong> are external data: another mod, a hand edit, or an older nerd-herd version may have written them. Saved folder store checks their shape on every read. What happens to data that fails the check is not decided yet.</li>
+        <li><strong>Herdr's machines, spaces, and agents</strong> come typed from <code>herdr.d.ts</code>. A folder may name a machine Herdr no longer lists, so Folder model treats a missing machine as data, not an error.</li>
+        <li><strong>Folder names and icons typed by the user</strong> are checked when entered. Limits (length, allowed characters) are not decided yet.</li>
+      </ul>
+    </details>
+  </section>
+
+  <section class="ambiguity-resolution">
+    <details open><summary><h2>Ambiguity Resolution</h2></summary>
+      <p>"Session" means a Herdr tab that runs an agent. Herdr's Agents section already labels each row from its tab name when the tab is named, so renaming a session means renaming its tab (<code>tab.rename</code>), which also follows the standing rule to use Herdr's own features.</p>
+      <p>"Stored with Herdr" means Herdr's shared mod state, which Herdr saves to disk and loads at start. Whether that reach is enough is the open question <a href="#spec-question-folder-storage-scope">Folder storage scope</a>.</p>
+      <p>"Remote" means a machine from <code>hc machine ls</code> other than this computer. Herdr leaves out temporary machines, and so does nerd-herd.</p>
+      <p>The shipped <code>spaces</code> and <code>agents</code> mods belong to Herdr. Herdr's guide says to copy them with <code>mod.clone</code> before changing them, and to copy a layout with <code>layout.clone</code>, so nerd-herd's mods go into a copied layout and the user's <code>main</code> layout stays as it is.</p>
+    </details>
+  </section>
+
+  <section class="test-cases" data-roles="qa">
+    <details open><summary><h2>Test Cases</h2></summary>
+      <test-group category="error-scenarios">
+        <h3>Error scenarios</h3>
+        <test-case traces-to="An unreachable remote stays in its folder and says it is unreachable" covers-module="Folder model" status="pending">
+          <h4>An unreachable remote keeps its folder place</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">laptop-travel is in Personal, second of two, and Herdr reports it unreachable</dd>
+            <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">laptop-travel is the second row inside Personal, marked unreachable</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Renaming a session to an empty name returns it to its automatic name" covers-module="Agents sidebar mod" status="pending">
+          <h4>Clearing a session's name restores its automatic name</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session whose tab is named "NAS drive health"</dd>
+            <dt>When</dt> <dd data-field="when">Dannel renames it to an empty name</dd>
+            <dt>Then</dt> <dd data-field="then">Herdr receives <code>tab.rename</code> with an empty name, and the row shows the session's automatic name (Herdr documents an empty name as returning a tab to its number)</dd>
+          </dl>
+        </test-case>
+      </test-group>
+      <test-group category="recovery-paths">
+        <h3>Recovery paths</h3>
+        <test-case traces-to="Folders, their remotes, the order, the fold state, and the look are the same after Herdr restarts" covers-module="Saved folder store" status="pending">
+          <h4>Saved folders read back after a restart</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work holds desk-work, Personal holds ai-sandbox then desk-home, Work is folded, Work's icon is set</dd>
+            <dt>When</dt> <dd data-field="when">The saved folders are written and then read by a fresh store</dd>
+            <dt>Then</dt> <dd data-field="then">The read folders equal the written folders</dd>
+          </dl>
+        </test-case>
+      </test-group>
+      <test-group category="edge-cases">
+        <h3>Edge cases</h3>
+        <test-case traces-to="The new-folder button in Spaces adds an empty folder that Dannel names" covers-module="Folder model" status="pending">
+          <h4>A new folder starts empty</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">No folders</dd>
+            <dt>When</dt> <dd data-field="when">The make-folder action runs with the name "Work"</dd>
+            <dt>Then</dt> <dd data-field="then">One folder named "Work" with zero remotes</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Folding a folder hides its remotes and keeps its header with the folder's name and remote count" covers-module="Folder model" status="pending">
+          <h4>A folded folder shows only its header</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work holds desk-work and is folded</dd>
+            <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">One row for Work showing "Work" and "1", and no rows for desk-work or its spaces</dd>
+          </dl>
+        </test-case>
+      </test-group>
+      <test-group category="happy-paths">
+        <h3>Happy paths</h3>
+        <test-case traces-to="Dropping a remote on a folder lists that remote's spaces inside the folder" covers-module="Folder model" status="pending">
+          <h4>Dropping a remote on a folder moves it in</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">An empty Work folder and desk-work in no folder</dd>
+            <dt>When</dt> <dd data-field="when">The move action puts desk-work in Work</dd>
+            <dt>Then</dt> <dd data-field="then">Work's rows are desk-work followed by its spaces</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Dropping a remote between two remotes puts it at that position" covers-module="Folder model" status="pending">
+          <h4>Dropping between two remotes reorders</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Personal holds desk-home then ai-sandbox, sort is custom</dd>
+            <dt>When</dt> <dd data-field="when">ai-sandbox is dropped before desk-home</dd>
+            <dt>Then</dt> <dd data-field="then">Personal's remotes are ai-sandbox then desk-home</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Choosing alphabetical or reverse alphabetical sorts remotes by name, and choosing custom again restores the dragged order" covers-module="Folder model" status="pending">
+          <h4>Alphabetical sort orders remotes by name</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Personal holds desk-home then ai-sandbox in custom order</dd>
+            <dt>When</dt> <dd data-field="when">The sort is set to alphabetical</dd>
+            <dt>Then</dt> <dd data-field="then">Personal's remotes are ai-sandbox then desk-home</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Choosing alphabetical or reverse alphabetical sorts remotes by name, and choosing custom again restores the dragged order" covers-module="Folder model" status="pending">
+          <h4>Reverse alphabetical sort orders remotes by name, last first</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Personal holds ai-sandbox then desk-home in custom order</dd>
+            <dt>When</dt> <dd data-field="when">The sort is set to reverse alphabetical</dd>
+            <dt>Then</dt> <dd data-field="then">Personal's remotes are desk-home then ai-sandbox</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Choosing alphabetical or reverse alphabetical sorts remotes by name, and choosing custom again restores the dragged order" covers-module="Folder model" status="pending">
+          <h4>Returning to custom sort restores the dragged order</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Personal's custom order is desk-home then ai-sandbox, sort is alphabetical</dd>
+            <dt>When</dt> <dd data-field="when">The sort is set to custom</dd>
+            <dt>Then</dt> <dd data-field="then">Personal's remotes are desk-home then ai-sandbox</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A folder shows its chosen icon and banner in its header" covers-module="Folder model" status="pending">
+          <h4>A folder header carries its icon and banner</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work's icon and banner are set (their kind waits on the icon and banner questions)</dd>
+            <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">Work's header row carries that icon and that banner</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Agents lists each session under the remote it runs on" covers-module="Session list model" status="pending">
+          <h4>Sessions group under their remote</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Agents on desk-client, this computer, and desk-home</dd>
+            <dt>When</dt> <dd data-field="when">Agents rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">Each agent's row follows the header of the machine it runs on</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A session row shows the session's subject wrapped onto more lines when it is longer than one line" covers-module="Session list model" status="pending">
+          <h4>A session row carries the whole subject</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">An agent whose title is "π 🧵 THRD: Reset leader election"</dd>
+            <dt>When</dt> <dd data-field="when">Agents rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">The row's subject is "π 🧵 THRD: Reset leader election", with no characters dropped</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Renaming a session from its row gives its Herdr tab that name" covers-module="Agents sidebar mod" status="pending">
+          <h4>Renaming a session runs Herdr's tab rename</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session in tab T</dd>
+            <dt>When</dt> <dd data-field="when">Dannel renames it "NAS drive health" from its row</dd>
+            <dt>Then</dt> <dd data-field="then">Herdr's tab T is named "NAS drive health"</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Clicking a session row focuses that session's pane" covers-module="Agents sidebar mod" status="pending">
+          <h4>Clicking a session row focuses its pane</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session in pane P, and another pane focused</dd>
+            <dt>When</dt> <dd data-field="when">Dannel clicks the session's row</dd>
+            <dt>Then</dt> <dd data-field="then">Herdr reports pane P as focused</dd>
+          </dl>
+        </test-case>
+      </test-group>
+      <test-group category="ux-validation">
+        <h3>UX validation</h3>
+        <test-case traces-to="Folders, their remotes, the order, the fold state, and the look are the same after Herdr restarts" covers-module="Spaces sidebar mod" status="pending" browser-test>
+          <h4>Organizing remotes survives a restart</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">An isolated Herdr window with nerd-herd's layout and remotes desk-work and desk-home</dd>
+            <dt>When</dt> <dd data-field="when">Make Work, move desk-work into it, fold it, restart Herdr</dd>
+            <dt>Then (experience)</dt> <dd data-field="then" data-aspect="experience">The screenshot shows a folded Work header with count 1 above desk-home</dd>
+            <dt>Then (technical)</dt> <dd data-field="then" data-aspect="technical">The isolated home's saved shared state holds Work with desk-work, folded</dd>
+            <dt>Incremental</dt> <dd data-field="incremental">Testable once the Spaces mod saves through the store, and the harness question is answered</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Renaming a session from its row gives its Herdr tab that name" covers-module="Agents sidebar mod" status="pending" browser-test>
+          <h4>Reading and renaming a session by remote</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">An isolated Herdr window with an agent on a remote whose subject is longer than the sidebar is wide</dd>
+            <dt>When</dt> <dd data-field="when">Rename that session "NAS drive health" from its row</dd>
+            <dt>Then (experience)</dt> <dd data-field="then" data-aspect="experience">The screenshot shows the session under its remote's header, its row reading "NAS drive health"</dd>
+            <dt>Then (technical)</dt> <dd data-field="then" data-aspect="technical"><code>herdr-app ls</code> lists the tab named "NAS drive health"</dd>
+            <dt>Incremental</dt> <dd data-field="incremental">Testable once the Agents mod is in the copied layout</dd>
+          </dl>
+        </test-case>
+      </test-group>
+    </details>
+  </section>
+
+  <section class="phase-dependencies" data-roles="build">
+    <details open><summary><h2>Phase Dependencies</h2></summary>
+      <spec-phase parallel-safe="no" agent-suitable="no">
+        <h3>Walking skeleton</h3>
+        <dl>
+          <dt>Writes</dt>
+          <dd><ul>
+            <li data-field="shared-artifact">package.json, biome.json, tsconfig.json</li>
+            <li data-field="shared-artifact">e2e test harness</li>
+            <li data-field="shared-artifact">mods/nerd-herd-spaces/*, mods/nerd-herd-agents/*</li>
+            <li data-field="shared-artifact">copied Herdr layout</li>
+          </ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Walking skeleton" parallel-safe="no" agent-suitable="no">
+        <h3>Folder model</h3>
+        <dl>
+          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">src/folders/*</li></ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Walking skeleton" parallel-safe="no" agent-suitable="no">
+        <h3>Session list model</h3>
+        <dl>
+          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">src/sessions/*</li></ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Folder model" parallel-safe="no" agent-suitable="no">
+        <h3>Saved folder store</h3>
+        <dl>
+          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">src/store/*</li></ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Saved folder store" parallel-safe="no" agent-suitable="no">
+        <h3>Spaces sidebar mod</h3>
+        <dl>
+          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">mods/nerd-herd-spaces/*</li></ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Session list model" parallel-safe="no" agent-suitable="no">
+        <h3>Agents sidebar mod</h3>
+        <dl>
+          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">mods/nerd-herd-agents/*</li></ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Spaces sidebar mod, Agents sidebar mod" parallel-safe="no" agent-suitable="no">
+        <h3>Skeleton re-walk</h3>
+        <dl>
+          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">e2e test harness</li></ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <h3>Definition of Done</h3>
+      <ol class="tasks">
+        <li><h4>The full testing cycle passes: test, typecheck, test, build</h4>
+          <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+        <li><h4>herdr-app check passes for both mods</h4>
+          <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+        <li><h4>Both journeys walked by hand in the running Herdr window, with screenshots</h4>
+          <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+        <li><h4>A security scan runs clean</h4>
+          <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+      </ol>
+      <execution-plan>Walking skeleton &rarr; Folder model &rarr; Session list model &rarr; Saved folder store &rarr; Spaces sidebar mod &rarr; Agents sidebar mod &rarr; Skeleton re-walk</execution-plan>
+    </details>
+  </section>
+</main>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true });
+</script>
+<script>
+(() => {
+  const slug = s => s.trim().toLowerCase().replace(/[^\w]+/g, '-').replace(/^-|-$/g, '');
+  const el = (tag, props = {}, ...kids) => {
+    const node = document.createElement(tag);
+    Object.assign(node, props);
+    node.append(...kids);
+    return node;
+  };
+  const BLOCKS = 'spec-question, test-case, spec-module, spec-phase';
+  const byLabel = new Map();
+
+  // 1a. Section and narrative headings: stable id, copyable anchor, section labelling.
+  //     Headings inside a block belong to that block and are handled in 1b.
+  //     A task heading names a behavior, not an addressable thing: two halves of a pair
+  //     share it on purpose, so it gets no id and resolves nothing.
+  document.querySelectorAll('main :is(h2, h3, h4)').forEach(h => {
+    if (h.closest(BLOCKS) || h.closest('ol.tasks')) return;
+    const label = h.textContent.trim();
+    h.id ||= slug('sec-' + label);
+    byLabel.set(label.toLowerCase(), h);
+    const a = el('a', { className: 'anchor', href: '#' + h.id, textContent: '#' });
+    a.setAttribute('aria-label', 'Link to this section');
+    h.append(a);
+    const section = h.closest('section');
+    if (h.tagName === 'H2' && section) section.setAttribute('aria-labelledby', h.id);
+  });
+
+  // 1b. Domain blocks: named by their own heading, announced as one unit.
+  document.querySelectorAll(BLOCKS).forEach(node => {
+    const heading = node.querySelector(':scope > :is(h3, h4)');
+    const label = (heading?.textContent || node.textContent).trim().slice(0, 80);
+    node.id ||= slug(node.tagName.toLowerCase() + '-' + label);
+    node.dataset.label = label;        // captured before badges are appended, so it stays clean
+    byLabel.set(label.toLowerCase(), node);
+    node.setAttribute('role', 'group');
+    if (heading) {
+      heading.id ||= node.id + '-h';
+      node.setAttribute('aria-labelledby', heading.id);
+    } else {
+      node.setAttribute('aria-label', label);
+    }
+  });
+
+  // 1c. Claims: the one target `traces-to` resolves against, so they keep an index of
+  //     their own. A journey heading is not in it, and a case traced to one is unresolved.
+  const claims = new Map();
+  document.querySelectorAll('section.narrative details.claims').forEach(list => {
+    const items = list.querySelectorAll(':scope > ol > li');
+    list.querySelector(':scope > summary').textContent = 'Claims (' + items.length + ')';
+    items.forEach(li => {
+      const label = li.textContent.trim();
+      li.id ||= slug('claim-' + label);
+      li.dataset.label = label;
+      claims.set(label.toLowerCase(), li);
+      const a = el('a', { className: 'anchor', href: '#' + li.id, textContent: '#' });
+      a.setAttribute('aria-label', 'Link to this claim');
+      li.append(a);
+    });
+  });
+
+  // 2. Status attributes become document text, not just a border colour.
+  const badge = (node, text, tone) => {
+    const target = node.querySelector(':scope > :is(h3, h4)') || node;
+    target.append(el('span', { className: 'badge is-' + tone, textContent: text }));
+  };
+  document.querySelectorAll('spec-question[status]').forEach(q =>
+    badge(q, q.getAttribute('status'), q.getAttribute('status') === 'resolved' ? 'ok' : 'warn'));
+  document.querySelectorAll('test-case[status]').forEach(t =>
+    badge(t, t.getAttribute('status'), t.getAttribute('status') === 'done' ? 'ok' : 'warn'));
+  document.querySelectorAll('spec-phase[parallel-safe]').forEach(p => {
+    const yes = p.getAttribute('parallel-safe') === 'yes';
+    badge(p, yes ? 'parallel-safe' : 'sequential', yes ? 'ok' : 'warn');
+  });
+  // Written by execution at nomination, never by the author: the artifacts were
+  // read off tasks that exist and checked against the siblings nominated with it.
+  document.querySelectorAll('spec-phase[artifacts-verified="yes"]').forEach(p =>
+    badge(p, 'artifacts verified', 'ok'));
+
+  // 3. Cross-reference attributes become linked rows in the block's own field list.
+  //    Backlinks are a navigation aid, so they arrive folded. A claim is the exception:
+  //    it usually has one case, so its cases stay open beneath it as "Checked by".
+  //    A heading cannot hold a <details>, so a heading target gets its list after it.
+  const addBacklink = (target, node) => {
+    if (target.matches('details.claims li')) {
+      let checked = target.querySelector(':scope > dl.checked-by');
+      if (!checked) target.append(checked = el('dl', { className: 'checked-by' },
+        el('dt', { textContent: 'Checked by' })));
+      return checked.append(el('dd', {}, node));
+    }
+    const isHeading = /^H[2-4]$/.test(target.tagName);
+    let box = isHeading
+      ? (target.nextElementSibling?.matches('details.backlinks') ? target.nextElementSibling : null)
+      : target.querySelector(':scope > details.backlinks');
+    if (!box) {
+      box = el('details', { className: 'backlinks' }, el('summary'), el('ul'));
+      isHeading ? target.after(box) : target.append(box);
+    }
+    box.querySelector(':scope > ul').append(el('li', {}, node));
+    box.querySelector(':scope > summary').textContent =
+      'Referenced by (' + box.querySelectorAll(':scope > ul > li').length + ')';
+  };
+  const resolve = (node, attr, label, index = byLabel) => {
+    const raw = node.getAttribute(attr);
+    if (!raw) return;
+    const dd = el('dd');
+    raw.split(',').map(s => s.trim()).filter(Boolean).forEach((ref, i) => {
+      if (i) dd.append(document.createTextNode(', '));
+      const target = index.get(ref.toLowerCase());
+      if (!target) return dd.append(el('span', {
+        className: 'unresolved-ref', textContent: ref + ' (unresolved)' }));
+      dd.append(el('a', { href: '#' + target.id, textContent: ref }));
+      addBacklink(target, el('a', { href: '#' + node.id, textContent: node.dataset.label }));
+    });
+    let list = node.querySelector(':scope > dl');
+    if (!list) node.append(list = el('dl'));
+    list.prepend(el('dt', { textContent: label }), dd);
+  };
+  document.querySelectorAll('test-case').forEach(t => {
+    resolve(t, 'traces-to', 'Traces to', claims);
+    resolve(t, 'covers-module', 'Covers module');
+  });
+  document.querySelectorAll('spec-phase').forEach(p => resolve(p, 'depends-on', 'Depends on'));
+
+  // 4. Show first, tell on demand: each diagram keeps its source one toggle away.
+  //    Runs before the deferred module script, so it captures the source pre-render.
+  document.querySelectorAll('pre.mermaid').forEach(pre => {
+    const details = el('details', { className: 'source' },
+      el('summary', { textContent: 'Diagram source' }),
+      el('pre', { textContent: pre.textContent.trim() }));
+    (pre.closest('figure') || pre).append(details);
+  });
+  let reopened = [];   // a printed spec must be complete, so nothing stays collapsed on paper
+  addEventListener('beforeprint', () => {
+    reopened = [...document.querySelectorAll('details:not([open])')];
+    reopened.forEach(d => d.open = true);
+  });
+  addEventListener('afterprint', () => reopened.forEach(d => d.open = false));
+
+  // 5. Toolbar: theme switch, then reader modes when roles are declared.
+  const toolbar = document.getElementById('toolbar');
+  const store = {
+    get: k => { try { return localStorage.getItem(k); } catch { return null; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+  };
+  const themeBtn = el('button', { type: 'button' });
+  const paintTheme = () => {
+    const dark = document.documentElement.dataset.theme === 'dark';
+    themeBtn.textContent = dark ? 'Light' : 'Dark';
+    themeBtn.setAttribute('aria-label', `Switch to ${dark ? 'light' : 'dark'} theme`);
+  };
+  const saved = store.get('spec-theme');
+  if (saved) document.documentElement.dataset.theme = saved;
+  else document.documentElement.dataset.theme =
+    matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  themeBtn.addEventListener('click', () => {
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    store.set('spec-theme', next);
+    paintTheme();
+  });
+  paintTheme();
+  toolbar.append(themeBtn);
+
+  const roles = [...document.querySelectorAll('spec-role')].map(r => ({
+    id: r.id || slug(r.textContent), label: r.textContent.trim() }));
+  if (roles.length) {
+    const fs = el('fieldset', {}, el('legend', { textContent: 'Reading as' }));
+    const apply = mode => {
+      document.querySelectorAll('.for-you-marker').forEach(m => m.remove());
+      document.querySelectorAll('[data-roles]').forEach(node => {
+        const mine = !mode || node.dataset.roles.split(/\s+/).includes(mode);
+        node.classList.toggle('for-you', !!mode && mine);
+        node.classList.toggle('not-yours', !!mode && !mine);
+        // Fold what is not yours down to its title; never hide it.
+        const panel = node.querySelector(':scope > details:not(.backlinks)');
+        if (panel) panel.open = !mode || mine;
+        // The marker is document text, so it reaches assistive technology too.
+        if (mode && mine) node.querySelector(':scope :is(h2, h3, h4)')
+          ?.append(el('span', { className: 'badge is-ok for-you-marker', textContent: 'for you' }));
+      });
+      document.querySelectorAll('#toc li').forEach(li => {
+        const target = document.getElementById(li.querySelector('a').hash.slice(1));
+        const owner = target?.closest('[data-roles]') || target?.querySelector('[data-roles]');
+        li.classList.toggle('for-you', !!mode && !!owner?.classList.contains('for-you'));
+        li.classList.toggle('not-yours', !!mode && !!owner?.classList.contains('not-yours'));
+      });
+      store.set('spec-reader-mode', mode || '');
+    };
+    [{ id: '', label: 'Everything' }, ...roles].forEach(({ id, label }) => {
+      const input = el('input', { type: 'radio', name: 'reader-mode', value: id });
+      input.addEventListener('change', () => apply(id));
+      fs.append(el('label', {}, input, el('span', { textContent: label })));
+    });
+    toolbar.append(fs);
+    const initial = store.get('spec-reader-mode') || '';
+    const chosen = [...fs.querySelectorAll('input')].find(i => i.value === initial);
+    if (chosen) { chosen.checked = true; queueMicrotask(() => apply(initial)); }
+  }
+
+  // 6. Facet filters, discovered rather than configured: any attribute repeating a small
+  //    set of values across a section's blocks becomes a filter over that section.
+  const NOT_A_FACET = new Set(['id', 'class', 'style', 'role', 'slot', 'title', 'name',
+    'data-label', 'data-roles', 'traces-to', 'depends-on', 'covers-module', 'resolved-on']);
+
+  // Folding hides a block's body and leaves its heading in place. `until-found`
+  // keeps the hidden body reachable by find-in-page, and nothing is moved, so a
+  // selector written against the source still matches the live DOM.
+  const foldBody = (node, folded) => {
+    node.querySelectorAll(':scope > :not(h1):not(h2):not(h3):not(h4)').forEach(part => {
+      if (folded) part.setAttribute('hidden', 'until-found');
+      else part.removeAttribute('hidden');
+    });
+    node.classList.toggle('folded', folded);
+  };
+
+  document.querySelectorAll('main section').forEach(section => {
+    const items = [...section.querySelectorAll(BLOCKS)];
+    if (items.length < 3) return;
+    const names = new Set();
+    section.querySelectorAll(BLOCKS + ', test-group').forEach(node => {
+      for (const { name, value } of node.attributes) {
+        if (NOT_A_FACET.has(name) || name.startsWith('aria-')) continue;
+        if (!value.trim() || /\s/.test(value.trim())) continue;   // multi-word reads as prose
+        names.add(name);
+      }
+    });
+    const valueOf = (item, name) => item.closest(`[${name}]`)?.getAttribute(name);
+    const facets = [...names].map(name => {
+      const valued = items.filter(i => valueOf(i, name));
+      const values = [...new Set(valued.map(i => valueOf(i, name)))];
+      return { name, values, count: v => valued.filter(i => valueOf(i, name) === v).length };
+    }).filter(f => f.values.length >= 2 && f.values.length <= 8);
+    if (!facets.length) return;
+
+    const active = new Map(facets.map(f => [f.name, new Set()]));
+    const paint = () => {
+      items.forEach(item => {
+        const out = facets.some(f => {
+          const on = active.get(f.name);
+          return on.size && !on.has(valueOf(item, f.name));
+        });
+        item.classList.toggle('filtered-out', out);
+        foldBody(item, out);                              // fold to the title, never remove
+      });
+      // A container whose every item is filtered out folds as a unit.
+      section.querySelectorAll('test-group').forEach(group => {
+        const own = [...group.querySelectorAll(BLOCKS)];
+        const allOut = own.length && own.every(i => i.classList.contains('filtered-out'));
+        group.classList.toggle('filtered-out', !!allOut);
+        group.querySelectorAll(':scope > :is(test-case, spec-question, spec-module, spec-phase)')
+             .forEach(child => { if (allOut) child.setAttribute('hidden', 'until-found');
+                                 else child.removeAttribute('hidden'); });
+        group.classList.toggle('folded', !!allOut);
+      });
+    };
+
+    const bar = el('div', { className: 'facets' });
+    facets.forEach(f => {
+      const group = el('div', { className: 'facet' },
+        el('span', { className: 'facet-name', textContent: f.name.replace(/-/g, ' ') }));
+      const buttons = [];
+      const sync = () => {
+        const on = active.get(f.name);
+        allBtn.setAttribute('aria-pressed', String(on.size === 0));
+        buttons.forEach(([b, v]) => b.setAttribute('aria-pressed', String(on.has(v))));
+        paint();
+      };
+      const allBtn = el('button', { type: 'button' },
+        document.createTextNode('All'),
+        el('span', { className: 'facet-count', textContent: ` ${items.length}` }));
+      allBtn.addEventListener('click', () => { active.get(f.name).clear(); sync(); });
+      group.append(allBtn);
+      f.values.forEach(v => {
+        const b = el('button', { type: 'button' },
+          document.createTextNode(v.replace(/-/g, ' ')),
+          el('span', { className: 'facet-count', textContent: ` ${f.count(v)}` }));
+        b.addEventListener('click', () => {
+          const on = active.get(f.name);
+          on.has(v) ? on.delete(v) : on.add(v);
+          sync();
+        });
+        buttons.push([b, v]);
+        group.append(b);
+      });
+      sync();
+      bar.append(group);
+    });
+    const panel = section.querySelector(':scope > details');
+    (panel || section).insertBefore(bar, panel ? panel.querySelector('summary').nextSibling
+                                               : section.querySelector('h2').nextSibling);
+  });
+
+  // 7. Contents panel, with the section currently in view marked as the location.
+  const heads = [...document.querySelectorAll('main h2')];
+  const list = document.querySelector('#toc ol');
+  const links = new Map();
+  heads.forEach(h => {
+    const n = h.closest('section')?.querySelectorAll(BLOCKS).length ?? 0;
+    const a = el('a', { href: '#' + h.id, textContent: h.textContent.replace(/#$/, '') });
+    if (n) a.append(el('span', { className: 'count', textContent: ` (${n})` }));
+    list.append(el('li', {}, a));
+    links.set(h, a);
+  });
+  const visible = new Set();
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => e.isIntersecting ? visible.add(e.target) : visible.delete(e.target));
+    const current = heads.find(h => visible.has(h))
+      || [...heads].reverse().find(h => h.getBoundingClientRect().top < 100);
+    links.forEach(a => a.removeAttribute('aria-current'));
+    if (current) links.get(current)?.setAttribute('aria-current', 'location');
+  }, { rootMargin: '0px 0px -70% 0px' });
+  heads.forEach(h => io.observe(h));
+
+  // 8. A deep link lands on visible content: whatever encloses the target opens,
+  //    whether it was folded by a reader mode, a facet, or the reader themselves.
+  //    Runs last so nothing set up above re-folds the target.
+  const revealHash = () => {
+    const id = location.hash.slice(1);
+    const node = id && document.getElementById(decodeURIComponent(id));
+    if (!node) return;
+    for (let n = node; n && n !== document.body; n = n.parentElement) {
+      if (n.tagName === 'DETAILS') n.open = true;
+      n.classList.remove('folded', 'filtered-out');
+      n.hidden = false;
+    }
+    node.scrollIntoView();
+  };
+  addEventListener('hashchange', revealHash);
+  revealHash();
+})();
+</script>
+</body>
+</html>
