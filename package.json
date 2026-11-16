@@ -5,5 +5,16 @@
   "scripts": {
     "specs:serve": "bun scripts/serve-specs.js docs/specs",
     "specs:check": "bun scripts/check-spec-refs.ts docs/specs/*/*.html"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.8",
+    "@playwright/test": "^1.65.1",
+    "@types/bun": "^1.4.4",
+    "fallow": "^3.43.2",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "arktype": "^2.2.9",
+    "ulid": "^3.0.2"
   }
 }
