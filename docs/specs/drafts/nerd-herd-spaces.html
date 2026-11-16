@@ -204,6 +204,9 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <li>Dropping a group into one of its own subgroups leaves every group where it was</li>
           <li>The Ungrouped header is renamed the same way as any group</li>
           <li>A banner link is downloaded and shown as the group header's banner</li>
+          <li>A group with one banner link shows that banner whether it is folded or open</li>
+          <li>A group with an open banner and a folded banner shows the one that matches its state</li>
+          <li>A banner shows at its full banner height in its original proportions, and the sidebar edge clips whatever is wider</li>
           <li>A banner link that fails to load shows an error card in the banner's place saying why</li>
           <li>Inside a group, its groups come before its machines, each ordered by the group's sort</li>
           <li>A group name that is empty or longer than 60 characters is refused with a message saying why</li>
@@ -303,8 +306,35 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <h3>Group banner source</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Where does a group's banner come from?</dd>
-          <dt>Resolution</dt> <dd data-field="resolution">A web link (URL).</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">A web link (URL). A group has no banner, one banner, or two: an open banner and a folded banner. When only one is set, it shows in both states. Each banner shows at its full banner height in its original proportions, and the sidebar clips the part wider than the sidebar.</dd>
           <dt>Context</dt> <dd data-field="context">Herdr's <code>image(path)</code> loads only a file inside Herdr's app folder (<code>~/.config/herdr-app</code>), per its doc comment in <code>gpui-kit.d.ts</code>. So Banner cache downloads the link with <code>fetch</code> and saves it as a file the sidebar can show. Not yet verified: that this runtime's <code>fetch</code> returns image bytes and that <code>fs/promises</code> can write them; that is research for the Banner cache phase.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Banner height</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">How tall is a banner drawn in the sidebar?</dd>
+          <dt>Context</dt> <dd data-field="context">"Full height" fixes the proportions but not the size: a 1200 by 300 pixel image drawn at its own pixel size is 300 points tall, taller than most of the sidebar's rows put together.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>The image's own pixel height, however tall</li>
+            <li>One banner height for every group, set in Spaces settings (for example 48 points), with each image scaled to it</li>
+            <li>A banner height on each group, with a default from Spaces settings</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">A banner height on each group, defaulting to one value in Spaces settings, so most groups match and a group can stand out.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Banner clip side</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">When a banner is wider than the sidebar, which part stays visible?</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>The left edge: the right side is clipped, and widening the sidebar reveals more to the right</li>
+            <li>The center: both sides are clipped equally</li>
+            <li>A choice on each group, defaulting to the left edge</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">The left edge, which reads naturally with the header text that also starts at the left.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -424,7 +454,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Owns</dt> <dd data-field="owns">Group membership, custom order of groups and of machines, sort rules, fold state, where ungrouped machines go.</dd>
           <dt>Delegates</dt> <dd data-field="delegates">Ordering to Sort order. Otherwise data in, data out. It never holds a display word: rows name groups by id, and Spaces sidebar mod picks the words.</dd>
           <dt>Input <code>SavedGroups</code>, <code>Machine[]</code>, <code>GroupAction</code></dt>
-          <dd data-field="input">The saved groups, Herdr's machines, and one action (make, rename, delete, move a machine, nest a group, reorder, fold, set a sort, set icon, set banner link).</dd>
+          <dd data-field="input">The saved groups, Herdr's machines, and one action (make, rename, delete, move a machine, nest a group, reorder, fold, set a sort, set icon, set open banner link, set folded banner link).</dd>
           <dt>Output <code>SavedGroups</code>, <code>SpacesRow[]</code></dt>
           <dd data-field="output">The new saved groups, and the rows to draw.</dd>
         </dl>
@@ -456,7 +486,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Owns</dt> <dd data-field="owns">Where downloaded banners are kept, and which link each file came from.</dd>
           <dt>Delegates</dt> <dd data-field="delegates">Downloading to an injected fetcher; writing to an injected file writer (Herdr's <code>fetch</code> and <code>fs/promises</code> in the real mod).</dd>
           <dt>Input <code>BannerLink</code></dt> <dd data-field="input">The link the user pasted.</dd>
-          <dt>Output <code>BannerFile</code></dt> <dd data-field="output">The path of the saved image, relative to Herdr's app folder.</dd>
+          <dt>Output <code>BannerFile</code></dt> <dd data-field="output">The path of the saved image, relative to Herdr's app folder, and the image's width and height in pixels. Herdr's elements offer no "fit" option for images (no <code>object_fit</code> in <code>gpui-kit.d.ts</code>), so Spaces sidebar mod sizes the image from these numbers and clips it with a container's <code>overflow_x_hidden</code>.</dd>
           <dt>Throws <code>BannerError</code></dt> <dd data-field="throws">One error type per failure, each under the package's root error type with its facts as fields (link, host, HTTP status and reason, content type) and a <code>userAction</code>: an HTTP 4xx answer or a non-image is <code>fix</code> (correct the link); an unreachable host or an HTTP 5xx answer is <code>retry</code> and its message carries the error's reference id.</dd>
         </dl>
       </spec-module>
@@ -784,6 +814,46 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Given</dt> <dd data-field="given">A fetcher that answers <code>https://example.test/work.png</code> with a PNG image's bytes</dd>
             <dt>When</dt> <dd data-field="when">Banner cache is given that link</dd>
             <dt>Then</dt> <dd data-field="then">It returns a path inside Herdr's app folder, and the file at that path holds the same bytes</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A banner shows at its full banner height in its original proportions, and the sidebar edge clips whatever is wider" covers-module="Banner cache" status="pending">
+          <h4>A downloaded banner reports its pixel size</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A fetcher that answers <code>https://example.test/wide.png</code> with a 1200 by 300 pixel PNG</dd>
+            <dt>When</dt> <dd data-field="when">Banner cache is given that link</dd>
+            <dt>Then</dt> <dd data-field="then">The banner file it returns has width 1200 and height 300</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A banner shows at its full banner height in its original proportions, and the sidebar edge clips whatever is wider" covers-module="Spaces sidebar mod" status="pending">
+          <h4>A wide banner keeps its proportions and is clipped</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work's banner is 1200 by 300 pixels, the banner height is H (set by the open question <a href="#spec-question-banner-height">Banner height</a>), and the sidebar is narrower than 4H</dd>
+            <dt>When</dt> <dd data-field="when">The Spaces section is drawn</dd>
+            <dt>Then</dt> <dd data-field="then">The banner image is drawn H tall and 4H wide, and the header shows only the part that fits the sidebar's width</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A group with one banner link shows that banner whether it is folded or open" covers-module="Group model" status="pending">
+          <h4>A single banner shows in both states</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work has only an open banner, and is folded</dd>
+            <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">Work's header row carries the open banner</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A group with an open banner and a folded banner shows the one that matches its state" covers-module="Group model" status="pending">
+          <h4>A folded group with two banners shows its folded banner</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work has an open banner and a folded banner, and is folded</dd>
+            <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">Work's header row carries the folded banner</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A group with an open banner and a folded banner shows the one that matches its state" covers-module="Group model" status="pending">
+          <h4>An open group with two banners shows its open banner</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work has an open banner and a folded banner, and is open</dd>
+            <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">Work's header row carries the open banner</dd>
           </dl>
         </test-case>
         <test-case traces-to="Each group sorts what it holds, custom by default, with alphabetical and reverse alphabetical as the other choices" covers-module="Group model" status="pending">
