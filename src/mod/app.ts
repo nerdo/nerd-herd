@@ -1,10 +1,15 @@
 import { type BannerCache, createBannerCache } from "../core/banners/bannerCache";
+import { fetchBanner } from "../core/banners/fetchBanner";
 import type { SpacesRow } from "../core/groups/groupModel";
 import { computeRows } from "../core/groups/groupRows";
 import type { ModAction } from "../core/modAction";
 import { readSettings, type SidebarSettings } from "../core/settings/sidebarSettings";
 import { createGroupStore } from "../core/store/savedGroupStore";
+import { curlDownloader, fnv1a, herdrFiles } from "./bannerAdapters";
 import type { Host } from "./herdrHost";
+
+/** Where downloaded banners are kept, relative to Herdr's app folder; hidden, so saving one does not reload the mod. */
+const bannerFolder = "mods/nerd-herd-spaces/.banners";
 
 /** Everything the Spaces view draws, computed from what Herdr saved. */
 export interface SpacesViewModel {
@@ -22,7 +27,14 @@ export interface App {
 /** The composition root: wires the core units to Herdr. */
 export function createApp(host: Host): App {
   const store = createGroupStore(host.shared);
-  const banners = createBannerCache();
+  const banners = createBannerCache((link) =>
+    fetchBanner(link, {
+      downloader: curlDownloader,
+      files: herdrFiles,
+      hash: fnv1a,
+      folder: bannerFolder,
+    }),
+  );
   return {
     // CROSSING (walking skeleton): actions change nothing yet.
     apply: () => {},
