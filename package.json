@@ -1,0 +1,8 @@
+{
+  "name": "nerd-herd",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "specs:serve": "bun scripts/serve-specs.js docs/specs"
+  }
+}
