@@ -165,9 +165,9 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
 </nav>
 <main id="content">
   <h1>nerd-herd Spaces mod: groups of machines</h1>
-  <p>nerd-herd is a set of Herdr mods, and its full scope is not settled yet. This spec covers one of them: a Spaces mod that replaces the sidebar’s Spaces section and gathers machines into groups (for example Personal and Work). The Agents section has <a href="../drafts/nerd-herd-agents.html">its own spec</a>. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
+  <p>nerd-herd is a set of Herdr mods, and its full scope is not settled yet. This spec covers one of them: a Spaces mod that replaces the sidebar’s Spaces section and gathers machines into groups (for example Personal and Work). The Agents section has <a href="../drafts/nerd-herd-agents.html">its own spec</a>.</p>
   <dl class="spec-meta">
-    <dt>Stage</dt> <dd data-field="stage">finalized</dd>
+    <dt>Stage</dt> <dd data-field="stage">in-progress</dd>
     <dt>Complexity</dt> <dd data-field="complexity">6 / 10 for the first build &mdash; one mod with nested groups, drag and drop, per-group sorts, settings, downloaded banners with error cards, and a test harness for a native app not yet proven</dd>
     <dt>Toolchain</dt> <dd data-field="toolchain">TypeScript on Bun. <code>bun build</code> compiles each mod into one ES module with <code>herdr</code>, <code>gpui-kit</code>, and <code>gpui-base</code> left as imports; a probe built this way passed <code>herdr-app check</code> on 2026-11-16.</dd>
     <dt>Herdr version</dt> <dd data-field="herdr-version">0.1.16 (app), read from <code>/Applications/Herdr.app/Contents/Info.plist</code></dd>
@@ -903,7 +903,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <test-case traces-to="A group shows its chosen icon and banner in its header" covers-module="Group model" status="pending">
           <h4>A group header carries its icon and banner</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">Work's icon and banner are set (their kind waits on the icon and banner questions)</dd>
+            <dt>Given</dt> <dd data-field="given">Work's emoji icon is 💼 and its banner is a downloaded banner file</dd>
             <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
             <dt>Then</dt> <dd data-field="then">Work's header row carries that icon and that banner</dd>
           </dl>
@@ -1072,7 +1072,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>When</dt> <dd data-field="when">Set the group word to Environment and Environments, make Work with the 💼 icon, move desk-work and this computer into it, fold it, restart Herdr</dd>
             <dt>Then (experience)</dt> <dd data-field="then" data-aspect="experience">The screenshot shows a folded "💼 Work" header with count 2 above desk-home, and a "New environment" button</dd>
             <dt>Then (technical)</dt> <dd data-field="then" data-aspect="technical">The isolated home's saved shared state holds Work with desk-work and this computer, folded, and the group word Environment and Environments</dd>
-            <dt>Incremental</dt> <dd data-field="incremental">Testable once the Spaces mod saves through the store, and the harness question is answered</dd>
+            <dt>Incremental</dt> <dd data-field="incremental">Testable once the Spaces mod saves through the store</dd>
           </dl>
         </test-case>
       </test-group>
