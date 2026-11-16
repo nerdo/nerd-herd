@@ -165,7 +165,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
 </nav>
 <main id="content">
   <h1>nerd-herd: a clearer Herdr sidebar</h1>
-  <p>nerd-herd is a pair of Herdr mods that replace the sidebar's Spaces and Agents sections. Spaces gains groups that gather machines (for example Personal and Work). Agents lists each machine's sessions under that machine, with subjects that wrap instead of being cut off. The first build is the Spaces mod with groups; the Agents mod comes after it. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
+  <p>nerd-herd is a set of Herdr mods, and its full scope is not settled yet. This spec covers two of them, which replace the sidebar's Spaces and Agents sections. Spaces gains groups that gather machines (for example Personal and Work). Agents lists each machine's sessions under that machine, with subjects that wrap instead of being cut off. The first build is the Spaces mod with groups; the Agents mod comes after it. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
   <dl class="spec-meta">
     <dt>Stage</dt> <dd data-field="stage">drafts</dd>
     <dt>Complexity</dt> <dd data-field="complexity">6 / 10 for the first build &mdash; one mod with nested groups, drag and drop, per-group sorts, settings, downloaded banners with error cards, and a test harness for a native app not yet proven</dd>
@@ -207,6 +207,9 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <li>A banner link is downloaded and shown as the group header's banner</li>
           <li>A banner link that fails to load shows an error card in the banner's place saying why</li>
           <li>Inside a group, its groups come before its machines, each ordered by the group's sort</li>
+          <li>A group name that is empty, longer than 60 characters, or already used is refused with a message saying why</li>
+          <li>Each group's folded count shows every machine inside by default, or only direct machines, or all direct items</li>
+          <li>Damaged saved groups are kept as a backup and Spaces shows Herdr's usual list with an error card</li>
         </ol>
       </details>
       <p>Dannel works on a personal machine and on machines for two contexts: their own projects and their job at Job. The Spaces section lists five machines in name order, so personal and work machines are mixed together. They click the new-group button beside the Spaces "+" button, and a group appears with its name ready to edit. They type "Work" and pick an icon for it.</p>
@@ -247,46 +250,38 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Resolution</dt> <dd data-field="resolution">Yes, as written in the Narrative.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Damaged saved data</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">What does Spaces do when the saved groups or settings it reads fail the shape check?</dd>
-          <dt>Context</dt> <dd data-field="context">A hand edit of <code>shared.json</code>, another mod, or an older nerd-herd version can leave data nerd-herd cannot read. Validation Boundaries says the check exists but not what follows it.</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>Keep the unreadable data aside under a backup key, start with no groups, and show a card saying the saved groups could not be read and were kept as a backup</li>
-            <li>Keep every part that still reads correctly, drop the rest, and show a card naming what was dropped</li>
-            <li>Show an error card and change nothing until the data is fixed by hand</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Keep it aside as a backup and start fresh, so no data is lost and Spaces still works.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Keep the unreadable data aside under a backup key and start with no groups. Spaces then looks like Herdr without the mod (this computer first, then the other machines by name), except for an error card saying the saved groups could not be read and were kept as a backup.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Group name rules</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Which group names are accepted?</dd>
-          <dt>Context</dt> <dd data-field="context">Validation Boundaries says names are checked when entered but sets no limits. The cases that need an answer are an empty name, a very long name, and two groups with the same name.</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>Not empty after trimming spaces, at most 60 characters, duplicates allowed (groups are told apart by id, not name)</li>
-            <li>The same, but no two groups with the same name inside one parent</li>
-            <li>Anything goes; an empty name shows as "Untitled"</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Not empty, at most 60 characters, duplicates allowed.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Not empty after trimming spaces, at most 60 characters, and no duplicates. Groups are told apart by an internal id, never by name. Whether "no duplicates" covers every group or only groups in the same parent is <a href="#spec-question-duplicate-name-scope">Duplicate name scope</a>.</dd>
         </dl>
       </spec-question>
       <spec-question status="open">
+        <h3>Duplicate name scope</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Does "no duplicate group names" apply across the whole sidebar, or only among groups that share a parent?</dd>
+          <dt>Context</dt> <dd data-field="context">The user asked for no duplicates unless there is a good use case. One use case, now that groups nest: projects that each hold the same stages, such as "Acme" holding "Staging" and "Production" and "Globex" holding its own "Staging" and "Production". Unique names in the whole sidebar would force "Acme Staging" and "Globex Staging".</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>Unique among groups that share a parent; the same name is allowed under different parents</li>
+            <li>Unique across the whole sidebar</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Unique among groups that share a parent.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Folded group count</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">With nesting, what number does a folded group's header show?</dd>
-          <dt>Context</dt> <dd data-field="context">The claim says a folded header shows its machine count. If Work holds desk-work and a Clients group holding two machines, the count could be 1, 2, or 3.</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>Every machine inside, at any depth (3)</li>
-            <li>Only machines directly inside (1)</li>
-            <li>Direct items, groups and machines together (2)</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Every machine inside, at any depth: it answers "how much is hidden here".</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">A setting on each group chooses it: every machine inside at any depth (the default), only machines directly inside, or everything directly inside (groups and machines together).</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -567,9 +562,9 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
   <section class="validation-boundaries" data-roles="build">
     <details open><summary><h2>Validation Boundaries</h2></summary>
       <ul>
-        <li><strong>Saved groups read from Herdr's shared state</strong> are external data: another mod, a hand edit, or an older nerd-herd version may have written them. Saved group store checks their shape on every read. What happens to data that fails the check is not decided yet.</li>
+        <li><strong>Saved groups read from Herdr's shared state</strong> are external data: another mod, a hand edit, or an older nerd-herd version may have written them. Saved group store checks their shape on every read. Data that fails the check is kept under a backup key, Spaces starts with no groups, and an error card says so (<a href="#spec-question-damaged-saved-data">Damaged saved data</a>).</li>
         <li><strong>Herdr's machines, spaces, and agents</strong> come typed from <code>herdr.d.ts</code>. A group may name a machine Herdr no longer lists, so Group model treats a missing machine as data, not an error.</li>
-        <li><strong>Group names and icons typed by the user</strong> are checked when entered. Limits (length, allowed characters) are not decided yet. An icon is saved with its kind, and the only kind accepted today is emoji.</li>
+        <li><strong>Group names and icons typed by the user</strong> are checked when entered: a name is not empty after trimming spaces, is at most 60 characters, and no other group has it (<a href="#spec-question-group-name-rules">Group name rules</a>). An icon is saved with its kind, and the only kind accepted today is emoji.</li>
         <li><strong>Sidebar settings read from Herdr's shared state</strong> are external data too. Sidebar settings checks them on every read and fills each missing value from its one declared default.</li>
       </ul>
     </details>
@@ -595,6 +590,54 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Given</dt> <dd data-field="given">Work holds the group Clients</dd>
             <dt>When</dt> <dd data-field="when">The nest action puts Work inside Clients</dd>
             <dt>Then</dt> <dd data-field="then">The saved groups equal the saved groups before the action: Work at the top level, holding Clients</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A group name that is empty, longer than 60 characters, or already used is refused with a message saying why" covers-module="Group model" status="pending">
+          <h4>An empty group name is refused</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">No groups</dd>
+            <dt>When</dt> <dd data-field="when">The make-group action runs with the name "   " (three spaces)</dd>
+            <dt>Then</dt> <dd data-field="then">It throws a group-name error with <code>userAction</code> fix and reason "empty", and the saved groups are unchanged</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A group name that is empty, longer than 60 characters, or already used is refused with a message saying why" covers-module="Group model" status="pending">
+          <h4>A 61-character group name is refused</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">No groups</dd>
+            <dt>When</dt> <dd data-field="when">The make-group action runs with a 61-character name</dd>
+            <dt>Then</dt> <dd data-field="then">It throws a group-name error with <code>userAction</code> fix, reason "too long", limit 60, and length 61, and the saved groups are unchanged</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A group name that is empty, longer than 60 characters, or already used is refused with a message saying why" covers-module="Group model" status="pending">
+          <h4>A group name already used beside it is refused</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Acme holds a group named Staging</dd>
+            <dt>When</dt> <dd data-field="when">The make-group action runs inside Acme with the name "Staging"</dd>
+            <dt>Then</dt> <dd data-field="then">It throws a group-name error with <code>userAction</code> fix, reason "taken", and Acme as the parent, and the saved groups are unchanged</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A group name that is empty, longer than 60 characters, or already used is refused with a message saying why" covers-module="Spaces sidebar mod" status="pending">
+          <h4>A refused name explains itself in the chosen group word</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The group word is Environment and Environments, and Acme holds an environment named Staging</dd>
+            <dt>When</dt> <dd data-field="when">Dannel names a new environment inside Acme "Staging"</dd>
+            <dt>Then</dt> <dd data-field="then">The name field shows "Acme already has an environment named Staging. Choose another name."</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Damaged saved groups are kept as a backup and Spaces shows Herdr's usual list with an error card" covers-module="Saved group store" status="pending">
+          <h4>Unreadable saved groups are backed up and reset</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The saved-groups key holds the text <code>"not groups"</code></dd>
+            <dt>When</dt> <dd data-field="when">The store reads saved groups</dd>
+            <dt>Then</dt> <dd data-field="then">It returns no groups, the backup key holds <code>"not groups"</code>, and it reports a saved-groups error with <code>userAction</code> report</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Damaged saved groups are kept as a backup and Spaces shows Herdr's usual list with an error card" covers-module="Group model" status="pending">
+          <h4>With no groups, Spaces lists machines the way Herdr does</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">No groups, and Herdr lists desk-work, this computer, and ai-sandbox</dd>
+            <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">The machine rows are this computer, ai-sandbox, desk-work, with no header rows</dd>
           </dl>
         </test-case>
         <test-case traces-to="A banner link that fails to load shows an error card in the banner's place saying why" covers-module="Banner cache" status="pending">
@@ -673,6 +716,30 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Given</dt> <dd data-field="given">Work holds desk-work and is folded</dd>
             <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
             <dt>Then</dt> <dd data-field="then">One row for Work showing "Work" and "1", and no rows for desk-work or its spaces</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Each group's folded count shows every machine inside by default, or only direct machines, or all direct items" covers-module="Group model" status="pending">
+          <h4>A folded group counts every machine inside by default</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work holds desk-work and the group Clients, which holds ai-sandbox and desk-client; Work is folded; Work's count setting is untouched</dd>
+            <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">Work's header row shows the count 3</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Each group's folded count shows every machine inside by default, or only direct machines, or all direct items" covers-module="Group model" status="pending">
+          <h4>A folded group set to direct machines counts only those</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The same Work, with its count setting on direct machines</dd>
+            <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">Work's header row shows the count 1</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Each group's folded count shows every machine inside by default, or only direct machines, or all direct items" covers-module="Group model" status="pending">
+          <h4>A folded group set to direct items counts groups and machines</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The same Work, with its count setting on direct items</dd>
+            <dt>When</dt> <dd data-field="when">Spaces rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">Work's header row shows the count 2</dd>
           </dl>
         </test-case>
         <test-case traces-to="Deleting a group moves its machines to the ungrouped machines below the groups" covers-module="Group model" status="pending">
