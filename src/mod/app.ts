@@ -5,14 +5,14 @@ import { applyCommand } from "../core/commands/applyCommand";
 import type { NerdHerdError } from "../core/errors/nerdHerdError";
 import type { GroupId, SavedGroups, SpacesRow } from "../core/groups/groupModel";
 import { computeRows } from "../core/groups/groupRows";
-import { readSettings, type SidebarSettings } from "../core/settings/sidebarSettings";
+import { createSettingsStore } from "../core/settings/settingsStore";
+import type { SidebarSettings } from "../core/settings/sidebarSettings";
 import { createGroupStore } from "../core/store/savedGroupStore";
 import { curlDownloader, herdrFiles } from "./bannerAdapters";
 import type { Host } from "./herdrHost";
 
 /** Where downloaded banners are kept, relative to Herdr's app folder; hidden, so saving one does not reload the mod. */
 const bannerFolder = "mods/nerd-herd-spaces/.banners";
-const settingsKey = "nerd-herd.settings";
 
 /** Everything the Spaces view draws, computed from what Herdr saved. */
 export interface SpacesViewModel {
@@ -31,11 +31,14 @@ export interface App {
   view(): SpacesViewModel;
   /** Loads every banner link the groups use that has not loaded yet; true when any state changed. */
   loadBanners(): Promise<boolean>;
+  /** Reads backed-up saved data again, restoring what can be read now. True when anything was restored. */
+  retry(): boolean;
 }
 
 /** The composition root: wires the core units to Herdr. */
 export function createApp(host: Host, newId: () => GroupId): App {
   const store = createGroupStore(host.shared);
+  const settingsStore = createSettingsStore(host.shared);
   const banners = createBannerCache((link) =>
     fetchBanner(link, {
       downloader: curlDownloader,
@@ -46,7 +49,7 @@ export function createApp(host: Host, newId: () => GroupId): App {
   );
   const read = () => {
     const groups = store.load();
-    const settings = readSettings(host.shared.read(settingsKey));
+    const settings = settingsStore.load();
     return { groups, settings };
   };
   return {
@@ -58,7 +61,7 @@ export function createApp(host: Host, newId: () => GroupId): App {
         newId,
       );
       store.save(next.groups);
-      host.shared.write(settingsKey, next.settings);
+      settingsStore.save(next.settings);
     },
     view: () => {
       const { groups, settings } = read();
@@ -69,6 +72,11 @@ export function createApp(host: Host, newId: () => GroupId): App {
         banners,
         problems: [groups.problem, settings.problem].flatMap((p) => (p ? [p] : [])),
       };
+    },
+    retry: () => {
+      const groups = store.retry();
+      const settings = settingsStore.retry();
+      return groups || settings;
     },
     loadBanners: async () => {
       const links = read().groups.groups.groups.flatMap((g) => [g.openBanner, g.foldedBanner]);

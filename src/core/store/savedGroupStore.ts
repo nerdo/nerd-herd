@@ -1,6 +1,7 @@
-import { SavedDataError } from "../errors/savedDataError";
+import type { SavedDataError } from "../errors/savedDataError";
 import { emptyGroups, type SavedGroups } from "../groups/groupModel";
 import { z } from "../schema/zod";
+import { createSavedValue } from "./savedValue";
 
 /** Herdr's shared mod state, as the store sees it. */
 export type SharedKey = string;
@@ -18,10 +19,11 @@ export interface GroupsRead {
 export interface GroupStore {
   load(): GroupsRead;
   save(groups: SavedGroups): void;
+  /** Reads backed-up groups again; restores them when they can be read now. */
+  retry(): boolean;
 }
 
 const groupsKey = "nerd-herd.groups";
-const backupKey = "nerd-herd.groups.backup";
 
 const sort = z.enum(["custom", "alphabetical", "reverseAlphabetical"]);
 const link = z.string().nullable();
@@ -51,18 +53,17 @@ const SavedGroupsSchema = z.object({
 });
 
 /** Keeps the group model's data in Herdr's shared state, so it survives restarts. */
-export const createGroupStore = (shared: SharedState): GroupStore => ({
-  load: () => {
-    const saved = shared.read(groupsKey);
-    // While a backup of damaged groups is kept, every read reports it, so its error card stays.
-    const backedUp = (): SavedDataError | null =>
-      shared.read(backupKey) === undefined ? null : new SavedDataError("groups");
-    if (saved === undefined || saved === null) return { groups: emptyGroups, problem: backedUp() };
-    const parsed = SavedGroupsSchema.safeParse(saved);
-    if (parsed.success) return { groups: parsed.data, problem: backedUp() };
-    shared.write(backupKey, saved);
-    shared.write(groupsKey, emptyGroups);
-    return { groups: emptyGroups, problem: new SavedDataError("groups", { cause: parsed.error }) };
-  },
-  save: (groups) => shared.write(groupsKey, groups),
-});
+export const createGroupStore = (shared: SharedState): GroupStore => {
+  const value = createSavedValue(shared, groupsKey, "groups", emptyGroups, (raw) => {
+    const parsed = SavedGroupsSchema.safeParse(raw);
+    return parsed.success ? { ok: true, value: parsed.data } : { ok: false, cause: parsed.error };
+  });
+  return {
+    load: () => {
+      const read = value.load();
+      return { groups: read.value, problem: read.problem };
+    },
+    save: (groups) => value.save(groups),
+    retry: () => value.retry(),
+  };
+};

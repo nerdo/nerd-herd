@@ -6,6 +6,7 @@ import { spawnSync } from "node:child_process";
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { test } from "@playwright/test";
 import { e2eSettings } from "./e2e-settings";
 
 export type ScreenLines = readonly string[];
@@ -94,6 +95,14 @@ export class HerdrWindow {
     return JSON.parse(run(["herdr-app", what], this.env()).out);
   }
 
+  /** The next screenshot's path: named by the walk's file and numbered, kept for the whole run. */
+  private shotPath(): string {
+    this.shots += 1;
+    mkdirSync(e2eSettings.shots, { recursive: true });
+    const walk = test.info().file.split("/").pop()?.replace(".spec.ts", "");
+    return join(e2eSettings.shots, `${walk}-${this.shots}.png`);
+  }
+
   /** Presses one of the Spaces mod's keys: sends the action its keys.json binding sends. */
   key(name: string): void {
     this.send(`nerd-herd-spaces.${name}`);
@@ -137,8 +146,7 @@ export class HerdrWindow {
   /** The whole window's text, top to bottom, for dialogs drawn past the sidebar. */
   readWindow(): ScreenLines {
     sleep(1500);
-    this.shots += 1;
-    const shot = join(this.home, `shot-${this.shots}.png`);
+    const shot = this.shotPath();
     const s = run(["herdr-app", "shot", shot], this.env());
     if (s.code !== 0) throw new Error(`herdr-app shot failed: ${s.out}\n${s.err}`);
     const t = run([e2eSettings.readText, shot]);
@@ -168,8 +176,7 @@ export class HerdrWindow {
   private readOnce(): ScreenLines {
     sleep(1500);
     // Every read keeps its own screenshot, numbered, so a failed reading can be checked by eye.
-    this.shots += 1;
-    const shot = join(this.home, `shot-${this.shots}.png`);
+    const shot = this.shotPath();
     const s = run(["herdr-app", "shot", shot], this.env());
     if (s.code !== 0) throw new Error(`herdr-app shot failed: ${s.out}\n${s.err}`);
     const edge = this.sidebarEdge(shot);

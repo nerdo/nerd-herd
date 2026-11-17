@@ -10,5 +10,5 @@ export default defineConfig({
   timeout: 240_000,
   reporter: "list",
   globalSetup: "./e2e/support/global-setup.ts",
-  globalTeardown: "./e2e/support/global-setup.ts",
+  globalTeardown: "./e2e/support/global-teardown.ts",
 });

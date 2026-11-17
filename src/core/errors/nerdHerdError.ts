@@ -14,13 +14,16 @@ export abstract class NerdHerdError extends Error {
   public readonly metadata: ErrorMetadata;
   public abstract readonly userAction: UserAction;
 
-  constructor(options?: { cause?: unknown }) {
+  /** `reference` re-creates an error reported earlier, keeping the id and time the user was shown. */
+  constructor(options?: { cause?: unknown; reference?: ErrorMetadata }) {
     super("", options?.cause !== undefined ? { cause: options.cause } : undefined);
     this.name = this.constructor.name;
-    this.metadata = Object.freeze({
-      errorId: crypto.randomUUID(),
-      unixTimestamp: Math.floor(Date.now() / 1000),
-    });
+    this.metadata = Object.freeze(
+      options?.reference ?? {
+        errorId: crypto.randomUUID(),
+        unixTimestamp: Math.floor(Date.now() / 1000),
+      },
+    );
   }
 
   protected setMessage(message: string): void {

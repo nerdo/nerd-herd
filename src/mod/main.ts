@@ -72,6 +72,12 @@ export default class NerdHerdSpaces extends Spaces {
             this.keyboard.focus();
             return;
           }
+          if (command === "data-retry") {
+            this.retryData();
+            cx.notify();
+            if (await this.app.loadBanners()) cx.notify();
+            return;
+          }
           if (command.startsWith("open:")) {
             if (!openFromCommand(JSON.parse(command.slice(5)), this.app.view()))
               throw new CommandError(command);
@@ -182,41 +188,48 @@ export default class NerdHerdSpaces extends Spaces {
       .child(row.name);
   }
 
+  /** The header's buttons before Herdr's "+": Spaces settings, then a new group; each named in a tooltip. */
   headerTools(t: Theme) {
-    return div()
-      .id("spaces-settings")
-      .size(26)
+    const word = this.app.view().settings.groupWord;
+    const button = (id: string, icon: string, tip: string, act: () => void) =>
+      div()
+        .id(id)
+        .size(26)
+        .flex_none()
+        .flex()
+        .items_center()
+        .justify_center()
+        .rounded(6)
+        .hover((s) => s.bg(themeColor(t, "hover")).text_color(themeColor(t, "foreground")))
+        .tooltip(tip)
+        .on_click(() => act())
+        .child(svg(`mods/workspace-chrome/${icon}.svg`).size(14));
+    return h_flex()
       .flex_none()
-      .flex()
-      .items_center()
-      .justify_center()
-      .rounded(6)
-      .hover((s) => s.bg(themeColor(t, "hover")).text_color(themeColor(t, "foreground")))
-      .on_click(() => openPanel({ panel: "spaces-settings" }, 420))
-      .child(svg("mods/workspace-chrome/settings.svg").size(14));
+      .child(
+        button("spaces-settings", "settings", "Spaces settings", () =>
+          openPanel({ panel: "spaces-settings" }, 420),
+        ),
+      )
+      .child(
+        button("group-new", "folder-plus", newGroupLabel(word), () =>
+          openPanel({ panel: "name", target: { kind: "new", parent: null } }, 200),
+        ),
+      );
   }
 
+  /** Below the header: a card for each saved-data problem, with a button to read the data again. */
   belowHeader(t: Theme) {
-    const view = this.app.view();
-    const word = view.settings.groupWord;
-    const button = h_flex()
-      .id("group-new")
-      .h(28)
-      .mx(8)
-      .px(8)
-      .gap(7)
-      .items_center()
-      .rounded(7)
-      .text_size(12)
-      .text_color(themeColor(t, "dim"))
-      .hover((s) => s.bg(themeColor(t, "hover")).text_color(themeColor(t, "foreground")))
-      .on_click(() => openPanel({ panel: "name", target: { kind: "new", parent: null } }, 200))
-      .child(svg("mods/workspace-chrome/folder-plus.svg").size(12))
-      .child(newGroupLabel(word));
     return v_flex()
       .flex_none()
-      .child(button)
-      .children(view.problems.map((p) => errorCard(t, p.message)));
+      .children(
+        this.app.view().problems.map((p) => errorCard(t, p.message, () => this.retryData())),
+      );
+  }
+
+  /** Reads backed-up saved data again (the error card's Try again, or the data-retry command). */
+  retryData(): void {
+    this.app.retry();
   }
 
   render() {

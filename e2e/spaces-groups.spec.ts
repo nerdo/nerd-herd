@@ -11,6 +11,7 @@ let machine: MachineName;
 let foldedAfterRestart: ScreenLines;
 let openedAfterRestart: ScreenLines;
 let bannerFiles: string[];
+let newGroupDialog: ScreenLines;
 
 test.beforeAll(() => {
   machine = window.remoteMachine();
@@ -29,6 +30,9 @@ test.beforeAll(() => {
   window.act("group-fold", { group: "Work", folded: false });
   openedAfterRestart = window.read();
   bannerFiles = readdirSync(join(window.home, "mods/nerd-herd-spaces/.banners"));
+  window.act("open", { panel: "name", target: { kind: "new", parent: null } });
+  newGroupDialog = window.readWindow();
+  window.herdr("overlay.close", {});
 });
 
 test.afterAll(() => window.stop());
@@ -46,7 +50,9 @@ test("Dannel renames the sidebar's word for groups to Environments, makes a Work
   // Not read here: the count on Work's banner. Vision reads that dim digit beside the icons
   // inconsistently on identical screens (2026-11-17: "2฿ +", "20 +", or nothing). The count is
   // guaranteed by src/core/presentation/groupHeaderLook.test.ts and the group model's count tests.
-  expect(folded, "the new-group button uses the chosen word").toContain("New environment");
+  // The new-group button is an icon in the header (its tooltip names it); its dialog uses the word.
+  expect(folded, "no new-group row in the sidebar").not.toContain("New environment");
+  expect(newGroupDialog, "the new-group dialog uses the chosen word").toContain("New environment");
   // Opened again: Clients, then the machines in the order they were dropped. Herdr's Spaces list
   // keeps the active space in view, which can scroll Work's banner above the top (2026-11-17), so
   // the reading starts at Clients; that the banner is drawn is checked in the folded reading.

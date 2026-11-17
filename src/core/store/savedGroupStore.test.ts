@@ -41,7 +41,7 @@ describe("saved group store", () => {
     const read = createGroupStore(shared).load();
     expect([
       read.groups,
-      values.get("nerd-herd.groups.backup"),
+      (values.get("nerd-herd.groups.backup") as { data?: unknown } | undefined)?.data,
       read.problem instanceof SavedDataError,
       read.problem?.userAction,
     ]).toEqual([emptyGroups, "not groups", true, "report"]);

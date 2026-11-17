@@ -1,4 +1,4 @@
-import { NerdHerdError } from "./nerdHerdError";
+import { type ErrorMetadata, NerdHerdError } from "./nerdHerdError";
 
 export type SavedDataName = "groups" | "settings";
 
@@ -7,7 +7,7 @@ export class SavedDataError extends NerdHerdError {
   readonly userAction = "report";
   constructor(
     public readonly data: SavedDataName,
-    options?: { cause?: unknown },
+    options?: { cause?: unknown; reference?: ErrorMetadata },
   ) {
     super(options);
     this.setMessage(

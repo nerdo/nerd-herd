@@ -10,5 +10,7 @@ export const e2eSettings = {
   home: process.env.E2E_HERDR_HOME ?? resolve(root, ".e2e-home"),
   fakeBin: process.env.E2E_FAKE_BIN ?? resolve(root, ".e2e-bin/fakebin"),
   readText: process.env.E2E_READ_TEXT ?? resolve(root, ".e2e-bin/read-text"),
+  /** Where every screenshot a walk reads is kept, so a failed reading can be checked afterward. */
+  shots: process.env.E2E_SHOTS ?? resolve(root, ".e2e-bin/shots"),
   bannerFixture: resolve(root, "e2e/fixtures/work-banner.png"),
 } as const;
