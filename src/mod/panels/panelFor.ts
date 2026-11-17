@@ -54,14 +54,6 @@ export const panelFor = (props: unknown, view: SpacesViewModel, cx: AsyncContext
   }
 };
 
-/** How tall each dialog opens, in points; the menu's height follows its items. */
-const heights: Record<string, number> = {
-  name: 200,
-  move: 320,
-  "group-settings": 600,
-  "spaces-settings": 420,
-};
-
 /**
  * Opens the dialog or menu an `open:<props>` command names (what the cog wheels, the group menu,
  * and a keys.json binding open). A group may be named by its id or its name. False when the props
@@ -94,6 +86,6 @@ export const openFromCommand = (json: unknown, view: SpacesViewModel): boolean =
   if (!parsed.success) return false;
   const p = parsed.data;
   if (p.panel === "menu") openMenu(p.target, p.target.kind === "group" ? 4 : 1);
-  else openPanel(p, heights[p.panel] ?? 300);
+  else openPanel(p);
   return true;
 };

@@ -33,15 +33,15 @@ export class GroupMenuPanel implements Panel {
     const target = this.target;
     const items =
       target.kind === "ungrouped"
-        ? [item("rename", "Rename", () => openPanel({ panel: "name", target }, 200))]
+        ? [item("rename", "Rename", () => openPanel({ panel: "name", target }))]
         : [
             item("rename", "Rename", () =>
-              openPanel({ panel: "name", target: { ...target, kind: "group" } }, 200),
+              openPanel({ panel: "name", target: { ...target, kind: "group" } }),
             ),
             item("delete", "Delete", () => send("group-delete", { group: target.group })),
-            item("move", "Move to…", () => openPanel({ panel: "move", group: target.group }, 320)),
+            item("move", "Move to…", () => openPanel({ panel: "move", group: target.group })),
             item("settings", "Settings", () =>
-              openPanel({ panel: "group-settings", group: target.group }, 560),
+              openPanel({ panel: "group-settings", group: target.group }),
             ),
           ];
     return v_flex()

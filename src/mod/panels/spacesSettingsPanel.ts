@@ -15,6 +15,7 @@ import {
   send,
   type Theme,
   title,
+  type DialogScroll,
 } from "./formParts";
 
 export class SpacesSettingsPanel implements Panel {
@@ -47,9 +48,10 @@ export class SpacesSettingsPanel implements Panel {
     close();
   }
 
-  render(t: Theme) {
+  render(t: Theme, scroll: DialogScroll) {
     return dialog(
       t,
+      scroll,
       [
         title(t, "Spaces settings"),
         label(t, "Word for a group (one)"),

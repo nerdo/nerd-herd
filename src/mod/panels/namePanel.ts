@@ -16,6 +16,7 @@ import {
   send,
   type Theme,
   title,
+  type DialogScroll,
 } from "./formParts";
 
 export type NameTarget =
@@ -63,7 +64,7 @@ export class NamePanel implements Panel {
     close();
   }
 
-  render(t: Theme) {
+  render(t: Theme, scroll: DialogScroll) {
     const word = this.word.singular.toLowerCase();
     const heading =
       this.target.kind === "new"
@@ -73,6 +74,7 @@ export class NamePanel implements Panel {
           : "Rename the ungrouped header";
     return dialog(
       t,
+      scroll,
       [
         title(t, heading),
         label(t, "Name"),

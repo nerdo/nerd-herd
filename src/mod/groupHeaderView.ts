@@ -47,12 +47,12 @@ const controls = (row: GroupRow, look: GroupHeaderLook, t: Theme): Element[] => 
     ...(has("count") ? [div().flex_none().child(String(row.count))] : []),
     click(
       "group-settings",
-      () => openPanel({ panel: "group-settings", group: row.id }, 560),
+      () => openPanel({ panel: "group-settings", group: row.id }),
       svg("mods/workspace-chrome/settings.svg").size(11),
     ),
     click(
       "group-add",
-      () => openPanel({ panel: "name", target: { kind: "new", parent: row.id } }, 200),
+      () => openPanel({ panel: "name", target: { kind: "new", parent: row.id } }),
       div().px(4).child("+"),
     ),
     div().size(6).flex_none(),

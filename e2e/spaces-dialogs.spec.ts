@@ -10,12 +10,19 @@ let spacesSettings: ScreenLines;
 let overlays: unknown;
 let groupSettings: ScreenLines;
 let menu: ScreenLines;
+let size: unknown;
 
-/** The whole window's text: dialogs open in the middle of it, past the sidebar. */
-const whole = (w: HerdrWindow) => w.readWindow();
+/**
+ * A dialog's whole text: dialogs open in the middle of the window, past the sidebar. The window is
+ * shorter than the group settings (the user, 2026-11-17: "make the dialog walks scroll and read in
+ * pieces"), so each dialog is read at its top and again after Page Down brings its end into view.
+ * 634 points is the shortest window the person's tiling gave a walk; there the two pieces overlap.
+ * A dialog more than about twice the window's height would lose its middle between them.
+ */
+const whole = (w: HerdrWindow) => w.readDialog();
 
 test.beforeAll(() => {
-  window.start();
+  window.start({}, { width: 1200, height: 634 });
   window.act("group-make", { name: "Work" });
   window.act("open", { panel: "spaces-settings" });
   spacesSettings = whole(window);
@@ -27,9 +34,15 @@ test.beforeAll(() => {
   window.act("open", { panel: "menu", target: { kind: "group", group: "Work", name: "Work" } });
   menu = whole(window);
   window.herdr("overlay.close", {});
+  size = window.windowSize();
 });
 
 test.afterAll(() => window.stop());
+
+// The readings below mean "read in pieces" only in a window shorter than the group settings.
+test("the walk's window is 1200 by 634 points, shorter than a group's settings", () => {
+  expect(size).toEqual({ width: 1200, height: 634 });
+});
 
 // Spec: docs/specs/in-progress/executing-nerd-herd-spaces.html#test-case-the-cog-wheel-opens-spaces-settings@jj:261617da
 test("Spaces settings open as one overlay of the Spaces mod", () => {
@@ -52,8 +65,10 @@ test("Spaces settings show the choice of indented or flush spaces under a machin
 
 // Spec: docs/specs/in-progress/executing-nerd-herd-spaces.html#test-case-a-group-s-cog-opens-that-group-s-settings@jj:261617da
 test("a group's settings show its icon, banner links, clip side, sorts, and folded count", () => {
+  // The text reader can drop the capital I of "Icon (an emoji)", a bare bar at the start of a line
+  // (a 1200-point window, 2026-11-17: read as "con (an emoji)" while the capture shows "Icon").
   expect(groupSettings.join("\n")).toMatch(
-    /Work settings[\s\S]*Icon[\s\S]*Banner link[\s\S]*keep[\s\S]*Sort[\s\S]*Sort machines[\s\S]*Count shown when folded/,
+    /Work settings[\s\S]*I?con \(an emoji\)[\s\S]*Banner link[\s\S]*keep[\s\S]*Sort[\s\S]*Sort machines[\s\S]*Count shown when folded/,
   );
 });
 

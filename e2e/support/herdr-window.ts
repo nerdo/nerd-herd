@@ -3,19 +3,18 @@
 // tabs, or terminals: they only send commands to nerd-herd and read what the window draws.
 
 import { spawnSync } from "node:child_process";
-import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "@playwright/test";
 import { e2eSettings } from "./e2e-settings";
+import { savedWindowSize, type WindowPoints } from "./saved-window";
+import { linesIn, type PlacedLine, rowsIn } from "./text-rows";
+
+export type { PlacedLine };
 
 export type ScreenLines = readonly string[];
 export type MachineName = string;
-/** One line of the sidebar as drawn: its text, and its left edge in points from the window's left. */
-export interface PlacedLine {
-  readonly text: string;
-  readonly left: number;
-}
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const sleep = (ms: number) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
@@ -28,20 +27,6 @@ const run = (cmd: string[], env: Record<string, string> = {}) => {
     encoding: "utf8",
   });
   return { code: p.status, out: p.stdout ?? "", err: p.stderr ?? "" };
-};
-
-/** The window's width in points from Herdr's window.json ({ bounds: [x, y, width, height] }). */
-const windowWidthIn = (window: unknown): number => {
-  const bounds =
-    typeof window === "object" &&
-    window !== null &&
-    "bounds" in window &&
-    Array.isArray(window.bounds)
-      ? window.bounds
-      : [];
-  const width = bounds[2];
-  if (typeof width !== "number") throw new Error("window.json has no window width");
-  return width;
 };
 
 export class HerdrWindow {
@@ -59,7 +44,11 @@ export class HerdrWindow {
   }
 
   /** Starts a fresh test home with the project's own start command, the way a person starts it. */
-  start(seed: Record<string, unknown> = {}): void {
+  start(
+    seed: Record<string, unknown> = {},
+    size: WindowPoints = e2eSettings.windowSize,
+  ): void {
+    this.size = size;
     rmSync(this.home, { recursive: true, force: true });
     mkdirSync(this.home, { recursive: true });
     this.prepareFakeCurl();
@@ -71,6 +60,7 @@ export class HerdrWindow {
     );
     const r = run(["bun", "run", "start"], this.env());
     if (r.code !== 0) throw new Error(`bun run start failed: ${r.out}\n${r.err}`);
+    this.applySize();
     // Spaces and Agents share the sidebar evenly, so a long Spaces list is cut off at Agents and its
     // reading depends on where Herdr scrolled it. Like a person dragging the divider down, give
     // Spaces most of the height; Herdr keeps the size in this home, through restarts too.
@@ -82,6 +72,18 @@ export class HerdrWindow {
     this.stop();
     const r = run(["bun", "run", "start"], this.env());
     if (r.code !== 0) throw new Error(`bun run start failed: ${r.out}\n${r.err}`);
+    this.applySize();
+  }
+
+  /** The size this walk asked for; Herdr would otherwise take the size the window manager gives. */
+  private size: WindowPoints = e2eSettings.windowSize;
+
+  /** Floats the test window and gives it this walk's size, through yabai when it runs. */
+  private applySize(): void {
+    const { width, height } = this.size;
+    const r = run(["bun", "scripts/size-window.ts", String(width), String(height)], this.env());
+    if (r.code !== 0) throw new Error(`size-window failed: ${r.out}\n${r.err}`);
+    sleep(400);
   }
 
   stop(): void {
@@ -133,7 +135,6 @@ export class HerdrWindow {
     sleep(400);
   }
 
-  /** Captures the window and returns the text drawn in the sidebar column, top to bottom. */
   /**
    * Returns the sidebar's text once the screen has settled: readings 1.5 s apart until two in a row
    * agree, up to 8 readings. A person looks again when something is still loading, such as a banner.
@@ -156,15 +157,17 @@ export class HerdrWindow {
     if (s.code !== 0) throw new Error(`herdr-app shot failed: ${s.out}\n${s.err}`);
     const t = run([e2eSettings.readText, shot]);
     if (t.code !== 0) throw new Error(`read-text failed: ${t.err}`);
-    return t.out
-      .split("\n")
-      .map((line) => line.split("\t"))
-      .flatMap(([pos, text]) => {
-        const top = Number((pos ?? "").split(" ")[1]);
-        return text && !Number.isNaN(top) ? [{ top, text: text.trim() }] : [];
-      })
-      .sort((a, b) => a.top - b.top)
-      .map((l) => l.text);
+    return linesIn(t.out);
+  }
+
+  /**
+   * An open dialog's text, read the way a person reads a dialog taller than the window: the top, then
+   * again after Page Down (the dialog-end key) brings its end into view.
+   */
+  readDialog(): ScreenLines {
+    const top = this.readWindow();
+    this.key("dialog-end");
+    return [...top, ...this.readWindow()];
   }
 
   /**
@@ -202,36 +205,18 @@ export class HerdrWindow {
     const edge = this.sidebarEdge(shot);
     const t = run([e2eSettings.readText, shot, String(edge)]);
     if (t.code !== 0) throw new Error(`read-text failed: ${t.err}`);
-    const blocks = t.out
-      .split("\n")
-      .map((line) => line.split("\t"))
-      .flatMap(([pos, text]) => {
-        const [left, top] = (pos ?? "").split(" ").map(Number);
-        return left !== undefined && top !== undefined && text && left < edge
-          ? [{ left, top, text: text.trim() }]
-          : [];
-      })
-      .sort((a, b) => a.top - b.top);
-    // Blocks drawn on one row (tops within a third of a row) are one line, read left to right.
-    const rows: { top: number; blocks: typeof blocks }[] = [];
-    for (const b of blocks) {
-      const row = rows.at(-1);
-      if (row && b.top - row.top < 0.008) row.blocks.push(b);
-      else rows.push({ top: b.top, blocks: [b] });
-    }
-    const points = this.windowPoints(shot);
-    return rows.map((r) => {
-      const sorted = r.blocks.sort((a, b) => a.left - b.left);
-      return { text: sorted.map((b) => b.text).join(" "), left: (sorted[0]?.left ?? 0) * points };
-    });
+    return rowsIn(t.out, edge, this.windowPoints(shot));
+  }
+
+  /** The window's size in points, as Herdr saved it in window.json; null before Herdr writes it. */
+  windowSize(): WindowPoints | null {
+    return savedWindowSize(this.home);
   }
 
   /** The window's width in points: window.json, or until Herdr writes it, the screenshot's width
    *  (they were equal on 2026-11-17, both 1069). */
   private windowPoints(shot: string): number {
-    return existsSync(join(this.home, "window.json"))
-      ? windowWidthIn(JSON.parse(readFileSync(join(this.home, "window.json"), "utf8")))
-      : readFileSync(shot).readUInt32BE(16);
+    return this.windowSize()?.width ?? readFileSync(shot).readUInt32BE(16);
   }
 
   /**

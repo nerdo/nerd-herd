@@ -18,7 +18,7 @@ import { type App, createApp } from "./app";
 import { errorCard } from "./errorCard";
 import { groupHeaderView } from "./groupHeaderView";
 import { herdrHost } from "./herdrHost";
-import { openMenu, openPanel, type Panel } from "./panels/formParts";
+import { DialogScroll, openMenu, openPanel, type Panel } from "./panels/formParts";
 import { openFromCommand, panelFor } from "./panels/panelFor";
 import { marked, type RowMark } from "./rowMark";
 import { themeColor } from "./themeColor";
@@ -48,6 +48,8 @@ export default class NerdHerdSpaces extends Spaces {
   app: App;
   /** Set when this view is one of the mod's dialogs or popups rather than the sidebar. */
   panel: Panel | null = null;
+  /** Where this dialog's body is scrolled to; moved by Page Down and Page Up. */
+  dialogScroll: DialogScroll;
   /** The keyboard's focused row and cut row. */
   keys: KeyState = { focused: null, cut: null };
   keyboard: FocusHandle;
@@ -58,6 +60,8 @@ export default class NerdHerdSpaces extends Spaces {
     this.app = createApp(herdrHost, newGroupId);
     if (props()?.overlay) {
       this.panel = panelFor(props(), this.app.view(), cx);
+      this.dialogScroll = new DialogScroll();
+      if (!checking()) this.dialogKeys(cx);
       return;
     }
     super.init(initial, cx);
@@ -72,6 +76,8 @@ export default class NerdHerdSpaces extends Spaces {
             this.keyboard.focus();
             return;
           }
+          // Page Down and Page Up are for an open dialog, whose own copy of the mod moves its body.
+          if (command === "dialog-end" || command === "dialog-start") return;
           if (command === "data-dismiss") {
             this.app.dismiss();
             cx.notify();
@@ -102,6 +108,18 @@ export default class NerdHerdSpaces extends Spaces {
     });
   }
 
+  /** A dialog's keys: Page Down brings its body's end into view, Page Up its start. */
+  dialogKeys(cx: AsyncContext): void {
+    cx.spawn(async (cx) => {
+      for await (const command of commands()) {
+        if (command === "dialog-end") this.dialogScroll.end();
+        else if (command === "dialog-start") this.dialogScroll.start();
+        else continue;
+        cx.notify();
+      }
+    });
+  }
+
   /** Applies one key from the mod's keys.json section. */
   key(command: KeyCommand): void {
     const view = this.app.view();
@@ -110,7 +128,7 @@ export default class NerdHerdSpaces extends Spaces {
     if (effect?.kind === "command") this.app.apply(effect.command);
     if (effect?.kind === "rename") {
       const name = view.groups.groups.find((g) => g.id === effect.group)?.name ?? "";
-      openPanel({ panel: "name", target: { kind: "group", group: effect.group, name } }, 200);
+      openPanel({ panel: "name", target: { kind: "group", group: effect.group, name } });
     }
   }
 
@@ -219,12 +237,12 @@ export default class NerdHerdSpaces extends Spaces {
       .flex_none()
       .child(
         button("spaces-settings", "settings", "Spaces settings", () =>
-          openPanel({ panel: "spaces-settings" }, 420),
+          openPanel({ panel: "spaces-settings" }),
         ),
       )
       .child(
         button("group-new", "folder-plus", newGroupLabel(word), () =>
-          openPanel({ panel: "name", target: { kind: "new", parent: null } }, 200),
+          openPanel({ panel: "name", target: { kind: "new", parent: null } }),
         ),
       );
   }
@@ -261,7 +279,7 @@ export default class NerdHerdSpaces extends Spaces {
         .child(super.render());
     const t = theme();
     return this.panel
-      ? this.panel.render(t)
+      ? this.panel.render(t, this.dialogScroll)
       : div().size_full().p(18).bg(themeColor(t, "popover")).child("Nothing to show here.");
   }
 }

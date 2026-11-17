@@ -14,6 +14,7 @@ import {
   send,
   type Theme,
   title,
+  type DialogScroll,
 } from "./formParts";
 
 const sorts = [
@@ -69,10 +70,11 @@ export class GroupSettingsPanel implements Panel {
     close();
   }
 
-  render(t: Theme) {
+  render(t: Theme, scroll: DialogScroll) {
     const w = this.word.toLowerCase();
     return dialog(
       t,
+      scroll,
       [
         title(t, `${this.group.name} settings`),
         label(t, "Icon (an emoji)"),

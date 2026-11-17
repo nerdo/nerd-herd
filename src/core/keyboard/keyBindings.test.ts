@@ -25,6 +25,16 @@ describe("nerd-herd's key bindings", () => {
       ],
     ]);
   });
+
+  // The user, 2026-11-17: "make the dialog walks scroll and read in pieces". A dialog taller than the
+  // window scrolls; Page Down brings its end into view and Page Up its start, on every platform.
+  test("Page Down and Page Up bring an open dialog's end and start into view", () => {
+    const section = keyBindings("darwin")["mod:nerd-herd-spaces"] ?? {};
+    expect([section.pagedown, section.pageup]).toEqual([
+      "nerd-herd-spaces.dialog-end",
+      "nerd-herd-spaces.dialog-start",
+    ]);
+  });
 });
 
 describe("merging nerd-herd's keys into a keys.json", () => {

@@ -17,6 +17,9 @@ export const keyBindings = (platform: Platform): KeySections => {
       f2: "nerd-herd-spaces.rename",
       [`${mod}-x`]: "nerd-herd-spaces.cut",
       [`${mod}-v`]: "nerd-herd-spaces.paste",
+      // In a dialog taller than the window: bring its end, or its start, into view.
+      pagedown: "nerd-herd-spaces.dialog-end",
+      pageup: "nerd-herd-spaces.dialog-start",
     },
   };
 };
