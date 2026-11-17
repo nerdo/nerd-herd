@@ -86,7 +86,7 @@ export const setCountMode = (saved: SavedGroups, id: GroupId, countMode: CountMo
 const maxNameLength: NameLength = 60;
 
 /** A typed group name, trimmed; refused when empty or longer than the limit. */
-const checkedName = (typed: GroupName): GroupName => {
+export const checkedName = (typed: GroupName): GroupName => {
   const name = typed.trim();
   if (name.length === 0) throw new GroupNameError("empty", 0);
   if (name.length > maxNameLength) throw new GroupNameError("tooLong", name.length);

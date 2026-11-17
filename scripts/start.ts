@@ -2,6 +2,7 @@
 // runs for the Herdr home, installs the mod and the nerd-herd layout there, and shows that layout.
 import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { keyBindings, mergeKeys } from "../src/core/keyboard/keyBindings";
 import { scriptSettings as s } from "./settings";
 
 const root = join(import.meta.dir, "..");
@@ -54,11 +55,28 @@ async function installLayout(): Promise<void> {
   );
 }
 
+/**
+ * Adds the Spaces mod's key section to the home's keys.json, keeping any section already there
+ * (Herdr's guide: merge a mod's keys into the person's). Herdr stops upgrading an edited keys.json,
+ * so the file as it was is kept beside it the first time.
+ */
+async function installKeys(): Promise<void> {
+  const file = join(s.herdrHome, "keys.json");
+  const before = await readFile(file, "utf8").catch(() => "{}");
+  const merged = mergeKeys(JSON.parse(before), keyBindings(process.platform));
+  const after = `${JSON.stringify(merged, null, 2)}\n`;
+  if (JSON.stringify(JSON.parse(before)) === JSON.stringify(merged)) return;
+  const backup = join(s.herdrHome, "keys.json.before-nerd-herd");
+  if (!(await Bun.file(backup).exists())) await writeFile(backup, before);
+  await writeFile(file, after);
+}
+
 const built = build();
 await ensureWindow();
 await mkdir(join(s.herdrHome, "mods", modName), { recursive: true });
 await cp(built, join(s.herdrHome, "mods", modName), { recursive: true });
 await installLayout();
+await installKeys();
 const shown = herdr("do", "layout.switch", "--name", "nerd-herd");
 if (shown.exitCode !== 0) throw new Error(`layout.switch failed: ${shown.stderr.toString()}`);
 console.log(`nerd-herd Spaces mod is running in the Herdr window for ${s.herdrHome}`);

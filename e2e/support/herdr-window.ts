@@ -61,9 +61,17 @@ export class HerdrWindow {
     run(["bun", "scripts/stop-window.ts"], this.env());
   }
 
+  /** Presses one of the Spaces mod's keys: sends the action its keys.json binding sends. */
+  key(name: string): void {
+    this.send(`nerd-herd-spaces.${name}`);
+  }
+
   /** Sends one action to the nerd-herd Spaces mod. */
   act(action: string, payload: unknown): void {
-    const command = `nerd-herd-spaces.${action}:${JSON.stringify(payload)}`;
+    this.send(`nerd-herd-spaces.${action}:${JSON.stringify(payload)}`);
+  }
+
+  private send(command: string): void {
     // Right after the layout switch the mod may not have loaded yet; Herdr says so and the command is retried.
     let r = run(["herdr-app", "do", command], this.env());
     for (
@@ -74,7 +82,7 @@ export class HerdrWindow {
       sleep(500);
       r = run(["herdr-app", "do", command], this.env());
     }
-    if (r.code !== 0) throw new Error(`action ${action} failed: ${r.out}\n${r.err}`);
+    if (r.code !== 0) throw new Error(`command ${command} failed: ${r.out}\n${r.err}`);
     sleep(400);
   }
 

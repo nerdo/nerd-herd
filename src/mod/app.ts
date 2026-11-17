@@ -2,7 +2,7 @@ import { type BannerCache, createBannerCache } from "../core/banners/bannerCache
 import { fetchBanner } from "../core/banners/fetchBanner";
 import { applyCommand } from "../core/commands/applyCommand";
 import type { NerdHerdError } from "../core/errors/nerdHerdError";
-import type { GroupId, SpacesRow } from "../core/groups/groupModel";
+import type { GroupId, SavedGroups, SpacesRow } from "../core/groups/groupModel";
 import { computeRows } from "../core/groups/groupRows";
 import { readSettings, type SidebarSettings } from "../core/settings/sidebarSettings";
 import { createGroupStore } from "../core/store/savedGroupStore";
@@ -16,6 +16,8 @@ const settingsKey = "nerd-herd.settings";
 /** Everything the Spaces view draws, computed from what Herdr saved. */
 export interface SpacesViewModel {
   readonly rows: readonly SpacesRow[];
+  /** The saved groups the rows were computed from, for the dialogs' current values. */
+  readonly groups: SavedGroups;
   readonly settings: SidebarSettings;
   readonly banners: BannerCache;
   /** Saved data that could not be read, to show as error cards. */
@@ -61,6 +63,7 @@ export function createApp(host: Host, newId: () => GroupId): App {
       const { groups, settings } = read();
       return {
         rows: computeRows(groups.groups, host.machines(), settings.settings),
+        groups: groups.groups,
         settings: settings.settings,
         banners,
         problems: [groups.problem, settings.problem].flatMap((p) => (p ? [p] : [])),

@@ -418,7 +418,8 @@ export class Spaces extends View {
             .text_size(11).text_color(t.foreground).bg(t.raised).cursor_pointer().hover(s => s.bg(t.hover))
             .on_click((_e, cx) => { cx.stop_propagation(); cx.write_to_clipboard(login); this.copiedLogin = login; cx.notify(); })
             .child(this.copiedLogin === login ? "Copied" : "Copy")))] : [];
-      const items = [cell(head), ...guidance, ...(folded ? [] : mine.length ? mine.map(draw) : [loading(m) ? loadingRow(m) : cell(empty)])];
+      // nerd-herd: the machine row passes through machineHead(), which marks it when it has keyboard focus.
+      const items = [cell(this.machineHead(m, head, t)), ...guidance, ...(folded ? [] : mine.length ? mine.map(draw) : [loading(m) ? loadingRow(m) : cell(empty)])];
       const first = folded ? -1 : mine.findIndex(r => r.w.active);
       if (first >= 0) this.activeAt = before + 1 + guidance.length + first;
       before += items.length;
@@ -437,6 +438,7 @@ export class Spaces extends View {
     return [null, ...remote].map((name) => ({ kind: "machine", name, depth: 0 }));
   }
   groupHeader() { return div(); }
+  machineHead(_m, head) { return head; }
   ungroupedHeader() { return div(); }
   headerTools() { return div(); }
   belowHeader() { return div(); }

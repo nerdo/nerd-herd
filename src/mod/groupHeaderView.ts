@@ -1,10 +1,11 @@
 import { h_flex, v_flex } from "gpui-base";
 import { type AsyncContext, div, type Element, image, svg } from "gpui-kit";
-import { layout, openOverlay } from "herdr";
+import { layout } from "herdr";
 import type { BannerState } from "../core/banners/bannerCache";
 import type { SpacesRow } from "../core/groups/groupModel";
 import { type GroupHeaderLook, groupHeaderLook } from "../core/presentation/groupHeaderLook";
 import { bannerOffset } from "../core/presentation/spacesText";
+import { openMenu, openPanel } from "./panels/formParts";
 import { themeColor } from "./themeColor";
 
 type GroupRow = Extract<SpacesRow, { kind: "group" }>;
@@ -41,22 +42,18 @@ const controls = (row: GroupRow, look: GroupHeaderLook, t: Theme): Element[] => 
         act();
       })
       .child(child);
-  const dialog = (panel: string, extra: Record<string, string>, height: number) => () =>
-    openOverlay({
-      mod: "nerd-herd-spaces",
-      kind: "dialog",
-      width: 420,
-      height,
-      props: { panel, ...extra },
-    });
   return [
     ...(has("count") ? [div().flex_none().child(String(row.count))] : []),
     click(
       "group-settings",
-      dialog("group-settings", { group: row.id }, 360),
+      () => openPanel({ panel: "group-settings", group: row.id }, 560),
       svg("mods/workspace-chrome/settings.svg").size(11),
     ),
-    click("group-add", dialog("new-group", { parent: row.id }, 220), div().px(4).child("+")),
+    click(
+      "group-add",
+      () => openPanel({ panel: "name", target: { kind: "new", parent: row.id } }, 200),
+      div().px(4).child("+"),
+    ),
     div().size(6).flex_none(),
     has("chevron")
       ? svg(`mods/workspace-chrome/chevron-${row.folded ? "right" : "down"}.svg`)
@@ -74,6 +71,7 @@ export const groupHeaderView = (
   fold: (cx: AsyncContext) => void,
 ): Element => {
   const look = groupHeaderLook(row, banner);
+  const menu = () => openMenu({ kind: "group", group: row.id, name: row.name }, 4);
   const strip = h_flex().px(8).gap(7).items_center().text_size(11).text_color(themeColor(t, "dim"));
   if (look.kind === "banner") {
     const { file } = look;
@@ -88,6 +86,7 @@ export const groupHeaderView = (
       .overflow_x_hidden()
       .cursor_pointer()
       .on_click((_e, cx) => fold(cx))
+      .on_mouse_down("right", menu)
       .child(
         image(file.path)
           .w(file.width)
@@ -117,6 +116,7 @@ export const groupHeaderView = (
     .cursor_pointer()
     .hover((s) => s.bg(themeColor(t, "hover")))
     .on_click((_e, cx) => fold(cx))
+    .on_mouse_down("right", menu)
     .child(
       row.icon
         ? div().flex_none().child(row.icon.value)
