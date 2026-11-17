@@ -81,4 +81,79 @@ describe("applying a command", () => {
       caught instanceof CommandError && caught.userAction,
     ]).toEqual([true, "report"]);
   });
+
+  // Statements gained from the spec's group menu (Rename, Delete, Move to…, Settings), group settings,
+  // drag and drop, and Spaces settings: each reaches the sidebar as one of these commands.
+  test("group-rename renames the named group", () => {
+    const s = run(
+      start,
+      'group-make:{"name":"Work"}',
+      'group-rename:{"group":"Work","name":"Job"}',
+    );
+    expect(s.groups.groups.map((g) => g.name)).toEqual(["Job"]);
+  });
+
+  test("group-delete deletes the named group", () => {
+    const s = run(start, 'group-make:{"name":"Work"}', 'group-delete:{"group":"Work"}');
+    expect(s.groups.groups).toEqual([]);
+  });
+
+  test("group-move nests the named group inside another", () => {
+    const s = run(
+      start,
+      'group-make:{"name":"Work"}',
+      'group-make:{"name":"Clients"}',
+      'group-move:{"group":"Clients","parent":"Work"}',
+    );
+    expect(groupNamed(s, "Clients")?.parent).toBe(groupNamed(s, "Work")?.id ?? "missing");
+  });
+
+  test("group-move with before places the group ahead of that sibling", () => {
+    const s = run(
+      start,
+      'group-make:{"name":"Work"}',
+      'group-make:{"name":"Personal"}',
+      'group-move:{"group":"Personal","parent":null,"before":"Work"}',
+    );
+    expect(s.groups.groups.map((g) => g.name)).toEqual(["Personal", "Work"]);
+  });
+
+  test("machine-move with before places the machine ahead of that machine", () => {
+    const s = run(
+      start,
+      'machine-move:{"machine":"alpha","group":null}',
+      'machine-move:{"machine":"beta","group":null,"before":"alpha"}',
+    );
+    expect(s.groups.placements.map((p) => p.name)).toEqual(["beta", "alpha"]);
+  });
+
+  test("group-set sets the options it names on the named group", () => {
+    const s = run(
+      start,
+      'group-make:{"name":"Work"}',
+      'group-set:{"group":"Work","icon":"💼","clip":"center","countMode":"directItems","chevron":false,"align":"bottom"}',
+    );
+    const w = groupNamed(s, "Work");
+    expect([w?.icon, w?.clip, w?.countMode, w?.chevron, w?.align]).toEqual([
+      { kind: "emoji", value: "💼" },
+      "center",
+      "directItems",
+      false,
+      "bottom",
+    ]);
+  });
+
+  test("group-set with a null icon clears the group's icon", () => {
+    const s = run(
+      start,
+      'group-make:{"name":"Work","icon":"💼"}',
+      'group-set:{"group":"Work","icon":null}',
+    );
+    expect(groupNamed(s, "Work")?.icon).toBeNull();
+  });
+
+  test("settings-ungrouped turns the ungrouped header on and names it", () => {
+    const s = run(start, 'settings-ungrouped:{"header":true,"name":"Unsorted"}');
+    expect([s.settings.ungroupedHeader, s.settings.ungroupedName]).toEqual([true, "Unsorted"]);
+  });
 });

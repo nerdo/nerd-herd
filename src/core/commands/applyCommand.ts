@@ -1,5 +1,15 @@
 import { NerdHerdError } from "../errors/nerdHerdError";
-import { makeGroup, placeMachine, setBanner, setFolded, setSort } from "../groups/groupActions";
+import {
+  deleteGroup,
+  makeGroup,
+  nestGroup,
+  placeMachine,
+  renameGroup,
+  setBanner,
+  setFolded,
+  setLook,
+  setSort,
+} from "../groups/groupActions";
 import type { GroupId, GroupName, SavedGroups } from "../groups/groupModel";
 import { z } from "../schema/zod";
 import type { SidebarSettings } from "../settings/sidebarSettings";
@@ -37,13 +47,29 @@ const payloads = {
     open: z.string().nullable().optional(),
     folded: z.string().nullable().optional(),
   }),
-  "machine-move": z.object({ machine: z.string().nullable(), group: name.nullable() }),
+  "machine-move": z.object({
+    machine: z.string().nullable(),
+    group: name.nullable(),
+    before: z.string().nullable().optional(),
+  }),
   "sort-set": z.object({
     group: name.nullable(),
     subgroups: sort.optional(),
     machines: sort.optional(),
   }),
   "group-fold": z.object({ group: name, folded: z.boolean() }),
+  "group-rename": z.object({ group: name, name: z.string() }),
+  "group-delete": z.object({ group: name }),
+  "group-move": z.object({ group: name, parent: name.nullable(), before: name.optional() }),
+  "group-set": z.object({
+    group: name,
+    icon: z.string().min(1).nullable().optional(),
+    clip: z.enum(["left", "center"]).optional(),
+    countMode: z.enum(["allMachines", "directMachines", "directItems"]).optional(),
+    chevron: z.boolean().optional(),
+    align: z.enum(["top", "middle", "bottom"]).optional(),
+  }),
+  "settings-ungrouped": z.object({ header: z.boolean().optional(), name: name.optional() }),
 } as const;
 type Action = keyof typeof payloads;
 const isAction = (a: string): a is Action => a in payloads;
@@ -102,7 +128,14 @@ export const applyCommand = (
     }
     case "machine-move": {
       const p = check(payloads["machine-move"]);
-      return { ...state, groups: placeMachine(g, p.machine, resolveOrTop(g, p.group, command)) };
+      const group = resolveOrTop(g, p.group, command);
+      return {
+        ...state,
+        groups:
+          p.before === undefined
+            ? placeMachine(g, p.machine, group)
+            : placeMachine(g, p.machine, group, p.before),
+      };
     }
     case "sort-set": {
       const p = check(payloads["sort-set"]);
@@ -114,6 +147,43 @@ export const applyCommand = (
     case "group-fold": {
       const p = check(payloads["group-fold"]);
       return { ...state, groups: setFolded(g, resolve(g, p.group, command), p.folded) };
+    }
+    case "group-rename": {
+      const p = check(payloads["group-rename"]);
+      return { ...state, groups: renameGroup(g, resolve(g, p.group, command), p.name) };
+    }
+    case "group-delete": {
+      const p = check(payloads["group-delete"]);
+      return { ...state, groups: deleteGroup(g, resolve(g, p.group, command)) };
+    }
+    case "group-move": {
+      const p = check(payloads["group-move"]);
+      const id = resolve(g, p.group, command);
+      const parent = resolveOrTop(g, p.parent, command);
+      const place = p.before === undefined ? undefined : { before: resolve(g, p.before, command) };
+      return { ...state, groups: nestGroup(g, id, parent, place) };
+    }
+    case "group-set": {
+      const p = check(payloads["group-set"]);
+      const { group, icon, ...look } = p;
+      const options = {
+        ...Object.fromEntries(Object.entries(look).filter(([, v]) => v !== undefined)),
+        ...(icon === undefined
+          ? {}
+          : { icon: icon === null ? null : { kind: "emoji" as const, value: icon } }),
+      };
+      return { ...state, groups: setLook(g, resolve(g, group, command), options) };
+    }
+    case "settings-ungrouped": {
+      const p = check(payloads["settings-ungrouped"]);
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          ungroupedHeader: p.header ?? state.settings.ungroupedHeader,
+          ungroupedName: p.name ?? state.settings.ungroupedName,
+        },
+      };
     }
   }
 };

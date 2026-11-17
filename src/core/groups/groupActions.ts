@@ -143,6 +143,12 @@ export const placeMachine = (
 
 export const setFolded = (saved: SavedGroups, id: GroupId, folded: boolean): SavedGroups =>
   update(saved, id, { folded });
+/** The options a group's settings change, set together; a field left out keeps its value. */
+export type GroupLook = Partial<
+  Pick<SavedGroup, "icon" | "clip" | "countMode" | "chevron" | "align">
+>;
+export const setLook = (saved: SavedGroups, id: GroupId, look: GroupLook): SavedGroups =>
+  update(saved, id, look);
 export const setIcon = (saved: SavedGroups, id: GroupId, icon: GroupIcon | null): SavedGroups =>
   update(saved, id, { icon });
 export const setBanner = (
