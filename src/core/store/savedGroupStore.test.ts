@@ -47,6 +47,16 @@ describe("saved group store", () => {
     ]).toEqual([emptyGroups, "not groups", true, "report"]);
   });
 
+  // Statement gained when the damaged-data walk found the error card missing: the read that backs
+  // up the damaged groups may happen in a view Herdr then replaces, so every later read reports the
+  // problem too, while the backup is kept.
+  test("after damaged groups were backed up, a later read still reports the problem", () => {
+    const { shared } = memoryShared({ "nerd-herd.groups": "not groups" });
+    const store = createGroupStore(shared);
+    store.load();
+    expect(store.load().problem).toBeInstanceOf(SavedDataError);
+  });
+
   // Spec: docs/specs/in-progress/executing-nerd-herd-spaces.html#test-case-with-no-groups-spaces-lists-machines-the-way-herdr-does@jj:093e16ca
   // A first start has nothing saved: no groups, and nothing to report.
   test("nothing saved reads as no groups and no problem", () => {

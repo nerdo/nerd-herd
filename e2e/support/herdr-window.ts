@@ -3,7 +3,7 @@
 // tabs, or terminals: they only send commands to nerd-herd and read what the window draws.
 
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { e2eSettings } from "./e2e-settings";
@@ -24,6 +24,20 @@ const run = (cmd: string[], env: Record<string, string> = {}) => {
   return { code: p.status, out: p.stdout ?? "", err: p.stderr ?? "" };
 };
 
+/** The window's width in points from Herdr's window.json ({ bounds: [x, y, width, height] }). */
+const windowWidthIn = (window: unknown): number => {
+  const bounds =
+    typeof window === "object" &&
+    window !== null &&
+    "bounds" in window &&
+    Array.isArray(window.bounds)
+      ? window.bounds
+      : [];
+  const width = bounds[2];
+  if (typeof width !== "number") throw new Error("window.json has no window width");
+  return width;
+};
+
 export class HerdrWindow {
   readonly home = e2eSettings.home;
   private shots = 0;
@@ -39,13 +53,16 @@ export class HerdrWindow {
   }
 
   /** Starts a fresh test home with the project's own start command, the way a person starts it. */
-  start(): void {
+  start(seed: Record<string, unknown> = {}): void {
     rmSync(this.home, { recursive: true, force: true });
     mkdirSync(this.home, { recursive: true });
     this.prepareFakeCurl();
     // A person closes Herdr's welcome screen once; its close button records "skipped" in Herdr's shared
     // state (frame/welcome/main.js), and Herdr then never shows it again. The fresh home starts so.
-    writeFileSync(join(this.home, "shared.json"), JSON.stringify({ "frame.welcomed": "skipped" }));
+    writeFileSync(
+      join(this.home, "shared.json"),
+      JSON.stringify({ "frame.welcomed": "skipped", ...seed }),
+    );
     const r = run(["bun", "run", "start"], this.env());
     if (r.code !== 0) throw new Error(`bun run start failed: ${r.out}\n${r.err}`);
     // Spaces and Agents share the sidebar evenly, so a long Spaces list is cut off at Agents and its
@@ -155,7 +172,7 @@ export class HerdrWindow {
     const shot = join(this.home, `shot-${this.shots}.png`);
     const s = run(["herdr-app", "shot", shot], this.env());
     if (s.code !== 0) throw new Error(`herdr-app shot failed: ${s.out}\n${s.err}`);
-    const edge = this.sidebarEdge();
+    const edge = this.sidebarEdge(shot);
     const t = run([e2eSettings.readText, shot, String(edge)]);
     if (t.code !== 0) throw new Error(`read-text failed: ${t.err}`);
     const blocks = t.out
@@ -188,7 +205,7 @@ export class HerdrWindow {
    * Herdr's zoom (settings.json; Herdr's status does not report it), over the window's width in points
    * (window.json). The screenshot covers the window, so the fraction holds at any pixel density.
    */
-  private sidebarEdge(): number {
+  private sidebarEdge(shot: string): number {
     const json = (file: string): unknown => JSON.parse(readFileSync(join(this.home, file), "utf8"));
     const width = findSidebarPx(json("layouts/nerd-herd.json"));
     const settings = json("settings.json");
@@ -199,16 +216,11 @@ export class HerdrWindow {
       typeof settings.zoom === "number"
         ? settings.zoom
         : 1;
-    const window = json("window.json");
-    const bounds =
-      typeof window === "object" &&
-      window !== null &&
-      "bounds" in window &&
-      Array.isArray(window.bounds)
-        ? window.bounds
-        : [];
-    const windowWidth = bounds[2];
-    if (typeof windowWidth !== "number") throw new Error("window.json has no window width");
+    // Herdr writes window.json some time after a fresh home opens; until then the screenshot's own
+    // width stands in, which equals the window's width in points (both 1069 on 2026-11-17).
+    const windowWidth = existsSync(join(this.home, "window.json"))
+      ? windowWidthIn(json("window.json"))
+      : readFileSync(shot).readUInt32BE(16);
     return (width * zoom) / windowWidth;
   }
 

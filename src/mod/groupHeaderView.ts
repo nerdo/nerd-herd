@@ -5,6 +5,7 @@ import type { BannerState } from "../core/banners/bannerCache";
 import type { SpacesRow } from "../core/groups/groupModel";
 import { type GroupHeaderLook, groupHeaderLook } from "../core/presentation/groupHeaderLook";
 import { bannerOffset } from "../core/presentation/spacesText";
+import { errorCard } from "./errorCard";
 import { openMenu, openPanel } from "./panels/formParts";
 import { themeColor } from "./themeColor";
 
@@ -143,19 +144,7 @@ export const groupHeaderView = (
     )
     .child(div().flex_1().truncate().text_color(themeColor(t, "muted")).child(row.name))
     .children(controls(row, look, t));
-  const card =
-    look.card === null
-      ? null
-      : div()
-          .flex_none()
-          .mx(4)
-          .p(8)
-          .rounded(6)
-          .border_1()
-          .border_color(themeColor(t, "blocked"))
-          .text_size(11)
-          .text_color(themeColor(t, "foreground"))
-          .child(look.card);
+  const card = look.card === null ? null : errorCard(t, look.card);
   return v_flex()
     .flex_none()
     .ml(row.depth * 12)

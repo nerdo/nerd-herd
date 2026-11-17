@@ -54,9 +54,12 @@ const SavedGroupsSchema = z.object({
 export const createGroupStore = (shared: SharedState): GroupStore => ({
   load: () => {
     const saved = shared.read(groupsKey);
-    if (saved === undefined || saved === null) return { groups: emptyGroups, problem: null };
+    // While a backup of damaged groups is kept, every read reports it, so its error card stays.
+    const backedUp = (): SavedDataError | null =>
+      shared.read(backupKey) === undefined ? null : new SavedDataError("groups");
+    if (saved === undefined || saved === null) return { groups: emptyGroups, problem: backedUp() };
     const parsed = SavedGroupsSchema.safeParse(saved);
-    if (parsed.success) return { groups: parsed.data, problem: null };
+    if (parsed.success) return { groups: parsed.data, problem: backedUp() };
     shared.write(backupKey, saved);
     shared.write(groupsKey, emptyGroups);
     return { groups: emptyGroups, problem: new SavedDataError("groups", { cause: parsed.error }) };

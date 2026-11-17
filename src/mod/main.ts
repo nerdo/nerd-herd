@@ -1,4 +1,4 @@
-import { h_flex } from "gpui-base";
+import { h_flex, v_flex } from "gpui-base";
 import { type AsyncContext, div, type Element, type FocusHandle, svg } from "gpui-kit";
 import { checking, nextCommand, notify, props, theme } from "herdr";
 import { ulid } from "ulid";
@@ -15,6 +15,7 @@ import {
 } from "../core/keyboard/keyStep";
 import { newGroupLabel } from "../core/presentation/spacesText";
 import { type App, createApp } from "./app";
+import { errorCard } from "./errorCard";
 import { groupHeaderView } from "./groupHeaderView";
 import { herdrHost } from "./herdrHost";
 import { openMenu, openPanel, type Panel } from "./panels/formParts";
@@ -196,8 +197,9 @@ export default class NerdHerdSpaces extends Spaces {
   }
 
   belowHeader(t: Theme) {
-    const word = this.app.view().settings.groupWord;
-    return h_flex()
+    const view = this.app.view();
+    const word = view.settings.groupWord;
+    const button = h_flex()
       .id("group-new")
       .h(28)
       .mx(8)
@@ -211,6 +213,10 @@ export default class NerdHerdSpaces extends Spaces {
       .on_click(() => openPanel({ panel: "name", target: { kind: "new", parent: null } }, 200))
       .child(svg("mods/workspace-chrome/folder-plus.svg").size(12))
       .child(newGroupLabel(word));
+    return v_flex()
+      .flex_none()
+      .child(button)
+      .children(view.problems.map((p) => errorCard(t, p.message)));
   }
 
   render() {

@@ -24,7 +24,7 @@ describe("a group's banner controls", () => {
   test("a group saved before the banner control settings existed loads with their defaults", () => {
     const { chevron: _c, align: _a, ...older } = make(emptyGroups, "work", "Work").groups[0] ?? {};
     const store = createGroupStore({
-      read: () => ({ ...emptyGroups, groups: [older] }),
+      read: (key) => (key === "nerd-herd.groups" ? { ...emptyGroups, groups: [older] } : undefined),
       write: () => {},
     });
     const loaded = store.load();
