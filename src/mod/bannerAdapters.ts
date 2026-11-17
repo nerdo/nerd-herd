@@ -51,10 +51,3 @@ export const herdrFiles: FileStore = {
     await unlink(absolute(path));
   },
 };
-
-/** FNV-1a, 64 bits, as hex: a stable, distinct file name for a banner's bytes. */
-export const fnv1a = (bytes: Uint8Array): string => {
-  let h = 0xcbf29ce484222325n;
-  for (const b of bytes) h = BigInt.asUintN(64, (h ^ BigInt(b)) * 0x100000001b3n);
-  return h.toString(16).padStart(16, "0");
-};

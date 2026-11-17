@@ -1,12 +1,13 @@
 import { type BannerCache, createBannerCache } from "../core/banners/bannerCache";
 import { fetchBanner } from "../core/banners/fetchBanner";
+import { fileHash } from "../core/banners/fileHash";
 import { applyCommand } from "../core/commands/applyCommand";
 import type { NerdHerdError } from "../core/errors/nerdHerdError";
 import type { GroupId, SavedGroups, SpacesRow } from "../core/groups/groupModel";
 import { computeRows } from "../core/groups/groupRows";
 import { readSettings, type SidebarSettings } from "../core/settings/sidebarSettings";
 import { createGroupStore } from "../core/store/savedGroupStore";
-import { curlDownloader, fnv1a, herdrFiles } from "./bannerAdapters";
+import { curlDownloader, herdrFiles } from "./bannerAdapters";
 import type { Host } from "./herdrHost";
 
 /** Where downloaded banners are kept, relative to Herdr's app folder; hidden, so saving one does not reload the mod. */
@@ -39,7 +40,7 @@ export function createApp(host: Host, newId: () => GroupId): App {
     fetchBanner(link, {
       downloader: curlDownloader,
       files: herdrFiles,
-      hash: fnv1a,
+      hash: fileHash,
       folder: bannerFolder,
     }),
   );

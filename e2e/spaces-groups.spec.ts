@@ -1,6 +1,8 @@
 // The walking skeleton for the nerd-herd Spaces mod (spec: docs/specs/in-progress/executing-nerd-herd-spaces.html).
 // It walks the Narrative's skeleton journey in a test Herdr window and reads what the sidebar draws.
 
+import { readdirSync } from "node:fs";
+import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { HerdrWindow, type MachineName, type ScreenLines } from "./support/herdr-window";
 
@@ -8,6 +10,7 @@ const window = new HerdrWindow();
 let machine: MachineName;
 let foldedAfterRestart: ScreenLines;
 let openedAfterRestart: ScreenLines;
+let bannerFiles: string[];
 
 test.beforeAll(() => {
   machine = window.remoteMachine();
@@ -25,6 +28,7 @@ test.beforeAll(() => {
   foldedAfterRestart = window.read();
   window.act("group-fold", { group: "Work", folded: false });
   openedAfterRestart = window.read();
+  bannerFiles = readdirSync(join(window.home, "mods/nerd-herd-spaces/.banners"));
 });
 
 test.afterAll(() => window.stop());
@@ -49,4 +53,12 @@ test("Dannel renames the sidebar's word for groups to Environments, makes a Work
   expect(opened, "Work holds Clients, then the machine, then This computer").toMatch(
     new RegExp(`Clients[\\s\\S]*${machine}[\\s\\S]*This computer`),
   );
+});
+
+// Found by the 2026-11-17 production-path probe: in Herdr the file was "-16630bae599c670c.png", a
+// name command-line tools can read as an option. Herdr's engine is the only place it shows.
+test("a downloaded banner is saved under a name of hex digits", () => {
+  expect(bannerFiles.filter((f) => !f.endsWith(".tmp"))).toEqual([
+    expect.stringMatching(/^[0-9a-f]{16}\.png$/),
+  ]);
 });
