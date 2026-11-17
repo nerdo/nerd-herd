@@ -9,6 +9,7 @@
       "!docs",
       "!.e2e-home",
       "!.e2e-bin",
+      "!src/mod/vendor/**/*.js",
       "!scripts/serve-specs.js"
     ]
   },
@@ -27,14 +28,21 @@
         "useFilenamingConvention": {
           "level": "on",
           "options": {
-            "filenameCases": ["PascalCase", "camelCase", "kebab-case", "export"],
+            "filenameCases": [
+              "PascalCase",
+              "camelCase",
+              "kebab-case",
+              "export"
+            ],
             "strictCase": true,
             "requireAscii": true
           }
         },
         "noExcessiveLinesPerFile": {
           "level": "warn",
-          "options": { "maxLines": 300 }
+          "options": {
+            "maxLines": 300
+          }
         }
       }
     }

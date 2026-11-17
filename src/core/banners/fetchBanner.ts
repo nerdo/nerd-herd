@@ -159,7 +159,8 @@ const imageSize = (b: Uint8Array): ImageSize | null => {
 export const fetchBanner = async (link: BannerLink, deps: BannerDeps): Promise<BannerFile> => {
   const host = /^https:\/\/([^/?#:@\s]+)/i.exec(link)?.[1];
   if (!host) throw new BannerLinkError(link);
-  const temp = `${deps.folder}/download.tmp`;
+  // Each download has its own temporary file, so downloads that overlap never read each other's bytes.
+  const temp = `${deps.folder}/download-${crypto.randomUUID()}.tmp`;
   const result = await deps.downloader.download(link, temp);
   if (result.kind === "unreachable")
     throw new BannerUnreachableError(link, host, { cause: result.cause });

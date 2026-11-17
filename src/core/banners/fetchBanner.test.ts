@@ -26,6 +26,8 @@ class FakeDownloader implements Downloader {
     if (answer === undefined || answer === "unreachable")
       return { kind: "unreachable" as const, cause: "fake: cannot connect" };
     this.files.saved.set(to, answer.bytes);
+    // Answer on a later tick, as a real download does, so two downloads can overlap.
+    await new Promise((resolve) => setTimeout(resolve, 0));
     return {
       kind: "answered" as const,
       status: answer.status,
@@ -234,5 +236,20 @@ describe("fetching a banner", () => {
     });
     const error = await rejection(fetchBanner(link, deps));
     expect([error.userAction, files.saved.size]).toEqual(["fix", 0]);
+  });
+
+  // Statement gained when the walk found two loads at once failing on one shared download file:
+  // "Output BannerFile: ... the file at that path holds the same bytes" holds for overlapping fetches too.
+  test("two banners fetched at the same time each keep their own bytes", async () => {
+    const work = "https://example.test/work.png";
+    const home = "https://example.test/home.png";
+    const workBytes = png(240, 60, 1);
+    const homeBytes = png(240, 60, 2);
+    const { deps, files } = setup({
+      [work]: { status: 200, contentType: "image/png", bytes: workBytes },
+      [home]: { status: 200, contentType: "image/png", bytes: homeBytes },
+    });
+    const [a, b] = await Promise.all([fetchBanner(work, deps), fetchBanner(home, deps)]);
+    expect([files.saved.get(a.path), files.saved.get(b.path)]).toEqual([workBytes, homeBytes]);
   });
 });

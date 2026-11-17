@@ -1,3 +1,4 @@
+// biome-ignore lint/style/useNodejsImportProtocol: "fs/promises" is Herdr's module, not Node's; Herdr has no "node:" names.
 import { mkdir, readFile, unlink, writeFile } from "fs/promises";
 import { appHome, exec } from "herdr";
 import type { Downloader, DownloadResult, FilePath, FileStore } from "../core/banners/fetchBanner";

@@ -190,8 +190,8 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <li>Dropping a machine on a group lists that machine's spaces inside the group</li>
           <li>Dropping a machine between two machines puts it at that position</li>
           <li>Choosing alphabetical or reverse alphabetical sorts machines by name, and choosing custom again restores the dragged order</li>
-          <li>Folding a group hides its machines and keeps its header with the group's name and machine count</li>
-          <li>A group shows its chosen icon and banner in its header</li>
+          <li>Folding a group hides its machines and keeps its header with the group's machine count: on its row beside its name, or on its banner</li>
+          <li>A group without a loaded banner shows its chosen icon and name in its row</li>
           <li>Groups, their machines, the order, the fold state, and the look are the same after Herdr restarts</li>
           <li>An unreachable machine stays in its group and says it is unreachable</li>
           <li>This computer can be dropped into a group like any machine</li>
@@ -203,12 +203,16 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <li>Dropping a group on another group nests it inside that group</li>
           <li>Dropping a group into one of its own subgroups leaves every group where it was</li>
           <li>The Ungrouped header is renamed the same way as any group</li>
-          <li>A banner link is downloaded and shown as the group header's banner</li>
+          <li>A banner link is downloaded and shown in place of the group's row</li>
+          <li>A banner carries the group's controls on top of it: the cog, the + for a new subgroup, the machine count while folded, and the fold chevron</li>
+          <li>Each group can hide the fold chevron on its banner, and it shows by default</li>
+          <li>Each group places the controls on its banner at the top, middle, or bottom</li>
+          <li>A group whose banner is still loading shows its plain row until the banner is ready</li>
           <li>A group with one banner link shows that banner whether it is folded or open</li>
           <li>A group with an open banner and a folded banner shows the one that matches its state</li>
           <li>A banner shows at its image's own pixel size, and the sidebar edge clips whatever is wider</li>
           <li>A wide banner is clipped on the side its group chose, keeping the left edge by default</li>
-          <li>A banner link that fails to load shows an error card in the banner's place saying why</li>
+          <li>A banner link that fails to load shows the group's plain row with an error card beneath it saying why</li>
           <li>Renaming a group changes its name and keeps everything inside it</li>
           <li>Dropping a group at the top level or between two groups moves it there</li>
           <li>Dropping a machine below the groups takes it out of its group</li>
@@ -371,11 +375,19 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Evidence</dt> <dd data-field="evidence">2026-11-16, a probe mod in the test window (<code>.e2e-home/</code>): Herdr’s <code>fetch</code> answered status 200 but its response had no <code>arrayBuffer()</code> (<code>TypeError: not a function</code>). <code>fs.writeFile</code> saved a 3-byte <code>Uint8Array</code> and read it back. <code>curl</code> printed <code>200 image/png 13504</code>, and the saved file began with the PNG signature 137,80,78,71. <code>curl --proto =https</code> refused an <code>http</code> link with <code>Protocol "http" disabled</code>. A screenshot showed a 544 by 184 image drawn at that size in a 268-wide <code>overflow_x_hidden</code> box with its right side clipped, and a second box with the image shifted by a negative left margin (<code>ml(-138)</code>) showing its center.</dd>
         </dl>
       </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-17">
+        <h3>Banner as the group's row</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Does a banner sit beneath the group's row, or take its place?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">It takes the row's place: a group shows its row or its banner, never both. The icon and name are hidden while the banner shows. The group's controls sit on top of the banner: the cog (group settings), the + (a new subgroup inside this group), the machine count while folded, and the fold chevron. Each group can hide the chevron, for example when its open and folded banners already show the state; it shows by default. Each group places the controls at the top, middle, or bottom of the banner. While the banner is loading, and when it fails, the plain row shows instead, with the error card beneath it on a failure.</dd>
+          <dt>Context</dt> <dd data-field="context">The user, 2026-11-17: "when the banner is present, it would not show the row we display … the banner would effectively become that row, but you would still put any icons on top of it". The default placement was not stated; middle is in use until the user names one.</dd>
+        </dl>
+      </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Banner that fails to load</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">What does a group's header show when its banner link cannot be downloaded or is not an image?</dd>
-          <dt>Resolution</dt> <dd data-field="resolution">An error card in the banner's place with a clear message saying why, such as "404 Not Found". Each failure is its own error type carrying its facts as fields, and the card's message is rendered from those fields with the next step, per the user's error-handling standard.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">The group's plain row (icon, name, controls), with an error card beneath it giving a clear message saying why, such as "404 Not Found" (revised 2026-11-17, with <a href="#spec-question-banner-as-the-group-s-row">Banner as the group's row</a>). Each failure is its own error type carrying its facts as fields, and the card's message is rendered from those fields with the next step, per the user's error-handling standard.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -646,7 +658,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">It throws a banner error with <code>userAction</code> fix, limit 2 MB, and size 3 MB, with the message "The banner image is 3 MB; banners can be at most 2 MB. Use a smaller image.", and writes no file</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A banner link that fails to load shows an error card in the banner's place saying why" covers-module="Banner cache" status="pending">
+        <test-case traces-to="A banner link that fails to load shows the group's plain row with an error card beneath it saying why" covers-module="Banner cache" status="pending">
           <h4>A banner link answering 404 reports Not Found</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">A downloader that answers <code>https://example.test/missing.png</code> with HTTP 404 Not Found</dd>
@@ -654,7 +666,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">It throws a banner error with <code>userAction</code> fix, status 404, and the message "The banner link returned 404 Not Found. Check the link in Spaces settings."</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A banner link that fails to load shows an error card in the banner's place saying why" covers-module="Banner cache" status="pending">
+        <test-case traces-to="A banner link that fails to load shows the group's plain row with an error card beneath it saying why" covers-module="Banner cache" status="pending">
           <h4>A banner link to a web page reports that it is not an image</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">A downloader that answers <code>https://example.test/page</code> with HTTP 200 and content type <code>text/html</code></dd>
@@ -662,7 +674,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">It throws a banner error with <code>userAction</code> fix, content type <code>text/html</code>, and the message "The banner link opened a web page, not an image. Use a link that ends at the image itself."</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A banner link that fails to load shows an error card in the banner's place saying why" covers-module="Banner cache" status="pending">
+        <test-case traces-to="A banner link that fails to load shows the group's plain row with an error card beneath it saying why" covers-module="Banner cache" status="pending">
           <h4>A banner link to an unreachable host asks to try again</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">A downloader that cannot connect to <code>example.test</code></dd>
@@ -670,12 +682,76 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">It throws a banner error with <code>userAction</code> retry, host <code>example.test</code>, the downloader's failure as its cause, and the message "Couldn't reach example.test to load the banner. Try again in a moment (reference &lt;the error's reference id&gt;)."</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A banner link that fails to load shows an error card in the banner's place saying why" covers-module="Spaces sidebar mod" status="pending">
+        <test-case traces-to="A banner link is downloaded and shown in place of the group's row" covers-module="Spaces sidebar mod" status="pending">
+          <h4>A loaded banner takes the place of the group's row</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work, open, has a banner that has loaded</dd>
+            <dt>When</dt> <dd data-field="when">Work's header is drawn</dd>
+            <dt>Then</dt> <dd data-field="then">Work's header is the banner, and Work's row with its icon and name is not drawn</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A banner carries the group's controls on top of it: the cog, the + for a new subgroup, the machine count while folded, and the fold chevron" covers-module="Spaces sidebar mod" status="pending">
+          <h4>An open group's banner carries the cog, the + and the chevron</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work, open, has a banner that has loaded</dd>
+            <dt>When</dt> <dd data-field="when">Work's header is drawn</dd>
+            <dt>Then</dt> <dd data-field="then">The banner carries, in order, the cog, the + and the chevron, and no count</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A banner carries the group's controls on top of it: the cog, the + for a new subgroup, the machine count while folded, and the fold chevron" covers-module="Spaces sidebar mod" status="pending">
+          <h4>A folded group's banner carries its machine count</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work, folded and counting 2 machines, has a banner that has loaded</dd>
+            <dt>When</dt> <dd data-field="when">Work's header is drawn</dd>
+            <dt>Then</dt> <dd data-field="then">The banner carries, in order, the count 2, the cog, the + and the chevron</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Each group can hide the fold chevron on its banner, and it shows by default" covers-module="Group model" status="pending">
+          <h4>A new group shows the chevron on its banner</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">No groups</dd>
+            <dt>When</dt> <dd data-field="when">Work is made</dd>
+            <dt>Then</dt> <dd data-field="then">Work's row says the chevron shows</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Each group can hide the fold chevron on its banner, and it shows by default" covers-module="Spaces sidebar mod" status="pending">
+          <h4>A group set to hide the chevron draws its banner without one</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work, open, has a loaded banner and is set to hide the chevron</dd>
+            <dt>When</dt> <dd data-field="when">Work's header is drawn</dd>
+            <dt>Then</dt> <dd data-field="then">The banner carries the cog and the +, and no chevron</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Each group places the controls on its banner at the top, middle, or bottom" covers-module="Group model" status="pending">
+          <h4>A new group places its banner controls in the middle</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">No groups</dd>
+            <dt>When</dt> <dd data-field="when">Work is made</dd>
+            <dt>Then</dt> <dd data-field="then">Work's row places its banner controls in the middle</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Each group places the controls on its banner at the top, middle, or bottom" covers-module="Spaces sidebar mod" status="pending">
+          <h4>A group set to the bottom draws its banner controls at the bottom</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work has a loaded banner and its controls placed at the bottom</dd>
+            <dt>When</dt> <dd data-field="when">Work's header is drawn</dd>
+            <dt>Then</dt> <dd data-field="then">The banner's controls are placed at the bottom</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A group whose banner is still loading shows its plain row until the banner is ready" covers-module="Spaces sidebar mod" status="pending">
+          <h4>A banner still loading shows the plain row</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work has a banner link that has not loaded yet</dd>
+            <dt>When</dt> <dd data-field="when">Work's header is drawn</dd>
+            <dt>Then</dt> <dd data-field="then">Work's header is its plain row with its name and no card</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A banner link that fails to load shows the group's plain row with an error card beneath it saying why" covers-module="Spaces sidebar mod" status="pending">
           <h4>A failed banner draws an error card</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">Clients' banner link failed with the 404 banner error</dd>
             <dt>When</dt> <dd data-field="when">The Spaces section is drawn</dd>
-            <dt>Then</dt> <dd data-field="then">Clients' header holds a card, in the banner's place, reading "The banner link returned 404 Not Found. Check the link in Spaces settings."</dd>
+            <dt>Then</dt> <dd data-field="then">Clients' header is its plain row with its name, and beneath it a card reading "The banner link returned 404 Not Found. Check the link in Spaces settings."</dd>
           </dl>
         </test-case>
         <test-case traces-to="An unreachable machine stays in its group and says it is unreachable" covers-module="Group model" status="pending">
@@ -708,7 +784,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">One group named "Work" with zero machines</dd>
           </dl>
         </test-case>
-        <test-case traces-to="Folding a group hides its machines and keeps its header with the group's name and machine count" covers-module="Group model" status="pending">
+        <test-case traces-to="Folding a group hides its machines and keeps its header with the group's machine count: on its row beside its name, or on its banner" covers-module="Group model" status="pending">
           <h4>A folded group shows only its header</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">Work holds desk-work and is folded</dd>
@@ -903,7 +979,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">Personal's machines are desk-home then ai-sandbox</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A group shows its chosen icon and banner in its header" covers-module="Group model" status="pending">
+        <test-case traces-to="A group without a loaded banner shows its chosen icon and name in its row" covers-module="Group model" status="pending">
           <h4>A group header carries its icon and banner</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">Work's emoji icon is 💼 and its banner is a downloaded banner file</dd>
@@ -975,7 +1051,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then"><code>herdr-app status</code> lists one open overlay belonging to nerd-herd's Spaces settings</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A banner link is downloaded and shown as the group header's banner" covers-module="Banner cache" status="pending">
+        <test-case traces-to="A banner link is downloaded and shown in place of the group's row" covers-module="Banner cache" status="pending">
           <h4>A banner link becomes a file Herdr can show</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">A downloader that answers <code>https://example.test/work.png</code> with a PNG image's bytes</dd>

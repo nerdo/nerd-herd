@@ -26,10 +26,16 @@ const run = (cmd: string[], env: Record<string, string> = {}) => {
 
 export class HerdrWindow {
   readonly home = e2eSettings.home;
+  private shots = 0;
 
   private env(): Record<string, string> {
     // The fake curl copies the committed banner fixture, so tests need no internet.
-    return { HERDR_APP_HOME: this.home, PATH: `${e2eSettings.fakeBin}:${process.env.PATH ?? ""}` };
+    return {
+      HERDR_APP_HOME: this.home,
+      PATH: `${e2eSettings.fakeBin}:${process.env.PATH ?? ""}`,
+      // The test process owns the window: when it ends, even interrupted, the window is quit.
+      NERD_HERD_OWNER_PID: String(process.pid),
+    };
   }
 
   /** Starts a fresh test home with the project's own start command, the way a person starts it. */
@@ -72,43 +78,87 @@ export class HerdrWindow {
   }
 
   /** Captures the window and returns the text drawn in the sidebar column, top to bottom. */
+  /**
+   * Returns the sidebar's text once the screen has settled: readings 1.5 s apart until two in a row
+   * agree, up to 8 readings. A person looks again when something is still loading, such as a banner.
+   */
   read(): ScreenLines {
+    let last = this.readOnce();
+    for (let n = 1; n < 8; n++) {
+      const next = this.readOnce();
+      if (next.join("\n") === last.join("\n")) return next;
+      last = next;
+    }
+    return last;
+  }
+
+  private readOnce(): ScreenLines {
     sleep(1500);
-    const shot = join(this.home, "shot.png");
+    // Herdr's welcome screen can open late, over the sidebar; a person closes it before looking.
+    if (run(["herdr-app", "status"], this.env()).out.includes("frame-welcome")) {
+      run(["herdr-app", "do", "overlay.close", "--id", "frame-welcome"], this.env());
+      sleep(500);
+    }
+    // Every read keeps its own screenshot, numbered, so a failed reading can be checked by eye.
+    this.shots += 1;
+    const shot = join(this.home, `shot-${this.shots}.png`);
     const s = run(["herdr-app", "shot", shot], this.env());
     if (s.code !== 0) throw new Error(`herdr-app shot failed: ${s.out}\n${s.err}`);
-    const t = run([e2eSettings.readText, shot]);
+    const edge = this.sidebarEdge();
+    const t = run([e2eSettings.readText, shot, String(edge)]);
     if (t.code !== 0) throw new Error(`read-text failed: ${t.err}`);
-    const edge = this.sidebarEdge(shot);
-    return t.out
+    const blocks = t.out
       .split("\n")
       .map((line) => line.split("\t"))
       .flatMap(([pos, text]) => {
         const [left, top] = (pos ?? "").split(" ").map(Number);
         return left !== undefined && top !== undefined && text && left < edge
-          ? [{ top, text: text.trim() }]
+          ? [{ left, top, text: text.trim() }]
           : [];
       })
-      .sort((a, b) => a.top - b.top)
-      .map((l) => l.text);
+      .sort((a, b) => a.top - b.top);
+    // Blocks drawn on one row (tops within a third of a row) are one line, read left to right.
+    const rows: { top: number; blocks: typeof blocks }[] = [];
+    for (const b of blocks) {
+      const row = rows.at(-1);
+      if (row && b.top - row.top < 0.008) row.blocks.push(b);
+      else rows.push({ top: b.top, blocks: [b] });
+    }
+    return rows.map((r) =>
+      r.blocks
+        .sort((a, b) => a.left - b.left)
+        .map((b) => b.text)
+        .join(" "),
+    );
   }
 
-  /** The sidebar's right edge as a fraction of the screenshot: its width in points times the zoom, over the image width. */
-  private sidebarEdge(shot: string): number {
-    const layout: unknown = JSON.parse(
-      readFileSync(join(this.home, "layouts/nerd-herd.json"), "utf8"),
-    );
-    const width = findSidebarPx(layout);
-    const status: unknown = JSON.parse(run(["herdr-app", "status"], this.env()).out);
+  /**
+   * The sidebar's right edge as a fraction of the screenshot: its width in points (the layout) times
+   * Herdr's zoom (settings.json; Herdr's status does not report it), over the window's width in points
+   * (window.json). The screenshot covers the window, so the fraction holds at any pixel density.
+   */
+  private sidebarEdge(): number {
+    const json = (file: string): unknown => JSON.parse(readFileSync(join(this.home, file), "utf8"));
+    const width = findSidebarPx(json("layouts/nerd-herd.json"));
+    const settings = json("settings.json");
     const zoom =
-      typeof status === "object" &&
-      status !== null &&
-      "zoom" in status &&
-      typeof status.zoom === "number"
-        ? status.zoom
+      typeof settings === "object" &&
+      settings !== null &&
+      "zoom" in settings &&
+      typeof settings.zoom === "number"
+        ? settings.zoom
         : 1;
-    const png = readFileSync(shot);
-    return (width * zoom) / png.readUInt32BE(16);
+    const window = json("window.json");
+    const bounds =
+      typeof window === "object" &&
+      window !== null &&
+      "bounds" in window &&
+      Array.isArray(window.bounds)
+        ? window.bounds
+        : [];
+    const windowWidth = bounds[2];
+    if (typeof windowWidth !== "number") throw new Error("window.json has no window width");
+    return (width * zoom) / windowWidth;
   }
 
   /**
@@ -119,7 +169,7 @@ export class HerdrWindow {
   private closeWelcome({ expected }: { expected: boolean }): void {
     const showing = () => run(["herdr-app", "status"], this.env()).out.includes("frame-welcome");
     let seen = false;
-    for (let waited = 0; waited < (expected ? 15_000 : 5_000); waited += 500) {
+    for (let waited = 0; waited < (expected ? 15_000 : 12_000); waited += 500) {
       if (showing()) {
         seen = true;
         run(["herdr-app", "do", "overlay.close", "--id", "frame-welcome"], this.env());

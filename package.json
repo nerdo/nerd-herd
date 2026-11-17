@@ -9,7 +9,7 @@
     "lint": "biome lint .",
     "format": "biome format . --write",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.mod.json",
-    "test": "bun test src",
+    "test": "bun test src scripts",
     "test:watch": "bun test --watch src",
     "test:coverage": "bun test --coverage src",
     "test:e2e": "bun run e2e:tools && playwright test",
@@ -17,7 +17,7 @@
     "check:expected-failures": "! grep -rnE \"(test|it)\\.(fail|failing)\\(\" src e2e",
     "start": "bun scripts/start.ts",
     "dev": "bun scripts/start.ts",
-    "build": "bun build src/mod/main.ts --outdir dist/mods/nerd-herd-spaces --entry-naming main.js --format esm --target browser --external herdr --external gpui-kit --external gpui-base --external fs/promises && cp src/mod/mod.json dist/mods/nerd-herd-spaces/",
+    "build": "bun scripts/build.ts",
     "check:mod": "bun run build && herdr-app check dist/mods/nerd-herd-spaces",
     "check:all": "bun run lint && bun run typecheck && bun run test && bun run check:boundaries && bun run check:expected-failures && bun run build",
     "e2e:tools": "mkdir -p .e2e-bin && swiftc -O e2e/support/read-text.swift -o .e2e-bin/read-text"
