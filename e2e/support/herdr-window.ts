@@ -49,6 +49,7 @@ export class HerdrWindow {
     size: WindowPoints = e2eSettings.windowSize,
   ): void {
     this.size = size;
+    this.sidebarPx = null;
     rmSync(this.home, { recursive: true, force: true });
     mkdirSync(this.home, { recursive: true });
     this.prepareFakeCurl();
@@ -75,6 +76,9 @@ export class HerdrWindow {
     this.applySize();
   }
 
+  /** The sidebar width this walk last set, in points; null until it sets one. */
+  private sidebarPx: number | null = null;
+
   /** The size this walk asked for; Herdr would otherwise take the size the window manager gives. */
   private size: WindowPoints = e2eSettings.windowSize;
 
@@ -92,6 +96,11 @@ export class HerdrWindow {
 
   /** Runs one of Herdr's own commands with JSON arguments, as `herdr-app do <name> '<json>'`. */
   herdr(name: string, args: Record<string, unknown>): void {
+    // Herdr does not save a resize to the layout file at once, so the width this walk gave the
+    // sidebar is kept here for reading its column (2026-11-17: a 140-point rail read with the saved
+    // 268-point column took in terminal text beside it).
+    if (name === "layout.resize" && args.id === "sidebar" && typeof args.px === "number")
+      this.sidebarPx = args.px;
     const r = run(["herdr-app", "do", name, JSON.stringify(args)], this.env());
     if (r.code !== 0) throw new Error(`herdr-app do ${name} failed: ${r.out}\n${r.err}`);
     sleep(400);
@@ -226,7 +235,7 @@ export class HerdrWindow {
    */
   private sidebarEdge(shot: string): number {
     const json = (file: string): unknown => JSON.parse(readFileSync(join(this.home, file), "utf8"));
-    const width = findSidebarPx(json("layouts/nerd-herd.json"));
+    const width = this.sidebarPx ?? findSidebarPx(json("layouts/nerd-herd.json"));
     const settings = json("settings.json");
     const zoom =
       typeof settings === "object" &&

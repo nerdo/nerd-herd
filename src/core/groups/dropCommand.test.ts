@@ -62,6 +62,22 @@ describe("dropping a dragged row", () => {
     );
   });
 
+  // Found on the user's hand walk, 2026-11-17: dragging This computer above the Job group, with the
+  // line drawn above Job, put it inside Job. Dropped before a group, a machine joins that group's
+  // level, first among the machines there (groups come first at each level: the spec's
+  // "Subgroups first, then machines" decision).
+  test("a machine dropped before a top-level group goes to the top level, first among its machines", () => {
+    expect(dropCommand(machine("ai-sandbox"), group("personal"), "before", saved)).toEqual(
+      cmd("machine-move", { machine: "ai-sandbox", group: null, before: "desk-work" }),
+    );
+  });
+
+  test("a machine dropped before a subgroup goes to that subgroup's parent group", () => {
+    expect(dropCommand(machine("ai-sandbox"), group("clients"), "before", saved)).toEqual(
+      cmd("machine-move", { machine: "ai-sandbox", group: "work" }),
+    );
+  });
+
   test("a row dropped on itself does nothing", () => {
     expect(dropCommand(group("work"), group("work"), "onto", saved)).toBeNull();
   });

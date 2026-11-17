@@ -18,7 +18,8 @@ const command = (action: string, payload: unknown): DropEffect => ({
 });
 
 /**
- * The command a drop sends. A machine dropped onto a group moves into it; dropped on a machine it
+ * The command a drop sends. A machine dropped onto a group moves into it; dropped before a group it
+ * goes to that group's level, first among the machines there; dropped on a machine it
  * goes before that machine, in that machine's group. A group dropped onto a group nests inside it;
  * dropped before a group it moves beside that group, ahead of it; dropped on a machine it moves into
  * that machine's group. Cut and paste is a drop "onto" the focused row.
@@ -33,6 +34,16 @@ export const dropCommand = (
   const groupOf = (name: MachineName) =>
     saved.placements.find((p) => p.name === name)?.group ?? null;
   const parentOf = (id: GroupId) => saved.groups.find((g) => g.id === id)?.parent ?? null;
+  if (source.kind === "machine" && target.kind === "group" && zone === "before") {
+    // Groups come first at each level, so "before a group" is the start of that level's machines.
+    const level = parentOf(target.id);
+    const first = saved.placements.find((p) => p.group === level && p.name !== source.name);
+    return command("machine-move", {
+      machine: source.name,
+      group: level,
+      ...(first ? { before: first.name } : {}),
+    });
+  }
   if (source.kind === "machine")
     return target.kind === "group"
       ? command("machine-move", { machine: source.name, group: target.id })
