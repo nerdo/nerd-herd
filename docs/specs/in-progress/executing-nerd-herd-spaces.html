@@ -1158,6 +1158,63 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
     </details>
   </section>
 
+  <section class="end-user-validation" data-roles="qa">
+    <details open><summary><h2>End-user Validation</h2></summary>
+      <p>Walked 2026-11-17 in a test Herdr window started with the project's start command (<code>HERDR_APP_HOME=.e2e-home bun run start</code>), against the expectation list. “walk” is an end-to-end suite file under <code>e2e/</code> (skeleton, keyboard, parity, ungrouped, dialogs, damaged); “unit” is the core suite; “look” is a screenshot checked by eye; “needs pointer or typing” marks what this environment cannot do: Herdr's guide forbids pointer and key automation on the person's real display, so clicks, drags, and typing into dialogs are left for a person's hand walk.</p>
+      <table>
+        <thead><tr><th>#</th><th>Expectation</th><th>Checked by</th><th>Result</th></tr></thead>
+        <tbody>
+            <tr><td>1</td><td>The new-group button in Spaces adds an empty group that Dannel names</td><td>look; unit; needs pointer or typing</td><td>The new-group dialog opens with an empty Name field and Create; group-make makes the group. Typing the name needs the keyboard on the real display.</td></tr>
+            <tr><td>2</td><td>Dropping a machine on a group lists that machine&#x27;s spaces inside the group</td><td>walk; unit; needs pointer or typing</td><td>Skeleton walk: a machine moved into Work shows its spaces inside Work. dropCommand gives the move for a drop; the drag gesture needs the pointer.</td></tr>
+            <tr><td>3</td><td>Dropping a machine between two machines puts it at that position</td><td>unit; needs pointer or typing</td><td>dropCommand places a machine before the one it is dropped on; the drag needs the pointer.</td></tr>
+            <tr><td>4</td><td>Choosing alphabetical or reverse alphabetical sorts machines by name, and choosing custom again restores the dragged order</td><td>walk; unit</td><td>Skeleton walk sorts the top level alphabetically (Personal above Work); sort order tests cover all three choices.</td></tr>
+            <tr><td>5</td><td>Folding a group hides its machines and keeps its header with the group&#x27;s machine count: on its row beside its name, or on its banner</td><td>walk; unit; look</td><td>Folded Work shows its banner; the count 2 is drawn on it (screenshot) and computed by the group model; the walk does not read the dim digit reliably.</td></tr>
+            <tr><td>6</td><td>A group without a loaded banner shows its chosen icon and name in its row</td><td>look; unit</td><td>Clients and Personal rows show folder icon and name (screenshots).</td></tr>
+            <tr><td>7</td><td>Groups, their machines, the order, the fold state, and the look are the same after Herdr restarts</td><td>walk</td><td>Skeleton walk: groups, order, fold state, and banner are the same after Herdr restarts.</td></tr>
+            <tr><td>8</td><td>An unreachable machine stays in its group and says it is unreachable</td><td>unit; look</td><td>Group model keeps an unreachable machine in its group; laptop-travel shows “unreachable” (ungrouped, screenshot).</td></tr>
+            <tr><td>9</td><td>This computer can be dropped into a group like any machine</td><td>walk</td><td>Skeleton walk: This computer moved into Work.</td></tr>
+            <tr><td>10</td><td>Each group sorts what it holds, custom by default, with alphabetical and reverse alphabetical as the other choices</td><td>unit; walk</td><td>Per-group sorts in the group model; the group settings dialog shows both sort choices (dialogs walk).</td></tr>
+            <tr><td>11</td><td>Deleting a group moves its machines to the ungrouped machines below the groups</td><td>unit; walk</td><td>group-delete and deleteGroup tests; the menu lists Delete (dialogs walk). Clicking it needs the pointer.</td></tr>
+            <tr><td>12</td><td>Ungrouped machines show below the groups with no header, or under a header when that setting is on</td><td>walk</td><td>Ungrouped walk: the header shows when turned on.</td></tr>
+            <tr><td>13</td><td>Changing the word for groups to Environments shows Environments wherever the sidebar names groups</td><td>walk</td><td>Skeleton walk: the button reads “New environment” after the word changes.</td></tr>
+            <tr><td>14</td><td>The cog wheel beside the Spaces + opens Spaces settings</td><td>walk; needs pointer or typing</td><td>Dialogs walk: Spaces settings open as one overlay of the mod (opened by the open command the cog sends through). The click needs the pointer.</td></tr>
+            <tr><td>15</td><td>Dropping a group on another group nests it inside that group</td><td>unit</td><td>dropCommand nests a group dropped onto a group.</td></tr>
+            <tr><td>16</td><td>Dropping a group into one of its own subgroups leaves every group where it was</td><td>unit</td><td>Nesting into its own subgroup changes nothing (group model).</td></tr>
+            <tr><td>17</td><td>The Ungrouped header is renamed the same way as any group</td><td>walk</td><td>Ungrouped walk: renamed to “Unsorted”.</td></tr>
+            <tr><td>18</td><td>A banner link is downloaded and shown in place of the group&#x27;s row</td><td>walk</td><td>Skeleton walk: the banner is drawn and Work&#x27;s row is not.</td></tr>
+            <tr><td>19</td><td>A banner carries the group&#x27;s controls on top of it: the cog, the + for a new subgroup, the machine count while folded, and the fold chevron</td><td>unit; look</td><td>groupHeaderLook gives count, cog, +, chevron; screenshot shows them on the banner, aligned with the rows below.</td></tr>
+            <tr><td>20</td><td>Each group can hide the fold chevron on its banner, and it shows by default</td><td>unit</td><td>groupHeaderLook and the group model default.</td></tr>
+            <tr><td>21</td><td>Each group places the controls on its banner at the top, middle, or bottom</td><td>unit</td><td>groupHeaderLook places the controls; group-set saves the choice.</td></tr>
+            <tr><td>22</td><td>A group whose banner is still loading shows its plain row until the banner is ready</td><td>unit</td><td>groupHeaderLook shows the plain row while loading.</td></tr>
+            <tr><td>23</td><td>A group with one banner link shows that banner whether it is folded or open</td><td>walk; unit</td><td>One banner link shows folded (walk) and open (unit).</td></tr>
+            <tr><td>24</td><td>A group with an open banner and a folded banner shows the one that matches its state</td><td>unit</td><td>Group rows pick the banner for the state.</td></tr>
+            <tr><td>25</td><td>A banner shows at its image&#x27;s own pixel size, and the sidebar edge clips whatever is wider</td><td>unit; look</td><td>bannerOffset; the 240-pixel banner draws at its own size (screenshot).</td></tr>
+            <tr><td>26</td><td>A wide banner is clipped on the side its group chose, keeping the left edge by default</td><td>unit</td><td>bannerOffset left and center.</td></tr>
+            <tr><td>27</td><td>A banner link that fails to load shows the group&#x27;s plain row with an error card beneath it saying why</td><td>unit</td><td>Banner errors and the error card in groupHeaderLook; a failing link is not walked (the fake curl always succeeds).</td></tr>
+            <tr><td>28</td><td>Renaming a group changes its name and keeps everything inside it</td><td>unit</td><td>Renaming keeps contents (group model); the rename dialog opens filled in (look).</td></tr>
+            <tr><td>29</td><td>Dropping a group at the top level or between two groups moves it there</td><td>unit</td><td>dropCommand and group-move with before.</td></tr>
+            <tr><td>30</td><td>Dropping a machine below the groups takes it out of its group</td><td>unit</td><td>Dropping on an ungrouped machine ungroups (dropCommand).</td></tr>
+            <tr><td>31</td><td>A banner link that does not start with https is refused with a message saying why</td><td>unit</td><td>fetchBanner refuses http.</td></tr>
+            <tr><td>32</td><td>Everything Herdr’s own Spaces section does still works for every machine, inside groups or not</td><td>walk; needs pointer or typing</td><td>Parity walk: showing a space under Work, rail and back. Clicking and dragging spaces need the pointer; dragging would also move spaces in the shared herdr-core.</td></tr>
+            <tr><td>33</td><td>Right-clicking a group header opens its menu, and its cog opens its settings</td><td>walk; needs pointer or typing</td><td>Dialogs walk: the menu lists Rename, Delete, Move to…, Settings; a group&#x27;s settings show every option. The right-click and cog click need the pointer.</td></tr>
+            <tr><td>34</td><td>Deleting a group moves its subgroups up to its place</td><td>unit</td><td>Deleting lifts subgroups (group model).</td></tr>
+            <tr><td>35</td><td>Rows can be moved, folded, and renamed from the keyboard</td><td>walk; unit</td><td>Keyboard walk: Down then Enter folds Work (fails without the keys). F2, cut, paste in keyStep tests.</td></tr>
+            <tr><td>36</td><td>Cutting a row and pasting it onto a group moves the row into that group</td><td>unit</td><td>keyStep paste and dropCommand.</td></tr>
+            <tr><td>37</td><td>A banner download larger than 2 MB shows the error card</td><td>unit</td><td>fetchBanner refuses over 2 MB.</td></tr>
+            <tr><td>38</td><td>Inside a group, its subgroups come before its machines, the subgroups ordered by its subgroup sort and the machines by its machine sort</td><td>unit</td><td>Group rows list subgroups before machines.</td></tr>
+            <tr><td>39</td><td>A group name that is empty or longer than 60 characters is refused with a message saying why</td><td>unit; needs pointer or typing</td><td>checkedName and the message in the chosen word; typing a bad name needs the keyboard.</td></tr>
+            <tr><td>40</td><td>Each group&#x27;s folded count shows every machine inside by default, or only direct machines, or all direct items</td><td>unit</td><td>Three count modes (group model).</td></tr>
+            <tr><td>41</td><td>Damaged saved groups are kept as a backup and Spaces shows Herdr&#x27;s usual list with an error card</td><td>walk</td><td>Damaged-data walk: the error card shows, stays after a redraw, and the list is Herdr&#x27;s usual order.</td></tr>
+            <tr><td>42</td><td>Saved groups read from Herdr&#x27;s shared state are external data: another mod, a hand edit, or an older nerd-herd version may have written them. Saved group store checks them on every read against a Zod schema, which is also the single source of their TypeScript types. The user’s data standard names ArkType; ArkType failed inside Herdr’s mod runtime (no FormData, then “&#x27;valueOf&#x27; is read-only” under its frozen built-ins, both seen in herdr-app check on 2026-11-16), and Zod in its jitless mode loads there, so Zod stands in for it in this mod. Each group has a ULID as its internal id. Data that fails the check is kept under a backup key, Spaces starts with no groups, and an error card says so (Damaged saved data).</td><td>unit</td><td>Store schema tests (Zod; see Validation Boundaries).</td></tr>
+            <tr><td>43</td><td>Herdr&#x27;s machines, spaces, and agents come typed from herdr.d.ts. A group may name a machine Herdr no longer lists, so Group model treats a missing machine as data, not an error.</td><td>unit</td><td>A missing machine is data (group rows).</td></tr>
+            <tr><td>44</td><td>Group names and icons typed by the user are checked when entered: a name is not empty after trimming spaces, and is at most 60 characters; two groups may share a name (Group name rules). An icon is saved with its kind, and the only kind accepted today is emoji.</td><td>unit</td><td>Name and icon rules (group model, commands).</td></tr>
+            <tr><td>45</td><td>Sidebar settings read from Herdr&#x27;s shared state are external data too. Sidebar settings checks them on every read and fills each missing value from its one declared default.</td><td>unit</td><td>Sidebar settings read with defaults.</td></tr>
+        </tbody>
+      </table>
+      <p>Findings on this pass, each fixed with a test that failed first: the group settings dialog hid Save (dialogs walk); a banner file name came out signed in Herdr's engine (skeleton walk); damaged saved data showed no error card (damaged walk).</p>
+    </details>
+  </section>
+
   <section class="phase-dependencies" data-roles="build">
     <details open><summary><h2>Phase Dependencies</h2></summary>
       <spec-phase parallel-safe="no" agent-suitable="no">
