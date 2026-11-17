@@ -4,6 +4,7 @@ import { fetchBanner } from "../core/banners/fetchBanner";
 import { fileHash } from "../core/banners/fileHash";
 import { applyCommand } from "../core/commands/applyCommand";
 import type { NerdHerdError } from "../core/errors/nerdHerdError";
+import { bannersToLoad, keepBannerFile } from "../core/groups/groupActions";
 import type { GroupId, SavedGroups, SpacesRow } from "../core/groups/groupModel";
 import { computeRows } from "../core/groups/groupRows";
 import { createSettingsStore } from "../core/settings/settingsStore";
@@ -87,12 +88,18 @@ export function createApp(host: Host, newId: () => GroupId): App {
       store.dismiss();
       settingsStore.dismiss();
     },
+    // Each banner link is loaded once and its copy kept with the group (the user, 2026-11-17: "embed
+    // the images"); a link that failed is tried again only after Herdr restarts.
     loadBanners: async () => {
-      const links = read().groups.groups.groups.flatMap((g) => [g.openBanner, g.foldedBanner]);
-      const waiting = [...new Set(links)].flatMap((l) =>
-        l && banners.lookup(l).kind === "none" ? [l] : [],
+      const waiting = bannersToLoad(store.load().groups).filter(
+        (l) => banners.lookup(l).kind === "none",
       );
-      for (const link of waiting) await banners.load(link);
+      for (const link of waiting) {
+        await banners.load(link);
+        const state = banners.lookup(link);
+        if (state.kind === "ready")
+          store.save(keepBannerFile(store.load().groups, link, state.file));
+      }
       return waiting.length > 0;
     },
   };

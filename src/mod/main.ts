@@ -186,9 +186,12 @@ export default class NerdHerdSpaces extends Spaces {
   }
 
   groupHeader(row: GroupRow, t: Theme, rail: boolean) {
-    const banner = row.banner
-      ? this.app.view().banners.lookup(row.banner)
-      : { kind: "none" as const };
+    // The kept copy when the banner has loaded once; until then, how its loading is going.
+    const banner = row.bannerFile
+      ? { kind: "ready" as const, file: row.bannerFile }
+      : row.banner
+        ? this.app.view().banners.lookup(row.banner)
+        : { kind: "none" as const };
     const view = groupHeaderView(
       row,
       banner,

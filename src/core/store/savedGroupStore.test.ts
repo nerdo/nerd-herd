@@ -1,6 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { SavedDataError } from "../errors/savedDataError";
-import { makeGroup, placeMachine, setFolded, setIcon } from "../groups/groupActions";
+import {
+  keepBannerFile,
+  makeGroup,
+  placeMachine,
+  setBanner,
+  setFolded,
+  setIcon,
+} from "../groups/groupActions";
 import { emptyGroups } from "../groups/groupModel";
 import { placeItem } from "../groups/levelOrder";
 import { createGroupStore, type SharedState } from "./savedGroupStore";
@@ -30,6 +37,20 @@ describe("saved group store", () => {
       "personal",
     );
     groups = setIcon(setFolded(groups, "work", true), "work", { kind: "emoji", value: "💼" });
+    const { shared } = memoryShared();
+    createGroupStore(shared).save(groups);
+    expect(createGroupStore(shared).load().groups).toEqual(groups);
+  });
+
+  // The user, 2026-11-17: "I think we should embed the images." The kept copy survives a restart.
+  test("a group's kept banner copy reads back after a restart", () => {
+    let groups = makeGroup(emptyGroups, { id: "work", name: "Work" });
+    groups = setBanner(groups, "work", "open", "~/banners/work.png");
+    groups = keepBannerFile(groups, "~/banners/work.png", {
+      path: "mods/nerd-herd-spaces/.banners/abc.png",
+      width: 544,
+      height: 184,
+    });
     const { shared } = memoryShared();
     createGroupStore(shared).save(groups);
     expect(createGroupStore(shared).load().groups).toEqual(groups);

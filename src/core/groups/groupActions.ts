@@ -1,4 +1,4 @@
-import type { BannerLink } from "../banners/bannerCache";
+import type { BannerFile, BannerLink } from "../banners/bannerCache";
 import type { SortChoice } from "../sorting/sortOrder";
 import {
   type CountMode,
@@ -156,5 +156,42 @@ export const setBanner = (
   id: GroupId,
   state: "open" | "folded",
   link: BannerLink | null,
-): SavedGroups =>
-  update(saved, id, state === "open" ? { openBanner: link } : { foldedBanner: link });
+): SavedGroups => {
+  const group = saved.groups.find((g) => g.id === id);
+  const current = state === "open" ? group?.openBanner : group?.foldedBanner;
+  // A new link drops the kept copy, so the new link is loaded; the same link keeps it.
+  const file =
+    current === link
+      ? {}
+      : state === "open"
+        ? { openBannerFile: null }
+        : { foldedBannerFile: null };
+  return update(saved, id, {
+    ...(state === "open" ? { openBanner: link } : { foldedBanner: link }),
+    ...file,
+  });
+};
+
+/** Keeps a loaded banner's copy with each group whose open or folded banner is that link. */
+export const keepBannerFile = (
+  saved: SavedGroups,
+  link: BannerLink,
+  file: BannerFile,
+): SavedGroups => ({
+  ...saved,
+  groups: saved.groups.map((g) => ({
+    ...g,
+    ...(g.openBanner === link ? { openBannerFile: file } : {}),
+    ...(g.foldedBanner === link ? { foldedBannerFile: file } : {}),
+  })),
+});
+
+/** The banner links whose copy no group keeps yet: each is loaded once. */
+export const bannersToLoad = (saved: SavedGroups): BannerLink[] => [
+  ...new Set(
+    saved.groups.flatMap((g) => [
+      ...(g.openBanner && !g.openBannerFile ? [g.openBanner] : []),
+      ...(g.foldedBanner && !g.foldedBannerFile ? [g.foldedBanner] : []),
+    ]),
+  ),
+];

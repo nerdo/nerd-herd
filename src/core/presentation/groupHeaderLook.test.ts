@@ -14,6 +14,7 @@ const work: GroupRow = {
   folded: false,
   count: 2,
   banner: "https://banners.example/work.png",
+  bannerFile: null,
   clip: "left",
   chevron: true,
   align: "middle",

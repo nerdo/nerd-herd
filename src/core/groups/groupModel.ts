@@ -1,4 +1,4 @@
-import type { BannerLink } from "../banners/bannerCache";
+import type { BannerFile, BannerLink } from "../banners/bannerCache";
 import { NerdHerdError } from "../errors/nerdHerdError";
 import type { SortChoice } from "../sorting/sortOrder";
 
@@ -33,6 +33,9 @@ export interface SavedGroup {
   readonly icon: GroupIcon | null;
   readonly openBanner: BannerLink | null;
   readonly foldedBanner: BannerLink | null;
+  /** The loaded copy of each banner, kept so Herdr does not read the link again (absent: not yet). */
+  readonly openBannerFile?: BannerFile | null;
+  readonly foldedBannerFile?: BannerFile | null;
   readonly clip: ClipSide;
   readonly folded: boolean;
   readonly subgroupSort: SortChoice;
@@ -84,6 +87,8 @@ export type SpacesRow =
       readonly folded: boolean;
       readonly count: Count;
       readonly banner: BannerLink | null;
+      /** The kept copy of that banner, once loaded; null until then. */
+      readonly bannerFile: BannerFile | null;
       readonly clip: ClipSide;
       readonly chevron: boolean;
       readonly align: ControlAlign;

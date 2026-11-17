@@ -29,6 +29,11 @@ const groupsKey = "nerd-herd.groups";
 
 const sort = z.enum(["custom", "alphabetical", "reverseAlphabetical"]);
 const link = z.string().nullable();
+/** A banner's kept copy (added 2026-11-17); a group saved before then loads its links once. */
+const bannerFile = z
+  .object({ path: z.string().min(1), width: z.number(), height: z.number() })
+  .nullable()
+  .optional();
 /** A level's custom order (added 2026-11-17); data saved before then has none, so it draws groups first. */
 const items = z
   .array(
@@ -49,6 +54,8 @@ const SavedGroupsSchema = z.object({
       icon: z.object({ kind: z.literal("emoji"), value: z.string().min(1) }).nullable(),
       openBanner: link,
       foldedBanner: link,
+      openBannerFile: bannerFile,
+      foldedBannerFile: bannerFile,
       clip: z.enum(["left", "center"]),
       folded: z.boolean(),
       subgroupSort: sort,

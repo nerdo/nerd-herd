@@ -1,4 +1,4 @@
-import type { BannerLink } from "../banners/bannerCache";
+import type { BannerFile, BannerLink } from "../banners/bannerCache";
 import type { SidebarSettings } from "../settings/sidebarSettings";
 import type {
   Count,
@@ -14,6 +14,12 @@ import { drawnOrder, itemsOf, machineLabel, sortedBy } from "./levelOrder";
 /** The banner a group shows: the one for its state, or the only one it has. */
 const bannerFor = (g: SavedGroup): BannerLink | null =>
   g.folded ? (g.foldedBanner ?? g.openBanner) : (g.openBanner ?? g.foldedBanner);
+/** The kept copy of the banner bannerFor picks, or null before it has loaded. */
+const bannerFileFor = (g: SavedGroup): BannerFile | null => {
+  const link = bannerFor(g);
+  if (link === null) return null;
+  return (link === g.openBanner ? g.openBannerFile : g.foldedBannerFile) ?? null;
+};
 
 /** The rows the Spaces section draws, level by level (groups first, or a custom order); folded groups hide their contents. */
 export const computeRows = (
@@ -62,6 +68,7 @@ export const computeRows = (
       folded: g.folded,
       count: countOf(g),
       banner: bannerFor(g),
+      bannerFile: bannerFileFor(g),
       clip: g.clip,
       chevron: g.chevron,
       align: g.align,
