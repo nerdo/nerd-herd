@@ -2,6 +2,7 @@ import { h_flex } from "gpui-base";
 import { type AsyncContext, div, type Element, type FocusHandle, svg } from "gpui-kit";
 import { checking, nextCommand, notify, props, theme } from "herdr";
 import { ulid } from "ulid";
+import { CommandError } from "../core/commands/applyCommand";
 import { runCommands } from "../core/commands/commandLoop";
 import { type DropZone, dropCommand } from "../core/groups/dropCommand";
 import type { GroupId, SpacesRow } from "../core/groups/groupModel";
@@ -17,7 +18,7 @@ import { type App, createApp } from "./app";
 import { groupHeaderView } from "./groupHeaderView";
 import { herdrHost } from "./herdrHost";
 import { openMenu, openPanel, type Panel } from "./panels/formParts";
-import { panelFor } from "./panels/panelFor";
+import { openFromCommand, panelFor } from "./panels/panelFor";
 import { marked, type RowMark } from "./rowMark";
 import { themeColor } from "./themeColor";
 import { Spaces } from "./vendor/herdrSpaces.js";
@@ -68,6 +69,11 @@ export default class NerdHerdSpaces extends Spaces {
         async (command) => {
           if (command === "focus") {
             this.keyboard.focus();
+            return;
+          }
+          if (command.startsWith("open:")) {
+            if (!openFromCommand(JSON.parse(command.slice(5)), this.app.view()))
+              throw new CommandError(command);
             return;
           }
           if (isKeyCommand(command)) {

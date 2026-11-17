@@ -48,6 +48,7 @@ test.beforeAll(() => {
 
 test.afterAll(() => window.stop());
 
+// Spec: docs/specs/in-progress/executing-nerd-herd-spaces.html#test-case-herdr-s-spaces-features-work-inside-a-group@jj:261617da
 test("showing a space under Work makes it the window's space", () => {
   expect(shownSpace).toBe(chosen);
 });

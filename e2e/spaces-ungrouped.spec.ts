@@ -24,6 +24,7 @@ test("turning the ungrouped header on shows Ungrouped below the groups", () => {
   expect(shown.join("\n")).toMatch(/Work[\s\S]*\nUngrouped/);
 });
 
+// Spec: docs/specs/in-progress/executing-nerd-herd-spaces.html#test-case-renaming-the-ungrouped-header@jj:261617da
 test("renaming the ungrouped header shows its new name", () => {
   expect(renamed.join("\n")).toMatch(/Work[\s\S]*\nUnsorted/);
 });

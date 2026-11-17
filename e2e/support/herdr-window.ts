@@ -117,6 +117,26 @@ export class HerdrWindow {
     return last;
   }
 
+  /** The whole window's text, top to bottom, for dialogs drawn past the sidebar. */
+  readWindow(): ScreenLines {
+    sleep(1500);
+    this.shots += 1;
+    const shot = join(this.home, `shot-${this.shots}.png`);
+    const s = run(["herdr-app", "shot", shot], this.env());
+    if (s.code !== 0) throw new Error(`herdr-app shot failed: ${s.out}\n${s.err}`);
+    const t = run([e2eSettings.readText, shot]);
+    if (t.code !== 0) throw new Error(`read-text failed: ${t.err}`);
+    return t.out
+      .split("\n")
+      .map((line) => line.split("\t"))
+      .flatMap(([pos, text]) => {
+        const top = Number((pos ?? "").split(" ")[1]);
+        return text && !Number.isNaN(top) ? [{ top, text: text.trim() }] : [];
+      })
+      .sort((a, b) => a.top - b.top)
+      .map((l) => l.text);
+  }
+
   /**
    * Reads until the sidebar shows what the test is waiting for, up to 20 s, as a person waits for
    * the sidebar to finish loading; returns the last reading either way, for the test to judge.

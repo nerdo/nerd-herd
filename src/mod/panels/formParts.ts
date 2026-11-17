@@ -116,7 +116,7 @@ export const choice = <V extends string>(
       ),
     );
 
-/** A dialog's frame: its content, then Cancel and the primary action at the bottom right. */
+/** A dialog's frame: its content, scrolling when tall, then Cancel and the primary action at the bottom right. */
 export const dialog = (t: Theme, content: Element[], save: string, act: () => void): Element =>
   v_flex()
     .id("nerd-herd-dialog")
@@ -124,8 +124,8 @@ export const dialog = (t: Theme, content: Element[], save: string, act: () => vo
     .p(18)
     .bg(themeColor(t, "popover"))
     .text_color(themeColor(t, "foreground"))
-    .children(content)
-    .child(div().flex_1())
+    // The content scrolls when it is taller than the dialog; Cancel and Save stay in view below it.
+    .child(v_flex().id("dialog-body").flex_1().min_h(0).overflow_y_scroll().children(content))
     .child(
       h_flex()
         .pt(16)
