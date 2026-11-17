@@ -1,3 +1,4 @@
+import { home } from "herdr";
 import { type BannerCache, createBannerCache } from "../core/banners/bannerCache";
 import { fetchBanner } from "../core/banners/fetchBanner";
 import { fileHash } from "../core/banners/fileHash";
@@ -8,7 +9,6 @@ import { computeRows } from "../core/groups/groupRows";
 import { createSettingsStore } from "../core/settings/settingsStore";
 import type { SidebarSettings } from "../core/settings/sidebarSettings";
 import { createGroupStore } from "../core/store/savedGroupStore";
-import { home } from "herdr";
 import { curlDownloader, herdrFiles, herdrLocalFiles } from "./bannerAdapters";
 import type { Host } from "./herdrHost";
 

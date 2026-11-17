@@ -11,4 +11,10 @@ export const scriptSettings = {
   isOwnHome: (process.env.HERDR_APP_HOME ?? defaultHome) === defaultHome,
   herdrBinary: process.env.HERDR_BINARY ?? "/Applications/Herdr.app/Contents/MacOS/Herdr",
   windowWaitMs: 30_000,
+  /**
+   * How a test window starts: "background" (default) through macOS's open -g, leaving the app in
+   * front where it was; "direct" runs Herdr itself, which takes the front for a moment but keeps
+   * this PATH (Herdr gives a Finder-style launch the login shell's PATH instead).
+   */
+  launch: process.env.NERD_HERD_LAUNCH === "direct" ? "direct" : "background",
 } as const;

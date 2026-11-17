@@ -15,7 +15,9 @@ let newGroupDialog: ScreenLines;
 
 test.beforeAll(() => {
   machine = window.remoteMachine();
-  window.start();
+  // Run directly so Herdr keeps the PATH with the fake curl (a background launch gets the login
+  // shell's PATH); this walk takes the front for a moment at its start and restart.
+  window.start({}, undefined, "direct");
   window.act("settings-word", { singular: "Environment", plural: "Environments" });
   window.act("group-make", { name: "Work", icon: "💼" });
   window.act("group-make", { name: "Personal" });

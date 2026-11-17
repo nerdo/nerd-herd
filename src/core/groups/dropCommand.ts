@@ -19,10 +19,10 @@ const command = (action: string, payload: unknown): DropEffect => ({
 
 /**
  * The command a drop sends. A machine dropped onto a group moves into it; dropped before a group it
- * goes to that group's level, first among the machines there; dropped on a machine it
+ * goes just before that group, at its level (a custom order); dropped on a machine it
  * goes before that machine, in that machine's group. A group dropped onto a group nests inside it;
- * dropped before a group it moves beside that group, ahead of it; dropped on a machine it moves into
- * that machine's group. Cut and paste is a drop "onto" the focused row.
+ * dropped before a group it moves beside that group, ahead of it; dropped on a machine it goes just
+ * before that machine, in its group (a custom order). Cut and paste is a drop "onto" the focused row.
  */
 export const dropCommand = (
   source: RowKey,
@@ -34,16 +34,13 @@ export const dropCommand = (
   const groupOf = (name: MachineName) =>
     saved.placements.find((p) => p.name === name)?.group ?? null;
   const parentOf = (id: GroupId) => saved.groups.find((g) => g.id === id)?.parent ?? null;
-  if (source.kind === "machine" && target.kind === "group" && zone === "before") {
-    // Groups come first at each level, so "before a group" is the start of that level's machines.
-    const level = parentOf(target.id);
-    const first = saved.placements.find((p) => p.group === level && p.name !== source.name);
+  // One kind dropped among the other lands exactly there; the level switches to a custom order.
+  if (source.kind === "machine" && target.kind === "group" && zone === "before")
     return command("machine-move", {
       machine: source.name,
-      group: level,
-      ...(first ? { before: first.name } : {}),
+      group: parentOf(target.id),
+      beforeGroup: target.id,
     });
-  }
   if (source.kind === "machine")
     return target.kind === "group"
       ? command("machine-move", { machine: source.name, group: target.id })
@@ -53,7 +50,11 @@ export const dropCommand = (
           before: target.name,
         });
   if (target.kind === "machine")
-    return command("group-move", { group: source.id, parent: groupOf(target.name) });
+    return command("group-move", {
+      group: source.id,
+      parent: groupOf(target.name),
+      beforeMachine: target.name,
+    });
   return zone === "onto"
     ? command("group-move", { group: source.id, parent: target.id })
     : command("group-move", { group: source.id, parent: parentOf(target.id), before: target.id });

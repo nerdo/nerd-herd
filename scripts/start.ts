@@ -4,6 +4,7 @@ import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { keyBindings, mergeKeys } from "../src/core/keyboard/keyBindings";
 import { scriptSettings as s } from "./settings";
+import { testWindows } from "./testWindows";
 
 const root = join(import.meta.dir, "..");
 const modName = "nerd-herd-spaces";
@@ -28,22 +29,40 @@ async function ensureWindow(): Promise<void> {
   if (s.isOwnHome) Bun.spawnSync(["open", "-a", "Herdr"]);
   else {
     // A test window keeps its log in its own home, so a failure can be read afterward.
-    const log = Bun.file(join(s.herdrHome, "window.log"));
-    const window = Bun.spawn([s.herdrBinary], { env, stdout: log, stderr: log });
-    window.unref();
-    // The program that owns the test window (NERD_HERD_OWNER_PID, else whoever ran this script);
-    // a watchdog quits the window once that program ends, even when it is interrupted.
-    const owner = process.env.NERD_HERD_OWNER_PID ?? String(process.ppid);
-    Bun.spawn(["bun", join(import.meta.dir, "window-watchdog.ts"), owner, String(window.pid)], {
-      env,
-      stdio: ["ignore", "ignore", "ignore"],
-    }).unref();
+    const log = join(s.herdrHome, "window.log");
+    if (s.launch === "direct") {
+      // Herdr run directly keeps this PATH (the walks' fake curl), and takes the front for a moment.
+      Bun.spawn([s.herdrBinary], { env, stdout: Bun.file(log), stderr: Bun.file(log) }).unref();
+    } else {
+      // macOS's open -g leaves the app in front where it was: run directly, Herdr took the keyboard
+      // for about 1.8 s (the user, 2026-11-17: "have it not steal focus"). open passes only the
+      // variables named; Herdr then uses the login shell's PATH, as for any Finder launch.
+      const app = s.herdrBinary.replace(/\/Contents\/MacOS\/[^/]+$/, "");
+      const opened = Bun.spawnSync(
+        ["open", "-g", "-n", "-a", app, "--env", `HERDR_APP_HOME=${s.herdrHome}`].concat([
+          "--stdout",
+          log,
+          "--stderr",
+          log,
+        ]),
+      );
+      if (opened.exitCode !== 0) throw new Error(`open could not start Herdr: ${opened.stderr}`);
+    }
   }
   const until = Date.now() + s.windowWaitMs;
   while (!windowRuns()) {
     if (Date.now() > until) throw new Error(`No Herdr window answered for ${s.herdrHome}`);
     Bun.sleepSync(500);
   }
+  if (s.isOwnHome) return;
+  // The program that owns the test window (NERD_HERD_OWNER_PID, else whoever ran this script);
+  // a watchdog quits the window once that program ends, even when it is interrupted.
+  const owner = process.env.NERD_HERD_OWNER_PID ?? String(process.ppid);
+  for (const pid of testWindows())
+    Bun.spawn(["bun", join(import.meta.dir, "window-watchdog.ts"), owner, String(pid)], {
+      env,
+      stdio: ["ignore", "ignore", "ignore"],
+    }).unref();
 }
 
 async function installLayout(): Promise<void> {

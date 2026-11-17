@@ -3,19 +3,27 @@
 import { InputState } from "gpui-base";
 import type { AsyncContext } from "gpui-kit";
 import type { ClipSide, ControlAlign, CountMode, SavedGroup } from "../../core/groups/groupModel";
+import type { LevelOrder } from "../../core/groups/levelOrder";
 import type { SortChoice } from "../../core/sorting/sortOrder";
 import {
   choice,
   close,
+  type DialogScroll,
   dialog,
   field,
+  hint,
   label,
   type Panel,
   send,
   type Theme,
   title,
-  type DialogScroll,
 } from "./formParts";
+
+/** A level's order: groups above machines, or one custom order (the user, 2026-11-17). */
+export const levelOrders = [
+  { value: "groupsFirst", text: "Groups first" },
+  { value: "custom", text: "Custom" },
+] as const;
 
 const sorts = [
   { value: "custom", text: "Custom" },
@@ -33,12 +41,15 @@ export class GroupSettingsPanel implements Panel {
   private count: CountMode;
   private chevron: "shown" | "hidden";
   private align: ControlAlign;
+  private order: LevelOrder;
 
   constructor(
     private readonly group: SavedGroup,
     private readonly word: string,
+    order: LevelOrder,
     _cx: AsyncContext,
   ) {
+    this.order = order;
     this.icon = InputState.new({ value: group.icon?.value ?? "" });
     this.openLink = InputState.new({ value: group.openBanner ?? "" });
     this.foldedLink = InputState.new({ value: group.foldedBanner ?? "" });
@@ -67,6 +78,7 @@ export class GroupSettingsPanel implements Panel {
       folded: text(this.foldedLink) || null,
     });
     send("sort-set", { group: id, subgroups: this.subgroups, machines: this.machines });
+    send("level-order", { group: id, order: this.order });
     close();
   }
 
@@ -96,6 +108,13 @@ export class GroupSettingsPanel implements Panel {
             this.clip = v;
           },
         ),
+        label(t, "Order inside"),
+        choice(t, "order", levelOrders, this.order, (v) => {
+          this.order = v;
+        }),
+        ...(this.order === "custom"
+          ? [hint(t, "In a custom order the sorts below do not apply.")]
+          : []),
         label(t, `Sort ${w}s inside`),
         choice(t, "subgroups", sorts, this.subgroups, (v) => {
           this.subgroups = v;

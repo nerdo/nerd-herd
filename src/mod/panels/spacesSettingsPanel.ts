@@ -1,12 +1,14 @@
 // Spaces settings, opened from the cog beside the Spaces "+": the word for groups (singular and
-// plural), whether a machine's spaces are indented under it, and the ungrouped header (shown or
+// plural), the top level's order (groups first or custom), whether a machine's spaces are indented under it, and the ungrouped header (shown or
 // not, and its name).
 import { InputState } from "gpui-base";
 import type { AsyncContext } from "gpui-kit";
+import type { LevelOrder } from "../../core/groups/levelOrder";
 import type { SidebarSettings } from "../../core/settings/sidebarSettings";
 import {
   choice,
   close,
+  type DialogScroll,
   dialog,
   field,
   hint,
@@ -15,8 +17,8 @@ import {
   send,
   type Theme,
   title,
-  type DialogScroll,
 } from "./formParts";
+import { levelOrders } from "./groupSettingsPanel";
 
 export class SpacesSettingsPanel implements Panel {
   private readonly singular: InputState;
@@ -24,9 +26,11 @@ export class SpacesSettingsPanel implements Panel {
   private readonly ungroupedName: InputState;
   private header: "shown" | "hidden";
   private indent: "indented" | "flush";
+  private order: LevelOrder;
   private refused: string | null = null;
 
-  constructor(settings: SidebarSettings, _cx: AsyncContext) {
+  constructor(settings: SidebarSettings, order: LevelOrder, _cx: AsyncContext) {
+    this.order = order;
     this.singular = InputState.new({ value: settings.groupWord.singular });
     this.plural = InputState.new({ value: settings.groupWord.plural });
     this.ungroupedName = InputState.new({ value: settings.ungroupedName });
@@ -44,6 +48,7 @@ export class SpacesSettingsPanel implements Panel {
     }
     send("settings-word", { singular, plural });
     send("settings-indent", { indent: this.indent === "indented" });
+    send("level-order", { group: null, order: this.order });
     send("settings-ungrouped", { header: this.header === "shown", name });
     close();
   }
@@ -58,6 +63,10 @@ export class SpacesSettingsPanel implements Panel {
         field(t, this.singular),
         label(t, "Word for groups (more than one)"),
         field(t, this.plural),
+        label(t, "Order at the top level"),
+        choice(t, "top-order", levelOrders, this.order, (v) => {
+          this.order = v;
+        }),
         label(t, "Spaces under a machine"),
         choice(
           t,

@@ -1,6 +1,7 @@
 // Builds the panel an overlay of the Spaces mod draws, from the props it was opened with. The props
 // cross from one view to another, so they are checked rather than trusted.
 import type { AsyncContext } from "gpui-kit";
+import { levelOrderOf } from "../../core/groups/levelOrder";
 import { z } from "../../core/schema/zod";
 import type { SpacesViewModel } from "../app";
 import { openMenu, openPanel, type Panel } from "./formParts";
@@ -47,10 +48,12 @@ export const panelFor = (props: unknown, view: SpacesViewModel, cx: AsyncContext
       return new MovePanel(p.group, view.groups, word);
     case "group-settings": {
       const group = view.groups.groups.find((g) => g.id === p.group);
-      return group ? new GroupSettingsPanel(group, word.singular, cx) : null;
+      return group
+        ? new GroupSettingsPanel(group, word.singular, levelOrderOf(view.groups, group.id), cx)
+        : null;
     }
     case "spaces-settings":
-      return new SpacesSettingsPanel(view.settings, cx);
+      return new SpacesSettingsPanel(view.settings, levelOrderOf(view.groups, null), cx);
   }
 };
 

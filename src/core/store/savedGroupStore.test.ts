@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { SavedDataError } from "../errors/savedDataError";
 import { makeGroup, placeMachine, setFolded, setIcon } from "../groups/groupActions";
 import { emptyGroups } from "../groups/groupModel";
+import { placeItem } from "../groups/levelOrder";
 import { createGroupStore, type SharedState } from "./savedGroupStore";
 
 /** Herdr's shared state, kept in memory. */
@@ -29,6 +30,33 @@ describe("saved group store", () => {
       "personal",
     );
     groups = setIcon(setFolded(groups, "work", true), "work", { kind: "emoji", value: "💼" });
+    const { shared } = memoryShared();
+    createGroupStore(shared).save(groups);
+    expect(createGroupStore(shared).load().groups).toEqual(groups);
+  });
+
+  // The user, 2026-11-17: a level switched to a custom order keeps it, in the top level and in a group.
+  test("custom orders of the top level and of a group read back after a restart", () => {
+    let groups = makeGroup(makeGroup(emptyGroups, { id: "work", name: "Work" }), {
+      id: "clients",
+      name: "Clients",
+      parent: "work",
+    });
+    groups = placeItem(
+      groups,
+      null,
+      { kind: "machine", name: null },
+      { kind: "group", id: "work" },
+    );
+    groups = placeItem(
+      groups,
+      "work",
+      { kind: "machine", name: "ai-sandbox" },
+      {
+        kind: "group",
+        id: "clients",
+      },
+    );
     const { shared } = memoryShared();
     createGroupStore(shared).save(groups);
     expect(createGroupStore(shared).load().groups).toEqual(groups);

@@ -41,7 +41,14 @@ export interface SavedGroup {
   /** Whether the fold chevron shows on the group's banner. */
   readonly chevron: boolean;
   readonly align: ControlAlign;
+  /** The custom order of what is inside, groups and machines together; absent or null: groups first. */
+  readonly items?: readonly LevelItem[] | null;
 }
+
+/** One member of a level (a group's contents, or the top): a group, or a machine. */
+export type LevelItem =
+  | { readonly kind: "group"; readonly id: GroupId }
+  | { readonly kind: "machine"; readonly name: MachineName };
 
 /** Where a machine sits: in a group, or ungrouped (null). The list order is the custom order. */
 export interface MachinePlacement {
@@ -55,6 +62,8 @@ export interface SavedGroups {
   readonly placements: readonly MachinePlacement[];
   readonly topSubgroupSort: SortChoice;
   readonly topMachineSort: SortChoice;
+  /** The top level's custom order, groups and machines together; absent or null: groups first. */
+  readonly topItems?: readonly LevelItem[] | null;
 }
 
 export const emptyGroups: SavedGroups = {

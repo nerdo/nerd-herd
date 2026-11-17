@@ -40,6 +40,7 @@ export class HerdrWindow {
       PATH: `${e2eSettings.fakeBin}:${process.env.PATH ?? ""}`,
       // The test process owns the window: when it ends, even interrupted, the window is quit.
       NERD_HERD_OWNER_PID: String(process.pid),
+      ...(this.direct ? { NERD_HERD_LAUNCH: "direct" } : {}),
     };
   }
 
@@ -47,8 +48,10 @@ export class HerdrWindow {
   start(
     seed: Record<string, unknown> = {},
     size: WindowPoints = e2eSettings.windowSize,
+    launch: "background" | "direct" = "background",
   ): void {
     this.size = size;
+    this.direct = launch === "direct";
     this.sidebarPx = null;
     rmSync(this.home, { recursive: true, force: true });
     mkdirSync(this.home, { recursive: true });
@@ -75,6 +78,9 @@ export class HerdrWindow {
     if (r.code !== 0) throw new Error(`bun run start failed: ${r.out}\n${r.err}`);
     this.applySize();
   }
+
+  /** True when this walk's window runs Herdr directly, keeping the fake curl on its PATH. */
+  private direct = false;
 
   /** The sidebar width this walk last set, in points; null until it sets one. */
   private sidebarPx: number | null = null;

@@ -146,28 +146,30 @@ export const dialog = (
   act: () => void,
 ): Element => {
   scroll.count = content.length;
-  return v_flex()
-    .id("nerd-herd-dialog")
-    .size_full()
-    .p(18)
-    .bg(themeColor(t, "popover"))
-    .text_color(themeColor(t, "foreground"))
-    // The content scrolls when it is taller than the dialog; Cancel and Save stay in view below it.
-    .child(
-      v_flex()
-        .id("dialog-body")
-        .flex_1()
-        .min_h(0)
-        .overflow_y_scroll()
-        .track_scroll(scroll.handle)
-        .children(content),
-    )
-    .child(
-      h_flex()
-        .pt(16)
-        .gap(8)
-        .justify_end()
-        .child(button(t, "dialog-cancel", "Cancel", false, close))
-        .child(button(t, "dialog-save", save, true, act)),
-    );
+  return (
+    v_flex()
+      .id("nerd-herd-dialog")
+      .size_full()
+      .p(18)
+      .bg(themeColor(t, "popover"))
+      .text_color(themeColor(t, "foreground"))
+      // The content scrolls when it is taller than the dialog; Cancel and Save stay in view below it.
+      .child(
+        v_flex()
+          .id("dialog-body")
+          .flex_1()
+          .min_h(0)
+          .overflow_y_scroll()
+          .track_scroll(scroll.handle)
+          .children(content),
+      )
+      .child(
+        h_flex()
+          .pt(16)
+          .gap(8)
+          .justify_end()
+          .child(button(t, "dialog-cancel", "Cancel", false, close))
+          .child(button(t, "dialog-save", save, true, act)),
+      )
+  );
 };

@@ -20,7 +20,10 @@ describe("sidebar settings", () => {
 
   test("a saved indent setting that is not true or false reads as the defaults and reports a saved-data problem", () => {
     const read = readSettings({ indentSpaces: "yes" });
-    expect([read.settings, read.problem instanceof SavedDataError]).toEqual([defaultSettings, true]);
+    expect([read.settings, read.problem instanceof SavedDataError]).toEqual([
+      defaultSettings,
+      true,
+    ]);
   });
 
   test("a saved group word is read back, with the other settings at their defaults", () => {

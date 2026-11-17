@@ -11,6 +11,7 @@ import {
   setSort,
 } from "../groups/groupActions";
 import type { GroupId, GroupName, SavedGroups } from "../groups/groupModel";
+import { levelOrderOf, placeItem, setLevelOrder } from "../groups/levelOrder";
 import { z } from "../schema/zod";
 import type { SidebarSettings } from "../settings/sidebarSettings";
 
@@ -51,6 +52,8 @@ const payloads = {
     machine: z.string().nullable(),
     group: name.nullable(),
     before: z.string().nullable().optional(),
+    /** Just before this group, at its level: the level switches to a custom order. */
+    beforeGroup: name.optional(),
   }),
   "sort-set": z.object({
     group: name.nullable(),
@@ -60,7 +63,14 @@ const payloads = {
   "group-fold": z.object({ group: name, folded: z.boolean() }),
   "group-rename": z.object({ group: name, name: z.string() }),
   "group-delete": z.object({ group: name }),
-  "group-move": z.object({ group: name, parent: name.nullable(), before: name.optional() }),
+  "group-move": z.object({
+    group: name,
+    parent: name.nullable(),
+    before: name.optional(),
+    /** Just before this machine (null: this computer): the level switches to a custom order. */
+    beforeMachine: z.string().nullable().optional(),
+  }),
+  "level-order": z.object({ group: name.nullable(), order: z.enum(["groupsFirst", "custom"]) }),
   "group-set": z.object({
     group: name,
     icon: z.string().min(1).nullable().optional(),
@@ -130,6 +140,15 @@ export const applyCommand = (
     case "machine-move": {
       const p = check(payloads["machine-move"]);
       const group = resolveOrTop(g, p.group, command);
+      const item = { kind: "machine" as const, name: p.machine };
+      if (p.beforeGroup !== undefined) {
+        const before = { kind: "group" as const, id: resolve(g, p.beforeGroup, command) };
+        return { ...state, groups: placeItem(g, group, item, before) };
+      }
+      if (levelOrderOf(g, group) === "custom") {
+        const before = p.before === undefined ? null : { kind: "machine" as const, name: p.before };
+        return { ...state, groups: placeItem(g, group, item, before) };
+      }
       return {
         ...state,
         groups:
@@ -161,8 +180,24 @@ export const applyCommand = (
       const p = check(payloads["group-move"]);
       const id = resolve(g, p.group, command);
       const parent = resolveOrTop(g, p.parent, command);
-      const place = p.before === undefined ? undefined : { before: resolve(g, p.before, command) };
-      return { ...state, groups: nestGroup(g, id, parent, place) };
+      const item = { kind: "group" as const, id };
+      if (p.beforeMachine !== undefined) {
+        const before = { kind: "machine" as const, name: p.beforeMachine };
+        return { ...state, groups: placeItem(g, parent, item, before) };
+      }
+      const sibling = p.before === undefined ? undefined : resolve(g, p.before, command);
+      if (levelOrderOf(g, parent) === "custom") {
+        const before = sibling === undefined ? null : { kind: "group" as const, id: sibling };
+        return { ...state, groups: placeItem(g, parent, item, before) };
+      }
+      return {
+        ...state,
+        groups: nestGroup(g, id, parent, sibling === undefined ? undefined : { before: sibling }),
+      };
+    }
+    case "level-order": {
+      const p = check(payloads["level-order"]);
+      return { ...state, groups: setLevelOrder(g, resolveOrTop(g, p.group, command), p.order) };
     }
     case "group-set": {
       const p = check(payloads["group-set"]);

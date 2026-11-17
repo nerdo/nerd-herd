@@ -8,6 +8,7 @@ import { groupNameMessage, newGroupLabel } from "../../core/presentation/spacesT
 import type { GroupWord } from "../../core/settings/sidebarSettings";
 import {
   close,
+  type DialogScroll,
   dialog,
   field,
   hint,
@@ -16,7 +17,6 @@ import {
   send,
   type Theme,
   title,
-  type DialogScroll,
 } from "./formParts";
 
 export type NameTarget =

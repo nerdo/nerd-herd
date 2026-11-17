@@ -29,6 +29,16 @@ const groupsKey = "nerd-herd.groups";
 
 const sort = z.enum(["custom", "alphabetical", "reverseAlphabetical"]);
 const link = z.string().nullable();
+/** A level's custom order (added 2026-11-17); data saved before then has none, so it draws groups first. */
+const items = z
+  .array(
+    z.discriminatedUnion("kind", [
+      z.object({ kind: z.literal("group"), id: z.string().min(1) }),
+      z.object({ kind: z.literal("machine"), name: z.string().nullable() }),
+    ]),
+  )
+  .nullable()
+  .optional();
 /** The saved shape of the group model's data: what Herdr's shared state holds under the groups key. */
 const SavedGroupsSchema = z.object({
   groups: z.array(
@@ -47,11 +57,13 @@ const SavedGroupsSchema = z.object({
       // Added 2026-11-17; groups saved before then take the defaults.
       chevron: z.boolean().default(true),
       align: z.enum(["top", "middle", "bottom"]).default("middle"),
+      items,
     }),
   ),
   placements: z.array(z.object({ name: z.string().nullable(), group: z.string().nullable() })),
   topSubgroupSort: sort,
   topMachineSort: sort,
+  topItems: items,
 });
 
 /** Keeps the group model's data in Herdr's shared state, so it survives restarts. */

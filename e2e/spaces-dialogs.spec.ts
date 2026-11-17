@@ -10,6 +10,7 @@ let spacesSettings: ScreenLines;
 let overlays: unknown;
 let groupSettings: ScreenLines;
 let menu: ScreenLines;
+let customSettings: ScreenLines;
 let size: unknown;
 
 /**
@@ -35,6 +36,10 @@ test.beforeAll(() => {
   menu = whole(window);
   window.herdr("overlay.close", {});
   size = window.windowSize();
+  window.act("level-order", { group: "Work", order: "custom" });
+  window.act("open", { panel: "group-settings", group: "Work" });
+  customSettings = whole(window);
+  window.herdr("overlay.close", {});
 });
 
 test.afterAll(() => window.stop());
@@ -70,6 +75,21 @@ test("a group's settings show its icon, banner links, clip side, sorts, and fold
   expect(groupSettings.join("\n")).toMatch(
     /Work settings[\s\S]*I?con \(an emoji\)[\s\S]*Banner link \(https or a file path\)[\s\S]*keep[\s\S]*Sort[\s\S]*Sort machines[\s\S]*Count shown when folded/,
   );
+});
+
+// The user, 2026-11-17: each level orders groups first by default, or in a custom order.
+test("a group's settings offer the order inside, groups first or custom, above its sorts", () => {
+  expect(groupSettings.join("\n")).toMatch(
+    /Order inside[\s\S]*Groups first[\s\S]*Sort groups inside/,
+  );
+});
+
+test("a group in a custom order says its sorts do not apply", () => {
+  expect(customSettings.join("\n")).toContain("In a custom order the sorts below do not apply");
+});
+
+test("Spaces settings offer the order at the top level, groups first or custom", () => {
+  expect(spacesSettings.join("\n")).toMatch(/Order at the top level[\s\S]*Groups first/);
 });
 
 // Found on the 2026-11-17 hand look: the group settings ran taller than the dialog, hiding Save.

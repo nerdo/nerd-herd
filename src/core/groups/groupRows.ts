@@ -1,25 +1,21 @@
 import type { BannerLink } from "../banners/bannerCache";
 import type { SidebarSettings } from "../settings/sidebarSettings";
-import { type SortChoice, sortOrder } from "../sorting/sortOrder";
 import type {
   Count,
   Depth,
   GroupId,
   Machine,
-  MachineName,
   SavedGroup,
   SavedGroups,
   SpacesRow,
 } from "./groupModel";
-
-const thisComputer = "This computer";
-const machineLabel = (name: MachineName): string => name ?? thisComputer;
+import { drawnOrder, itemsOf, machineLabel, sortedBy } from "./levelOrder";
 
 /** The banner a group shows: the one for its state, or the only one it has. */
 const bannerFor = (g: SavedGroup): BannerLink | null =>
   g.folded ? (g.foldedBanner ?? g.openBanner) : (g.openBanner ?? g.foldedBanner);
 
-/** The rows the Spaces section draws: groups first, then machines, at each level; folded groups hide their contents. */
+/** The rows the Spaces section draws, level by level (groups first, or a custom order); folded groups hide their contents. */
 export const computeRows = (
   saved: SavedGroups,
   machines: readonly Machine[],
@@ -41,11 +37,6 @@ export const computeRows = (
     ...(group === null ? unplaced : []),
   ];
   const subgroupsOf = (group: GroupId | null) => saved.groups.filter((g) => g.parent === group);
-  const sorted = <T>(choice: SortChoice, items: readonly T[], name: (item: T) => string): T[] =>
-    sortOrder(
-      choice,
-      items.map((item) => ({ name: name(item), item })),
-    ).map((n) => n.item);
   const countOf = (g: SavedGroup): Count => {
     const direct = machinesIn(g.id).length;
     if (g.countMode === "directMachines") return direct;
@@ -61,38 +52,60 @@ export const computeRows = (
     depth,
     reachable: m.reachable,
   });
+  const groupRows = (g: SavedGroup, depth: Depth): SpacesRow[] => [
+    {
+      kind: "group",
+      id: g.id,
+      name: g.name,
+      icon: g.icon,
+      depth,
+      folded: g.folded,
+      count: countOf(g),
+      banner: bannerFor(g),
+      clip: g.clip,
+      chevron: g.chevron,
+      align: g.align,
+    },
+    ...(g.folded ? [] : level(g, depth + 1)),
+  ];
+  // A level draws its groups, then its machines, each in its sort; or, in a custom order, both kinds
+  // in that order, where the sorts do not apply.
   const level = (group: SavedGroup | null, depth: Depth): SpacesRow[] => {
-    const subgroups = sorted(
-      group?.subgroupSort ?? saved.topSubgroupSort,
-      subgroupsOf(group?.id ?? null),
-      (g) => g.name,
-    );
-    const own = sorted(
-      group?.machineSort ?? saved.topMachineSort,
-      machinesIn(group?.id ?? null),
-      (m) => machineLabel(m.name),
-    );
-    const groupRows = subgroups.flatMap((g): SpacesRow[] => [
-      {
-        kind: "group",
-        id: g.id,
-        name: g.name,
-        icon: g.icon,
-        depth,
-        folded: g.folded,
-        count: countOf(g),
-        banner: bannerFor(g),
-        clip: g.clip,
-        chevron: g.chevron,
-        align: g.align,
-      },
-      ...(g.folded ? [] : level(g, depth + 1)),
-    ]);
+    const id = group?.id ?? null;
+    const custom = itemsOf(saved, id);
+    const subgroups = custom
+      ? subgroupsOf(id)
+      : sortedBy(group?.subgroupSort ?? saved.topSubgroupSort, subgroupsOf(id), (g) => g.name);
+    const own = custom
+      ? machinesIn(id)
+      : sortedBy(group?.machineSort ?? saved.topMachineSort, machinesIn(id), (m) =>
+          machineLabel(m.name),
+        );
+    if (custom) {
+      const order = drawnOrder(
+        custom,
+        subgroups.map((g) => ({ kind: "group", id: g.id })),
+        own.map((m) => ({ kind: "machine", name: m.name })),
+      );
+      return order.flatMap((item): SpacesRow[] => {
+        if (item.kind === "machine") {
+          const found = own.find((m) => m.name === item.name);
+          return found ? [machineRow(found, depth)] : [];
+        }
+        const found = subgroups.find((g) => g.id === item.id);
+        return found ? groupRows(found, depth) : [];
+      });
+    }
+    // The ungrouped header sits between the top's groups and its machines, so only groups first has it.
     const header: SpacesRow[] =
       group === null && settings.ungroupedHeader && own.length > 0
         ? [{ kind: "ungrouped", name: settings.ungroupedName }]
         : [];
-    return [...groupRows, ...header, ...own.map((m) => machineRow(m, depth))];
+    return [
+      ...subgroups.flatMap((g) => groupRows(g, depth)),
+      ...header,
+      ...own.map((m) => machineRow(m, depth)),
+    ];
   };
   return level(null, 0);
 };
