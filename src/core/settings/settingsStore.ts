@@ -14,6 +14,8 @@ export interface SettingsStore {
   save(settings: SidebarSettings): void;
   /** Reads backed-up settings again; restores them when they can be read now. */
   retry(): boolean;
+  /** Stops showing the backed-up settings' problem; the backup is kept. */
+  dismiss(): boolean;
 }
 
 /** Keeps the Spaces settings in Herdr's shared state; damaged settings are backed up like groups. */
@@ -31,5 +33,6 @@ export const createSettingsStore = (shared: SharedState): SettingsStore => {
     },
     save: (settings) => value.save(settings),
     retry: () => value.retry(),
+    dismiss: () => value.dismiss(),
   };
 };

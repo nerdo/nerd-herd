@@ -17,6 +17,8 @@ export interface SavedValue<T> {
   save(value: T): void;
   /** Reads the backup again; restores it when it can be read now. True when restored. */
   retry(): boolean;
+  /** Stops reporting the backup's problem; the backup is kept. True when there was one to dismiss. */
+  dismiss(): boolean;
 }
 
 /** The backup of damaged data: the data as found, and the reference the user was shown for it. */
@@ -24,6 +26,8 @@ const Backup = z.object({
   data: z.unknown(),
   errorId: z.string().min(1),
   unixTimestamp: z.number(),
+  /** Set when the user dismissed the card; the backup is still kept. */
+  dismissed: z.boolean().optional(),
 });
 
 /**
@@ -53,13 +57,13 @@ export const createSavedValue = <T>(
     load: () => {
       const raw = shared.read(key);
       const kept = backup();
-      if (raw === undefined || raw === null)
-        return { value: empty, problem: kept && problem(kept) };
+      const shown = kept && !kept.dismissed ? problem(kept) : null;
+      if (raw === undefined || raw === null) return { value: empty, problem: shown };
       const parsed = parse(raw);
-      if (parsed.ok) return { value: parsed.value, problem: kept && problem(kept) };
+      if (parsed.ok) return { value: parsed.value, problem: shown };
       const fresh = new SavedDataError(name, { cause: parsed.cause });
-      const made = kept ?? { data: raw, ...fresh.metadata };
-      if (!kept) shared.write(backupKey, made);
+      const made = kept ? { ...kept, dismissed: false } : { data: raw, ...fresh.metadata };
+      shared.write(backupKey, made);
       shared.write(key, empty);
       return { value: empty, problem: problem(made, parsed.cause) };
     },
@@ -71,6 +75,12 @@ export const createSavedValue = <T>(
       if (!parsed.ok) return false;
       shared.write(key, parsed.value);
       shared.write(backupKey, null);
+      return true;
+    },
+    dismiss: () => {
+      const kept = backup();
+      if (!kept) return false;
+      shared.write(backupKey, { ...kept, dismissed: true });
       return true;
     },
   };

@@ -258,7 +258,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <h3>Damaged saved data</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">What does Spaces do when the saved groups or settings it reads fail the shape check?</dd>
-          <dt>Resolution</dt> <dd data-field="resolution">Keep the unreadable data aside under a backup key and start with no groups. Spaces then looks like Herdr without the mod (this computer first, then the other machines by name), except for an error card saying the saved groups could not be read and were kept as a backup.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Keep the unreadable data aside under a backup key and start with no groups. Spaces then looks like Herdr without the mod (this computer first, then the other machines by name), except for an error card saying the saved groups could not be read and were kept as a backup. The card keeps one reference id for as long as the backup is kept, and has two buttons (revised 2026-11-17 by the user): Try again reads the backup again and restores it when it can be read now, and Dismiss hides the card and keeps the backup. A dismissal lasts across restarts; damaged data found after it shows the card again.</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -1209,6 +1209,8 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <tr><td>43</td><td>Herdr&#x27;s machines, spaces, and agents come typed from herdr.d.ts. A group may name a machine Herdr no longer lists, so Group model treats a missing machine as data, not an error.</td><td>unit</td><td>A missing machine is data (group rows).</td></tr>
             <tr><td>44</td><td>Group names and icons typed by the user are checked when entered: a name is not empty after trimming spaces, and is at most 60 characters; two groups may share a name (Group name rules). An icon is saved with its kind, and the only kind accepted today is emoji.</td><td>unit</td><td>Name and icon rules (group model, commands).</td></tr>
             <tr><td>45</td><td>Sidebar settings read from Herdr&#x27;s shared state are external data too. Sidebar settings checks them on every read and fills each missing value from its one declared default.</td><td>unit</td><td>Sidebar settings read with defaults.</td></tr>
+            <tr><td>46</td><td>The damaged-data card&#x27;s Try again restores the backup once it can be read, and the card goes</td><td>walk; unit; needs pointer or typing</td><td>Retry walk: after data-retry (what the button sends), the restored group shows and the card goes. The click needs the pointer.</td></tr>
+            <tr><td>47</td><td>The damaged-data card&#x27;s Dismiss hides the card, and it stays hidden after Herdr restarts</td><td>walk; unit; needs pointer or typing</td><td>Dismiss walk: after data-dismiss (what the button sends), the card is gone, and still gone after a restart. Damaged data found later shows it again (unit). The click needs the pointer.</td></tr>
         </tbody>
       </table>
       <p>Findings on this pass, each fixed with a test that failed first: the group settings dialog hid Save (dialogs walk); a banner file name came out signed in Herdr's engine (skeleton walk); damaged saved data showed no error card (damaged walk).</p>

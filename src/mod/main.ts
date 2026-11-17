@@ -72,6 +72,11 @@ export default class NerdHerdSpaces extends Spaces {
             this.keyboard.focus();
             return;
           }
+          if (command === "data-dismiss") {
+            this.app.dismiss();
+            cx.notify();
+            return;
+          }
           if (command === "data-retry") {
             this.retryData();
             cx.notify();
@@ -218,12 +223,17 @@ export default class NerdHerdSpaces extends Spaces {
       );
   }
 
-  /** Below the header: a card for each saved-data problem, with a button to read the data again. */
+  /** Below the header: a card for each saved-data problem, with Try again and Dismiss buttons. */
   belowHeader(t: Theme) {
     return v_flex()
       .flex_none()
       .children(
-        this.app.view().problems.map((p) => errorCard(t, p.message, () => this.retryData())),
+        this.app.view().problems.map((p) =>
+          errorCard(t, p.message, {
+            retry: () => this.retryData(),
+            dismiss: () => this.app.dismiss(),
+          }),
+        ),
       );
   }
 

@@ -48,6 +48,43 @@ describe("a saved value with a backup", () => {
     expect([value.load().value, value.load().problem]).toEqual([[1, 2], null]);
   });
 
+  test("dismissing with nothing backed up returns false", () => {
+    const { shared } = memoryShared();
+    expect(numbers(shared).dismiss()).toBe(false);
+  });
+
+  // Statement from the user, 2026-11-17: "add a dismiss button". Dismiss hides the card and keeps
+  // the backup (the option the user chose).
+  test("after a dismissal, a later read reports no problem", () => {
+    const { shared } = memoryShared({ "test.numbers": "damaged" });
+    const value = numbers(shared);
+    value.load();
+    value.dismiss();
+    expect(value.load().problem).toBeNull();
+  });
+
+  test("after a dismissal, trying again still restores the backup once it can be read", () => {
+    const { shared, values } = memoryShared({ "test.numbers": "damaged" });
+    const value = numbers(shared);
+    value.load();
+    value.dismiss();
+    const backup = values.get("test.numbers.backup");
+    values.set("test.numbers.backup", { ...(backup as object), data: [3] });
+    value.retry();
+    expect(value.load().value).toEqual([3]);
+  });
+
+  test("damaged data found after a dismissal reports the problem again", () => {
+    const { shared, values } = memoryShared({ "test.numbers": "damaged" });
+    const value = numbers(shared);
+    value.load();
+    value.dismiss();
+    values.set("test.numbers", "damaged again");
+    value.load();
+    // The read after the one that found the damage: the card is drawn from every later read.
+    expect(value.load().problem instanceof SavedDataError).toBe(true);
+  });
+
   test("damaged data is reported as a saved-data problem and the empty value is in use", () => {
     const { shared } = memoryShared({ "test.numbers": "damaged" });
     const read = numbers(shared).load();

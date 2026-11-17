@@ -21,6 +21,8 @@ export interface GroupStore {
   save(groups: SavedGroups): void;
   /** Reads backed-up groups again; restores them when they can be read now. */
   retry(): boolean;
+  /** Stops showing the backed-up groups' problem; the backup is kept. */
+  dismiss(): boolean;
 }
 
 const groupsKey = "nerd-herd.groups";
@@ -65,5 +67,6 @@ export const createGroupStore = (shared: SharedState): GroupStore => {
     },
     save: (groups) => value.save(groups),
     retry: () => value.retry(),
+    dismiss: () => value.dismiss(),
   };
 };

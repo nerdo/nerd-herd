@@ -33,6 +33,8 @@ export interface App {
   loadBanners(): Promise<boolean>;
   /** Reads backed-up saved data again, restoring what can be read now. True when anything was restored. */
   retry(): boolean;
+  /** Hides the saved-data problems' cards; the backups are kept for Try again. */
+  dismiss(): void;
 }
 
 /** The composition root: wires the core units to Herdr. */
@@ -77,6 +79,10 @@ export function createApp(host: Host, newId: () => GroupId): App {
       const groups = store.retry();
       const settings = settingsStore.retry();
       return groups || settings;
+    },
+    dismiss: () => {
+      store.dismiss();
+      settingsStore.dismiss();
     },
     loadBanners: async () => {
       const links = read().groups.groups.groups.flatMap((g) => [g.openBanner, g.foldedBanner]);
