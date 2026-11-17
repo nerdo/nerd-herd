@@ -43,9 +43,11 @@ export class HerdrWindow {
     rmSync(this.home, { recursive: true, force: true });
     mkdirSync(this.home, { recursive: true });
     this.prepareFakeCurl();
+    // A person closes Herdr's welcome screen once; its close button records "skipped" in Herdr's shared
+    // state (frame/welcome/main.js), and Herdr then never shows it again. The fresh home starts so.
+    writeFileSync(join(this.home, "shared.json"), JSON.stringify({ "frame.welcomed": "skipped" }));
     const r = run(["bun", "run", "start"], this.env());
     if (r.code !== 0) throw new Error(`bun run start failed: ${r.out}\n${r.err}`);
-    this.closeWelcome({ expected: true });
   }
 
   /** Closes the window and starts it again on the same home, as a person restarting Herdr. */
@@ -53,7 +55,6 @@ export class HerdrWindow {
     this.stop();
     const r = run(["bun", "run", "start"], this.env());
     if (r.code !== 0) throw new Error(`bun run start failed: ${r.out}\n${r.err}`);
-    this.closeWelcome({ expected: false });
   }
 
   stop(): void {
@@ -94,11 +95,6 @@ export class HerdrWindow {
 
   private readOnce(): ScreenLines {
     sleep(1500);
-    // Herdr's welcome screen can open late, over the sidebar; a person closes it before looking.
-    if (run(["herdr-app", "status"], this.env()).out.includes("frame-welcome")) {
-      run(["herdr-app", "do", "overlay.close", "--id", "frame-welcome"], this.env());
-      sleep(500);
-    }
     // Every read keeps its own screenshot, numbered, so a failed reading can be checked by eye.
     this.shots += 1;
     const shot = join(this.home, `shot-${this.shots}.png`);
@@ -159,24 +155,6 @@ export class HerdrWindow {
     const windowWidth = bounds[2];
     if (typeof windowWidth !== "number") throw new Error("window.json has no window width");
     return (width * zoom) / windowWidth;
-  }
-
-  /**
-   * A fresh home always opens Herdr's welcome screen over the sidebar, sometimes seconds after the
-   * window answers; a person closes it first. Expected: wait for it (up to 15 s), close it, confirm it
-   * is gone. Not expected (a restart): close it if it shows within 5 s.
-   */
-  private closeWelcome({ expected }: { expected: boolean }): void {
-    const showing = () => run(["herdr-app", "status"], this.env()).out.includes("frame-welcome");
-    let seen = false;
-    for (let waited = 0; waited < (expected ? 15_000 : 12_000); waited += 500) {
-      if (showing()) {
-        seen = true;
-        run(["herdr-app", "do", "overlay.close", "--id", "frame-welcome"], this.env());
-      } else if (seen) return;
-      sleep(500);
-    }
-    if (expected && !seen) throw new Error("Herdr's welcome screen never showed on a fresh home");
   }
 
   /** The first reachable machine other than this computer, from herdr-core's own list. */

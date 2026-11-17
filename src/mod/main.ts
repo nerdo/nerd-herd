@@ -1,20 +1,12 @@
 import { h_flex, v_flex } from "gpui-base";
-import { type AsyncContext, div, image, svg } from "gpui-kit";
-import {
-  checking,
-  closeOverlay,
-  layout,
-  nextCommand,
-  notify,
-  openOverlay,
-  props,
-  theme,
-} from "herdr";
+import { type AsyncContext, div, svg } from "gpui-kit";
+import { checking, closeOverlay, nextCommand, notify, openOverlay, props, theme } from "herdr";
 import { ulid } from "ulid";
 import { runCommands } from "../core/commands/commandLoop";
 import type { GroupId, SpacesRow } from "../core/groups/groupModel";
-import { bannerOffset, newGroupLabel } from "../core/presentation/spacesText";
+import { newGroupLabel } from "../core/presentation/spacesText";
 import { type App, createApp } from "./app";
+import { groupHeaderView } from "./groupHeaderView";
 import { herdrHost } from "./herdrHost";
 import { themeColor } from "./themeColor";
 import { Spaces } from "./vendor/herdrSpaces.js";
@@ -22,20 +14,6 @@ import { Spaces } from "./vendor/herdrSpaces.js";
 type GroupRow = Extract<SpacesRow, { kind: "group" }>;
 type UngroupedRow = Extract<SpacesRow, { kind: "ungrouped" }>;
 type Theme = Record<string, string>;
-
-/** The sidebar's width in points, from the layout, less the list's side padding. */
-const bannerSpace = (): number => {
-  const find = (node: unknown): number => {
-    if (typeof node !== "object" || node === null) return 0;
-    if ("id" in node && node.id === "sidebar" && "size" in node) {
-      const size = node.size;
-      if (typeof size === "object" && size !== null && "px" in size && typeof size.px === "number")
-        return size.px;
-    }
-    return Object.values(node).reduce((found: number, child: unknown) => found || find(child), 0);
-  };
-  return Math.max(0, (find(layout()) || 268) - 16);
-};
 
 /** The commands Herdr delivers to this mod, one at a time, for as long as it runs. */
 async function* commands(): AsyncGenerator<string> {
@@ -75,68 +53,13 @@ export default class NerdHerdSpaces extends Spaces {
   }
 
   groupHeader(row: GroupRow, t: Theme) {
-    const banners = this.app.view().banners;
-    const state = row.banner ? banners.lookup(row.banner) : { kind: "none" as const };
-    const head = h_flex()
-      .id(`group-${row.id}`)
-      .h(26)
-      .flex_none()
-      .px(8)
-      .gap(7)
-      .items_center()
-      .rounded(6)
-      .text_size(11)
-      .text_color(themeColor(t, "dim"))
-      .cursor_pointer()
-      .hover((s) => s.bg(themeColor(t, "hover")))
-      .on_click((_e, cx) => {
-        this.app.apply(`group-fold:${JSON.stringify({ group: row.id, folded: !row.folded })}`);
-        cx.notify();
-      })
-      .child(
-        row.icon
-          ? div().flex_none().child(row.icon.value)
-          : svg("mods/workspace-chrome/folder.svg").size(13).flex_none(),
-      )
-      .child(div().flex_1().truncate().text_color(themeColor(t, "muted")).child(row.name))
-      .when(row.folded, (el) => el.child(div().flex_none().child(String(row.count))))
-      .child(
-        svg(`mods/workspace-chrome/chevron-${row.folded ? "right" : "down"}.svg`)
-          .size(11)
-          .flex_none(),
-      );
-    const banner =
-      state.kind === "ready"
-        ? div()
-            .w_full()
-            .h(state.file.height)
-            .flex_none()
-            .overflow_x_hidden()
-            .child(
-              image(state.file.path)
-                .w(state.file.width)
-                .h(state.file.height)
-                .flex_none()
-                .ml(bannerOffset(state.file.width, bannerSpace(), row.clip)),
-            )
-        : state.kind === "failed"
-          ? div()
-              .flex_none()
-              .mx(4)
-              .p(8)
-              .rounded(6)
-              .border_1()
-              .border_color(themeColor(t, "blocked"))
-              .text_size(11)
-              .text_color(themeColor(t, "foreground"))
-              .child(state.message)
-          : null;
-    return v_flex()
-      .flex_none()
-      .ml(row.depth * 12)
-      .gap(4)
-      .child(head)
-      .when(banner !== null, (el) => (banner ? el.child(banner) : el));
+    const banner = row.banner
+      ? this.app.view().banners.lookup(row.banner)
+      : { kind: "none" as const };
+    return groupHeaderView(row, banner, t, (cx) => {
+      this.app.apply(`group-fold:${JSON.stringify({ group: row.id, folded: !row.folded })}`);
+      cx.notify();
+    });
   }
 
   ungroupedHeader(row: UngroupedRow, t: Theme) {

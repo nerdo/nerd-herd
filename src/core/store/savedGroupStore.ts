@@ -40,6 +40,9 @@ const SavedGroupsSchema = z.object({
       subgroupSort: sort,
       machineSort: sort,
       countMode: z.enum(["allMachines", "directMachines", "directItems"]),
+      // Added 2026-11-17; groups saved before then take the defaults.
+      chevron: z.boolean().default(true),
+      align: z.enum(["top", "middle", "bottom"]).default("middle"),
     }),
   ),
   placements: z.array(z.object({ name: z.string().nullable(), group: z.string().nullable() })),

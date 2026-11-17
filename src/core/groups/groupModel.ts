@@ -23,6 +23,8 @@ export interface GroupIcon {
 
 export type ClipSide = "left" | "center";
 export type CountMode = "allMachines" | "directMachines" | "directItems";
+/** Where a group's controls sit on its banner. */
+export type ControlAlign = "top" | "middle" | "bottom";
 
 export interface SavedGroup {
   readonly id: GroupId;
@@ -36,6 +38,9 @@ export interface SavedGroup {
   readonly subgroupSort: SortChoice;
   readonly machineSort: SortChoice;
   readonly countMode: CountMode;
+  /** Whether the fold chevron shows on the group's banner. */
+  readonly chevron: boolean;
+  readonly align: ControlAlign;
 }
 
 /** Where a machine sits: in a group, or ungrouped (null). The list order is the custom order. */
@@ -71,6 +76,8 @@ export type SpacesRow =
       readonly count: Count;
       readonly banner: BannerLink | null;
       readonly clip: ClipSide;
+      readonly chevron: boolean;
+      readonly align: ControlAlign;
     }
   | {
       readonly kind: "machine";

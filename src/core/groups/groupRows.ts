@@ -83,6 +83,8 @@ export const computeRows = (
         count: countOf(g),
         banner: bannerFor(g),
         clip: g.clip,
+        chevron: g.chevron,
+        align: g.align,
       },
       ...(g.folded ? [] : level(g, depth + 1)),
     ]);

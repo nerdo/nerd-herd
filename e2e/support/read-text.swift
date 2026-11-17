@@ -2,8 +2,11 @@
 // as "<left> <top> <right>\t<text>" with positions as fractions of the image (top-left origin).
 // Usage: read-text <image.png> [column]. With column (a fraction from 0 to 1), only the image's
 // left part of that width is read, scaled up twice so small, faint sidebar text is recognized;
-// positions are still fractions of the whole image. The end-to-end tests read Herdr screenshots with it.
+// positions are still fractions of the whole image. The image is read in gray with its contrast raised,
+// so dim text on a light banner is recognized as a person sees it. The end-to-end tests read Herdr
+// screenshots with it.
 import AppKit
+import CoreImage
 import Foundation
 import Vision
 
@@ -24,7 +27,17 @@ guard let ctx = CGContext(data: nil, width: part.width * scale, height: part.hei
 }
 ctx.interpolationQuality = .high
 ctx.draw(part, in: CGRect(x: 0, y: 0, width: part.width * scale, height: part.height * scale))
-guard let cg = ctx.makeImage() else { fputs("cannot scale image\n", stderr); exit(1) }
+guard let scaled = ctx.makeImage() else { fputs("cannot scale image\n", stderr); exit(1) }
+let contrast = Double(ProcessInfo.processInfo.environment["READ_TEXT_CONTRAST"] ?? "") ?? 2.5
+let filter = CIFilter(name: "CIColorControls")!
+filter.setValue(CIImage(cgImage: scaled), forKey: kCIInputImageKey)
+filter.setValue(0, forKey: kCIInputSaturationKey)
+filter.setValue(contrast, forKey: kCIInputContrastKey)
+guard let out = filter.outputImage,
+      let cg = CIContext().createCGImage(out, from: out.extent) else {
+  fputs("cannot raise contrast\n", stderr)
+  exit(1)
+}
 let req = VNRecognizeTextRequest()
 req.recognitionLevel = .accurate
 req.usesLanguageCorrection = false

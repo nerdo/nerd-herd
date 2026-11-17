@@ -117,6 +117,8 @@ export const makeGroup = (saved: SavedGroups, group: NewGroup): SavedGroups => {
         subgroupSort: "custom",
         machineSort: "custom",
         countMode: "allMachines",
+        chevron: true,
+        align: "middle",
       },
     ],
   };
