@@ -157,6 +157,12 @@ export default class NerdHerdSpaces extends Spaces {
     return marked(this.draggable(head, row), this.mark(row), t);
   }
 
+  /** How far a machine's spaces sit right of its row: 20 points puts each space's badge under the
+   *  machine's name (the row's 8-point padding, 13-point icon, and 7-point gap). */
+  spaceIndent(): number {
+    return this.app.view().settings.indentSpaces ? 20 : 0;
+  }
+
   layoutRows(): readonly SpacesRow[] {
     return this.app.view().rows;
   }

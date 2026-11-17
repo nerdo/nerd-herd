@@ -42,6 +42,14 @@ test("Spaces settings show the word for groups and the ungrouped header", () => 
   );
 });
 
+// The user, 2026-11-17: indenting spaces under their machine is a setting that can be turned off.
+test("Spaces settings show the choice of indented or flush spaces under a machine", () => {
+  // Indented and Flush share one line, and the window is read in overlapping strips, so their order
+  // in the reading is not fixed; the statement is that both are offered under the label.
+  const below = spacesSettings.join("\n").split("Spaces under a machine")[1] ?? "";
+  expect([below.includes("Indented"), below.includes("Flush")]).toEqual([true, true]);
+});
+
 // Spec: docs/specs/in-progress/executing-nerd-herd-spaces.html#test-case-a-group-s-cog-opens-that-group-s-settings@jj:261617da
 test("a group's settings show its icon, banner links, clip side, sorts, and folded count", () => {
   expect(groupSettings.join("\n")).toMatch(

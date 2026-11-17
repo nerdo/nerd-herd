@@ -156,4 +156,9 @@ describe("applying a command", () => {
     const s = run(start, 'settings-ungrouped:{"header":true,"name":"Unsorted"}');
     expect([s.settings.ungroupedHeader, s.settings.ungroupedName]).toEqual([true, "Unsorted"]);
   });
+
+  test("settings-indent turns off indenting spaces under their machine", () => {
+    const s = run(start, 'settings-indent:{"indent":false}');
+    expect(s.settings.indentSpaces).toBe(false);
+  });
 });

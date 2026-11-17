@@ -1,5 +1,6 @@
 // Spaces settings, opened from the cog beside the Spaces "+": the word for groups (singular and
-// plural) and the ungrouped header (shown or not, and its name).
+// plural), whether a machine's spaces are indented under it, and the ungrouped header (shown or
+// not, and its name).
 import { InputState } from "gpui-base";
 import type { AsyncContext } from "gpui-kit";
 import type { SidebarSettings } from "../../core/settings/sidebarSettings";
@@ -21,6 +22,7 @@ export class SpacesSettingsPanel implements Panel {
   private readonly plural: InputState;
   private readonly ungroupedName: InputState;
   private header: "shown" | "hidden";
+  private indent: "indented" | "flush";
   private refused: string | null = null;
 
   constructor(settings: SidebarSettings, _cx: AsyncContext) {
@@ -28,6 +30,7 @@ export class SpacesSettingsPanel implements Panel {
     this.plural = InputState.new({ value: settings.groupWord.plural });
     this.ungroupedName = InputState.new({ value: settings.ungroupedName });
     this.header = settings.ungroupedHeader ? "shown" : "hidden";
+    this.indent = settings.indentSpaces ? "indented" : "flush";
   }
 
   private save(): void {
@@ -39,6 +42,7 @@ export class SpacesSettingsPanel implements Panel {
       return;
     }
     send("settings-word", { singular, plural });
+    send("settings-indent", { indent: this.indent === "indented" });
     send("settings-ungrouped", { header: this.header === "shown", name });
     close();
   }
@@ -52,6 +56,19 @@ export class SpacesSettingsPanel implements Panel {
         field(t, this.singular),
         label(t, "Word for groups (more than one)"),
         field(t, this.plural),
+        label(t, "Spaces under a machine"),
+        choice(
+          t,
+          "indent-spaces",
+          [
+            { value: "indented", text: "Indented" },
+            { value: "flush", text: "Flush" },
+          ] as const,
+          this.indent,
+          (v) => {
+            this.indent = v;
+          },
+        ),
         label(t, "Header above the ungrouped machines"),
         choice(
           t,

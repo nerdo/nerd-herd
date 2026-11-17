@@ -11,6 +11,11 @@ import { e2eSettings } from "./e2e-settings";
 
 export type ScreenLines = readonly string[];
 export type MachineName = string;
+/** One line of the sidebar as drawn: its text, and its left edge in points from the window's left. */
+export interface PlacedLine {
+  readonly text: string;
+  readonly left: number;
+}
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const sleep = (ms: number) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
@@ -173,7 +178,22 @@ export class HerdrWindow {
     return lines;
   }
 
+  /** Like read(), with each line's left edge, for checks on where a line is drawn. */
+  readPlaced(): readonly PlacedLine[] {
+    let last = this.placedOnce();
+    for (let n = 1; n < 8; n++) {
+      const next = this.placedOnce();
+      if (next.map((l) => l.text).join("\n") === last.map((l) => l.text).join("\n")) return next;
+      last = next;
+    }
+    return last;
+  }
+
   private readOnce(): ScreenLines {
+    return this.placedOnce().map((l) => l.text);
+  }
+
+  private placedOnce(): readonly PlacedLine[] {
     sleep(1500);
     // Every read keeps its own screenshot, numbered, so a failed reading can be checked by eye.
     const shot = this.shotPath();
@@ -199,12 +219,19 @@ export class HerdrWindow {
       if (row && b.top - row.top < 0.008) row.blocks.push(b);
       else rows.push({ top: b.top, blocks: [b] });
     }
-    return rows.map((r) =>
-      r.blocks
-        .sort((a, b) => a.left - b.left)
-        .map((b) => b.text)
-        .join(" "),
-    );
+    const points = this.windowPoints(shot);
+    return rows.map((r) => {
+      const sorted = r.blocks.sort((a, b) => a.left - b.left);
+      return { text: sorted.map((b) => b.text).join(" "), left: (sorted[0]?.left ?? 0) * points };
+    });
+  }
+
+  /** The window's width in points: window.json, or until Herdr writes it, the screenshot's width
+   *  (they were equal on 2026-11-17, both 1069). */
+  private windowPoints(shot: string): number {
+    return existsSync(join(this.home, "window.json"))
+      ? windowWidthIn(JSON.parse(readFileSync(join(this.home, "window.json"), "utf8")))
+      : readFileSync(shot).readUInt32BE(16);
   }
 
   /**
@@ -223,12 +250,7 @@ export class HerdrWindow {
       typeof settings.zoom === "number"
         ? settings.zoom
         : 1;
-    // Herdr writes window.json some time after a fresh home opens; until then the screenshot's own
-    // width stands in, which equals the window's width in points (both 1069 on 2026-11-17).
-    const windowWidth = existsSync(join(this.home, "window.json"))
-      ? windowWidthIn(json("window.json"))
-      : readFileSync(shot).readUInt32BE(16);
-    return (width * zoom) / windowWidth;
+    return (width * zoom) / this.windowPoints(shot);
   }
 
   /** The first reachable machine other than this computer, from herdr-core's own list. */

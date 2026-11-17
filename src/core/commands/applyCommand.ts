@@ -70,6 +70,7 @@ const payloads = {
     align: z.enum(["top", "middle", "bottom"]).optional(),
   }),
   "settings-ungrouped": z.object({ header: z.boolean().optional(), name: name.optional() }),
+  "settings-indent": z.object({ indent: z.boolean() }),
 } as const;
 type Action = keyof typeof payloads;
 const isAction = (a: string): a is Action => a in payloads;
@@ -184,6 +185,10 @@ export const applyCommand = (
           ungroupedName: p.name ?? state.settings.ungroupedName,
         },
       };
+    }
+    case "settings-indent": {
+      const p = check(payloads["settings-indent"]);
+      return { ...state, settings: { ...state.settings, indentSpaces: p.indent } };
     }
   }
 };
