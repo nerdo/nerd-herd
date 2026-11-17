@@ -1,10 +1,12 @@
-// Quits a Herdr test window once the program that started it has ended, so an interrupted test run
-// leaves no window behind. Started by scripts/start.ts as `bun scripts/window-watchdog.ts <owner pid>`.
-import { join } from "node:path";
+// Ends one Herdr test window once the program that started it has ended, so an interrupted test run
+// leaves no window behind. Started by scripts/start.ts as
+// `bun scripts/window-watchdog.ts <owner pid> <window pid>`; it touches only that window, so a newer
+// test window on the same home keeps running.
 import { scriptSettings as s } from "./settings";
 
-const owner = Number(process.argv[2]);
-if (s.isOwnHome || !Number.isInteger(owner) || owner <= 0) process.exit(0);
+const [owner, window] = process.argv.slice(2).map(Number);
+const valid = (pid: number | undefined): pid is number => Number.isInteger(pid) && (pid ?? 0) > 0;
+if (s.isOwnHome || !valid(owner) || !valid(window)) process.exit(0);
 const alive = (pid: number): boolean => {
   try {
     process.kill(pid, 0);
@@ -13,9 +15,10 @@ const alive = (pid: number): boolean => {
     return false;
   }
 };
-while (alive(owner)) Bun.sleepSync(2_000);
-Bun.spawnSync(["bun", join(import.meta.dir, "stop-window.ts")], {
-  env: { ...process.env, HERDR_APP_HOME: s.herdrHome },
-  stdout: "ignore",
-  stderr: "ignore",
-});
+while (alive(owner) && alive(window)) Bun.sleepSync(2_000);
+if (alive(window)) {
+  process.kill(window, "SIGTERM");
+  const until = Date.now() + 5_000;
+  while (alive(window) && Date.now() < until) Bun.sleepSync(300);
+  if (alive(window)) process.kill(window, "SIGKILL");
+}

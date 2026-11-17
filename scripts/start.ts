@@ -29,11 +29,12 @@ async function ensureWindow(): Promise<void> {
   else {
     // A test window keeps its log in its own home, so a failure can be read afterward.
     const log = Bun.file(join(s.herdrHome, "window.log"));
-    Bun.spawn([s.herdrBinary], { env, stdout: log, stderr: log }).unref();
+    const window = Bun.spawn([s.herdrBinary], { env, stdout: log, stderr: log });
+    window.unref();
     // The program that owns the test window (NERD_HERD_OWNER_PID, else whoever ran this script);
     // a watchdog quits the window once that program ends, even when it is interrupted.
     const owner = process.env.NERD_HERD_OWNER_PID ?? String(process.ppid);
-    Bun.spawn(["bun", join(import.meta.dir, "window-watchdog.ts"), owner], {
+    Bun.spawn(["bun", join(import.meta.dir, "window-watchdog.ts"), owner, String(window.pid)], {
       env,
       stdio: ["ignore", "ignore", "ignore"],
     }).unref();

@@ -48,6 +48,10 @@ export class HerdrWindow {
     writeFileSync(join(this.home, "shared.json"), JSON.stringify({ "frame.welcomed": "skipped" }));
     const r = run(["bun", "run", "start"], this.env());
     if (r.code !== 0) throw new Error(`bun run start failed: ${r.out}\n${r.err}`);
+    // Spaces and Agents share the sidebar evenly, so a long Spaces list is cut off at Agents and its
+    // reading depends on where Herdr scrolled it. Like a person dragging the divider down, give
+    // Spaces most of the height; Herdr keeps the size in this home, through restarts too.
+    this.herdr("layout.resize", { id: "agents", weight: 0.25 });
   }
 
   /** Closes the window and starts it again on the same home, as a person restarting Herdr. */
@@ -59,6 +63,18 @@ export class HerdrWindow {
 
   stop(): void {
     run(["bun", "scripts/stop-window.ts"], this.env());
+  }
+
+  /** Runs one of Herdr's own commands with JSON arguments, as `herdr-app do <name> '<json>'`. */
+  herdr(name: string, args: Record<string, unknown>): void {
+    const r = run(["herdr-app", "do", name, JSON.stringify(args)], this.env());
+    if (r.code !== 0) throw new Error(`herdr-app do ${name} failed: ${r.out}\n${r.err}`);
+    sleep(400);
+  }
+
+  /** Herdr's answer to `herdr-app <what>` (ls or status), parsed. */
+  ask(what: "ls" | "status"): unknown {
+    return JSON.parse(run(["herdr-app", what], this.env()).out);
   }
 
   /** Presses one of the Spaces mod's keys: sends the action its keys.json binding sends. */
@@ -99,6 +115,17 @@ export class HerdrWindow {
       last = next;
     }
     return last;
+  }
+
+  /**
+   * Reads until the sidebar shows what the test is waiting for, up to 20 s, as a person waits for
+   * the sidebar to finish loading; returns the last reading either way, for the test to judge.
+   */
+  readUntil(shows: (lines: ScreenLines) => boolean): ScreenLines {
+    const until = Date.now() + 20_000;
+    let lines = this.read();
+    while (!shows(lines) && Date.now() < until) lines = this.readOnce();
+    return lines;
   }
 
   private readOnce(): ScreenLines {

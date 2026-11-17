@@ -3,6 +3,7 @@ import { type AsyncContext, div, type Element, type FocusHandle, svg } from "gpu
 import { checking, nextCommand, notify, props, theme } from "herdr";
 import { ulid } from "ulid";
 import { runCommands } from "../core/commands/commandLoop";
+import { type DropZone, dropCommand } from "../core/groups/dropCommand";
 import type { GroupId, SpacesRow } from "../core/groups/groupModel";
 import {
   isKeyCommand,
@@ -17,13 +18,18 @@ import { groupHeaderView } from "./groupHeaderView";
 import { herdrHost } from "./herdrHost";
 import { openMenu, openPanel, type Panel } from "./panels/formParts";
 import { panelFor } from "./panels/panelFor";
-import { marked } from "./rowMark";
+import { marked, type RowMark } from "./rowMark";
 import { themeColor } from "./themeColor";
 import { Spaces } from "./vendor/herdrSpaces.js";
 
 type GroupRow = Extract<SpacesRow, { kind: "group" }>;
 type UngroupedRow = Extract<SpacesRow, { kind: "ungrouped" }>;
 type Theme = Record<string, string>;
+
+const sameRow = (a: RowKey, b: RowKey): boolean =>
+  a.kind === "group"
+    ? b.kind === "group" && a.id === b.id
+    : b.kind === "machine" && a.name === b.name;
 
 /** The commands Herdr delivers to this mod, one at a time, for as long as it runs. */
 async function* commands(): AsyncGenerator<string> {
@@ -43,6 +49,8 @@ export default class NerdHerdSpaces extends Spaces {
   /** The keyboard's focused row and cut row. */
   keys: KeyState = { focused: null, cut: null };
   keyboard: FocusHandle;
+  /** The row being dragged, and where it would land if dropped now. */
+  drag: { source: RowKey; over: { target: RowKey; zone: DropZone } | null } | null = null;
 
   init(initial: unknown, cx: AsyncContext): void {
     this.app = createApp(herdrHost, newGroupId);
@@ -88,8 +96,36 @@ export default class NerdHerdSpaces extends Spaces {
     }
   }
 
-  /** How a row the keyboard holds is marked: focused, cut, or neither. */
-  mark(row: RowKey): "focused" | "cut" | null {
+  /** Lets a row be dragged and dropped on: down starts a drag, moving picks the zone, up drops. */
+  draggable(el: Element, row: RowKey): Element {
+    return el
+      .on_mouse_down("left", () => {
+        this.drag = { source: row, over: null };
+      })
+      .on_mouse_move((e, cx) => {
+        if (!this.drag) return;
+        const zone: DropZone = e.local_position.y < e.bounds.height * 0.3 ? "before" : "onto";
+        const over = this.drag.over;
+        if (over && sameRow(over.target, row) && over.zone === zone) return;
+        this.drag = { ...this.drag, over: { target: row, zone } };
+        cx.notify();
+      })
+      .on_mouse_up("left", (_e, cx) => {
+        const drag = this.drag;
+        this.drag = null;
+        if (!drag) return;
+        const zone = drag.over && sameRow(drag.over.target, row) ? drag.over.zone : "onto";
+        const effect = dropCommand(drag.source, row, zone, this.app.view().groups);
+        if (effect) this.app.apply(effect.command);
+        cx.notify();
+      });
+  }
+
+  /** How a row is marked: keyboard focus, cut, where a drag would land, or nothing. */
+  mark(row: RowKey): RowMark {
+    const over = this.drag?.over;
+    if (over && this.drag && !sameRow(this.drag.source, row) && sameRow(over.target, row))
+      return over.zone === "before" ? "drop-before" : "drop-onto";
     const is = (k: RowKey | null) =>
       k !== null &&
       (k.kind === "group"
@@ -99,25 +135,34 @@ export default class NerdHerdSpaces extends Spaces {
   }
 
   machineHead(name: string | null, head: Element, t: Theme): Element {
-    return marked(head, this.mark({ kind: "machine", name }), t);
+    const row: RowKey = { kind: "machine", name };
+    return marked(this.draggable(head, row), this.mark(row), t);
   }
 
   layoutRows(): readonly SpacesRow[] {
     return this.app.view().rows;
   }
 
-  groupHeader(row: GroupRow, t: Theme) {
+  groupHeader(row: GroupRow, t: Theme, rail: boolean) {
     const banner = row.banner
       ? this.app.view().banners.lookup(row.banner)
       : { kind: "none" as const };
-    const view = groupHeaderView(row, banner, t, (cx) => {
-      this.app.apply(`group-fold:${JSON.stringify({ group: row.id, folded: !row.folded })}`);
-      cx.notify();
-    });
-    return marked(view, this.mark({ kind: "group", id: row.id }), t);
+    const view = groupHeaderView(
+      row,
+      banner,
+      t,
+      (cx) => {
+        this.app.apply(`group-fold:${JSON.stringify({ group: row.id, folded: !row.folded })}`);
+        cx.notify();
+      },
+      rail,
+    );
+    const key: RowKey = { kind: "group", id: row.id };
+    return marked(this.draggable(view, key), this.mark(key), t);
   }
 
-  ungroupedHeader(row: UngroupedRow, t: Theme) {
+  ungroupedHeader(row: UngroupedRow, t: Theme, rail: boolean) {
+    if (rail) return div();
     return h_flex()
       .id("ungrouped-header")
       .h(26)
@@ -164,7 +209,15 @@ export default class NerdHerdSpaces extends Spaces {
 
   render() {
     if (props()?.overlay === undefined)
-      return div().size_full().track_focus(this.keyboard).child(super.render());
+      return div()
+        .size_full()
+        .track_focus(this.keyboard)
+        .on_mouse_up("left", (_e, cx) => {
+          if (!this.drag) return;
+          this.drag = null;
+          cx.notify();
+        })
+        .child(super.render());
     const t = theme();
     return this.panel
       ? this.panel.render(t)

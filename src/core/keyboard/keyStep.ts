@@ -1,9 +1,7 @@
-import type { GroupId, MachineName, SavedGroups, SpacesRow } from "../groups/groupModel";
+import { dropCommand, type RowKey } from "../groups/dropCommand";
+import type { GroupId, SavedGroups, SpacesRow } from "../groups/groupModel";
 
-/** A row the keyboard can focus or cut: a group or a machine. */
-export type RowKey =
-  | { readonly kind: "group"; readonly id: GroupId }
-  | { readonly kind: "machine"; readonly name: MachineName };
+export type { RowKey };
 
 /** What the keyboard holds: the focused row and the row waiting to be pasted. */
 export interface KeyState {
@@ -36,24 +34,6 @@ const command = (action: string, payload: unknown): KeyEffect => ({
   kind: "command",
   command: `${action}:${JSON.stringify(payload)}`,
 });
-
-/** The command that moves the cut row onto the target row: into a group, or beside a machine. */
-const pasteOnto = (cut: RowKey, target: RowKey, saved: SavedGroups): KeyEffect => {
-  const groupOf = (name: MachineName) =>
-    saved.placements.find((p) => p.name === name)?.group ?? null;
-  if (cut.kind === "machine")
-    return target.kind === "group"
-      ? command("machine-move", { machine: cut.name, group: target.id })
-      : command("machine-move", {
-          machine: cut.name,
-          group: groupOf(target.name),
-          before: target.name,
-        });
-  return command("group-move", {
-    group: cut.id,
-    parent: target.kind === "group" ? target.id : groupOf(target.name),
-  });
-};
 
 /**
  * What one key does in the Spaces mod. Up and Down move focus between group and machine rows,
@@ -93,7 +73,10 @@ export const keyStep = (
       return { state: { ...state, cut: focused }, effect: null };
     case "paste":
       if (!state.cut || !focused || same(state.cut, focused)) return { state, effect: null };
-      return { state: { ...state, cut: null }, effect: pasteOnto(state.cut, focused, saved) };
+      return {
+        state: { ...state, cut: null },
+        effect: dropCommand(state.cut, focused, "onto", saved),
+      };
   }
 };
 

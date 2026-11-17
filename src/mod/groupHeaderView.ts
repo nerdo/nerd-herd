@@ -69,7 +69,26 @@ export const groupHeaderView = (
   banner: BannerState,
   t: Theme,
   fold: (cx: AsyncContext) => void,
+  rail = false,
 ): Element => {
+  if (rail)
+    // In the narrow rail a group is its icon, named in a tooltip, like Herdr's machine cells.
+    return h_flex()
+      .id(`group-${row.id}`)
+      .h(26)
+      .mt(4)
+      .flex_none()
+      .justify_center()
+      .items_center()
+      .rounded(6)
+      .text_color(themeColor(t, "dim"))
+      .cursor_pointer()
+      .hover((s) => s.bg(themeColor(t, "hover")))
+      .tooltip(row.name)
+      .on_click((_e, cx) => fold(cx))
+      .child(
+        row.icon ? div().child(row.icon.value) : svg("mods/workspace-chrome/folder.svg").size(13),
+      );
   const look = groupHeaderLook(row, banner);
   const menu = () => openMenu({ kind: "group", group: row.id, name: row.name }, 4);
   const strip = h_flex().px(8).gap(7).items_center().text_size(11).text_color(themeColor(t, "dim"));
