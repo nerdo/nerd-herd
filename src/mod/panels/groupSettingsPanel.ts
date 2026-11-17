@@ -79,9 +79,9 @@ export class GroupSettingsPanel implements Panel {
         title(t, `${this.group.name} settings`),
         label(t, "Icon (an emoji)"),
         field(t, this.icon),
-        label(t, "Banner link (https), or the open banner when a folded one is set"),
+        label(t, "Banner link (https or a file path), or the open banner when a folded one is set"),
         field(t, this.openLink),
-        label(t, "Folded banner link (https), optional"),
+        label(t, "Folded banner link (https or a file path), optional"),
         field(t, this.foldedLink),
         label(t, "When the banner is wider than the sidebar, keep"),
         choice(

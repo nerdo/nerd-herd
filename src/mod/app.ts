@@ -8,7 +8,8 @@ import { computeRows } from "../core/groups/groupRows";
 import { createSettingsStore } from "../core/settings/settingsStore";
 import type { SidebarSettings } from "../core/settings/sidebarSettings";
 import { createGroupStore } from "../core/store/savedGroupStore";
-import { curlDownloader, herdrFiles } from "./bannerAdapters";
+import { home } from "herdr";
+import { curlDownloader, herdrFiles, herdrLocalFiles } from "./bannerAdapters";
 import type { Host } from "./herdrHost";
 
 /** Where downloaded banners are kept, relative to Herdr's app folder; hidden, so saving one does not reload the mod. */
@@ -45,6 +46,8 @@ export function createApp(host: Host, newId: () => GroupId): App {
     fetchBanner(link, {
       downloader: curlDownloader,
       files: herdrFiles,
+      localFiles: herdrLocalFiles,
+      home: home(),
       hash: fileHash,
       folder: bannerFolder,
     }),

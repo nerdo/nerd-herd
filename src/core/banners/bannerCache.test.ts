@@ -25,7 +25,8 @@ describe("banner cache", () => {
     await cache.load("http://example.test/work.png");
     expect(cache.lookup("http://example.test/work.png")).toEqual({
       kind: "failed",
-      message: "Banner links must start with https://. Use the https version of the link.",
+      message:
+        "Banner links must start with https://, or name a file on this computer (/…, ~/…, or file://…). Use the https version of a web link.",
     });
   });
 });

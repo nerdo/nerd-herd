@@ -53,7 +53,8 @@ const controls = (row: GroupRow, look: GroupHeaderLook, t: Theme): Element[] => 
     click(
       "group-add",
       () => openPanel({ panel: "name", target: { kind: "new", parent: row.id } }),
-      div().px(4).child("+"),
+      // The same folder-plus icon as the Spaces header's new-group button (the user, 2026-11-17).
+      div().px(2).child(svg("mods/workspace-chrome/folder-plus.svg").size(11)),
     ),
     div().size(6).flex_none(),
     has("chevron")

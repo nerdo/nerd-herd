@@ -1,7 +1,13 @@
 // biome-ignore lint/style/useNodejsImportProtocol: "fs/promises" is Herdr's module, not Node's; Herdr has no "node:" names.
 import { mkdir, readFile, unlink, writeFile } from "fs/promises";
 import { appHome, exec } from "herdr";
-import type { Downloader, DownloadResult, FilePath, FileStore } from "../core/banners/fetchBanner";
+import type {
+  Downloader,
+  DownloadResult,
+  FilePath,
+  FileStore,
+  LocalFiles,
+} from "../core/banners/fetchBanner";
 
 // Herdr's fetch returns no binary body, so banners download with curl through Herdr's exec
 // (spec: Banner research). curl enforces https and the 2 MB limit itself as well.
@@ -50,4 +56,9 @@ export const herdrFiles: FileStore = {
   remove: async (path) => {
     await unlink(absolute(path));
   },
+};
+
+/** Files on this computer by absolute path; Herdr lets a mod read inside the home folder. */
+export const herdrLocalFiles: LocalFiles = {
+  read: (path) => readFile(path),
 };

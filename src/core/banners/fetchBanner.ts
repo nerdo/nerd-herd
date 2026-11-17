@@ -29,9 +29,17 @@ export interface FileStore {
   remove(path: FilePath): Promise<void>;
 }
 
+/** Files anywhere on this computer, by absolute path. In the mod this is Herdr's fs/promises. */
+export interface LocalFiles {
+  read(path: FilePath): Promise<Uint8Array>;
+}
+
 export interface BannerDeps {
   readonly downloader: Downloader;
   readonly files: FileStore;
+  readonly localFiles: LocalFiles;
+  /** The person's home folder, for a banner path under ~/. */
+  readonly home: FilePath;
   readonly hash: (bytes: Uint8Array) => string;
   /** Where banner files are kept, relative to Herdr's app folder. */
   readonly folder: FilePath;
@@ -62,7 +70,36 @@ export class BannerLinkError extends BannerError {
   readonly userAction = "fix";
   constructor(public readonly link: BannerLink) {
     super();
-    this.setMessage("Banner links must start with https://. Use the https version of the link.");
+    this.setMessage(
+      "Banner links must start with https://, or name a file on this computer (/…, ~/…, or file://…). Use the https version of a web link.",
+    );
+  }
+}
+
+/** A banner file on this computer could not be read: missing, unreadable, or outside the home folder. */
+export class BannerFileUnreadableError extends BannerError {
+  readonly userAction = "fix";
+  constructor(
+    public readonly link: BannerLink,
+    public readonly path: FilePath,
+    options: { cause: unknown },
+  ) {
+    super(options);
+    this.setMessage(
+      `Couldn't read the banner file ${path}. Check the path in the group's settings; the file has to be inside your home folder.`,
+    );
+  }
+}
+
+/** A banner file on this computer is not a PNG, GIF, or JPEG image. */
+export class BannerFileNotImageError extends BannerError {
+  readonly userAction = "fix";
+  constructor(
+    public readonly link: BannerLink,
+    public readonly path: FilePath,
+  ) {
+    super();
+    this.setMessage("The banner file is not a PNG, GIF, or JPEG image. Use an image file.");
   }
 }
 
@@ -155,8 +192,47 @@ const imageSize = (b: Uint8Array): ImageSize | null => {
   return null;
 };
 
-/** Downloads a banner link into Herdr's app folder and describes the saved image. */
+/** The absolute path a banner link names on this computer (/…, ~/…, or file://…); null for others. */
+const localPath = (link: BannerLink, home: FilePath): FilePath | null => {
+  if (link.startsWith("~/")) return `${home}/${link.slice(2)}`;
+  if (link.startsWith("/")) return link;
+  // file:///path, or file://localhost/path; Herdr's runtime has no URL class.
+  const file = /^file:\/\/(?:localhost)?(\/[^?#]*)/i.exec(link)?.[1];
+  if (file !== undefined) {
+    try {
+      return decodeURIComponent(file);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
+/** Keeps an image's bytes in the banner folder, named by their hash, and describes it. */
+const keep = async (bytes: Uint8Array, size: ImageSize, deps: BannerDeps): Promise<BannerFile> => {
+  const path = `${deps.folder}/${deps.hash(bytes)}.${size.extension}`;
+  await deps.files.write(path, bytes);
+  return { path, width: size.width, height: size.height };
+};
+
+/** Reads a banner file on this computer, checks it as an image, and keeps a copy. */
+const fetchLocal = async (link: BannerLink, path: FilePath, deps: BannerDeps) => {
+  const bytes = await deps.localFiles.read(path).catch((cause: unknown) => {
+    throw new BannerFileUnreadableError(link, path, { cause });
+  });
+  if (bytes.length > maxBytes) throw new BannerTooLargeError(link, bytes.length);
+  const size = imageSize(bytes);
+  if (!size) throw new BannerFileNotImageError(link, path);
+  return keep(bytes, size, deps);
+};
+
+/**
+ * Makes a banner from a link: an https link is downloaded, and a file on this computer (/…, ~/…, or
+ * file://…) is read. Either is checked as an image and kept in Herdr's app folder.
+ */
 export const fetchBanner = async (link: BannerLink, deps: BannerDeps): Promise<BannerFile> => {
+  const local = localPath(link, deps.home);
+  if (local !== null) return fetchLocal(link, local, deps);
   const host = /^https:\/\/([^/?#:@\s]+)/i.exec(link)?.[1];
   if (!host) throw new BannerLinkError(link);
   // Each download has its own temporary file, so downloads that overlap never read each other's bytes.
@@ -172,8 +248,7 @@ export const fetchBanner = async (link: BannerLink, deps: BannerDeps): Promise<B
   const bytes = await deps.files.read(temp);
   const size = imageSize(bytes);
   if (!size) return refuse(new BannerNotImageError(link, result.contentType));
-  const path = `${deps.folder}/${deps.hash(bytes)}.${size.extension}`;
-  await deps.files.write(path, bytes);
+  const banner = await keep(bytes, size, deps);
   await deps.files.remove(temp);
-  return { path, width: size.width, height: size.height };
+  return banner;
 };

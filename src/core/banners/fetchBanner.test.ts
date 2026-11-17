@@ -1,89 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import type { NerdHerdError } from "../errors/nerdHerdError";
-import {
-  BannerError,
-  type BannerLink,
-  type Downloader,
-  type FileStore,
-  fetchBanner,
-} from "./fetchBanner";
+import { hash, png, rejection, setup } from "./bannerTestFakes";
+import { fetchBanner } from "./fetchBanner";
 
 // Spec-driven bulk tests. Spec cases cite their test case; statements the spec\'s Banner cache module
 // definition makes without a test case cite that definition. All pinned to the spec\'s revision.
-
-type Answer = { status: number; contentType: string; bytes: Uint8Array } | "unreachable";
-
-/** A downloader that answers from a table and records what it was asked. */
-class FakeDownloader implements Downloader {
-  readonly asked: BannerLink[] = [];
-  constructor(
-    private readonly answers: Record<BannerLink, Answer>,
-    private readonly files: MemoryFiles,
-  ) {}
-  async download(link: BannerLink, to: string) {
-    this.asked.push(link);
-    const answer = this.answers[link];
-    if (answer === undefined || answer === "unreachable")
-      return { kind: "unreachable" as const, cause: "fake: cannot connect" };
-    this.files.saved.set(to, answer.bytes);
-    // Answer on a later tick, as a real download does, so two downloads can overlap.
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    return {
-      kind: "answered" as const,
-      status: answer.status,
-      contentType: answer.contentType,
-      size: answer.bytes.length,
-    };
-  }
-}
-
-/** A file store kept in memory. */
-class MemoryFiles implements FileStore {
-  readonly saved = new Map<string, Uint8Array>();
-  async read(path: string) {
-    const bytes = this.saved.get(path);
-    if (!bytes) throw new Error(`fake: no file ${path}`);
-    return bytes;
-  }
-  async write(path: string, bytes: Uint8Array) {
-    this.saved.set(path, bytes);
-  }
-  async remove(path: string) {
-    this.saved.delete(path);
-  }
-}
-
-const hash = (bytes: Uint8Array) => new Bun.CryptoHasher("sha256").update(bytes).digest("hex");
-
-/** A PNG's signature and header chunk: enough for its pixel size. */
-const png = (width: number, height: number, padding = 0) => {
-  const b = new Uint8Array(33 + padding);
-  b.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52]);
-  new DataView(b.buffer).setUint32(16, width);
-  new DataView(b.buffer).setUint32(20, height);
-  return b;
-};
-
-const setup = (answers: Record<BannerLink, Answer>) => {
-  const files = new MemoryFiles();
-  const downloader = new FakeDownloader(answers, files);
-  return {
-    files,
-    downloader,
-    deps: { downloader, files, hash, folder: "mods/nerd-herd-spaces/.banners" },
-  };
-};
-
-const rejection = async (p: Promise<unknown>): Promise<NerdHerdError> => {
-  let value: unknown;
-  try {
-    value = await p;
-  } catch (error) {
-    if (error instanceof BannerError) return error;
-    throw error;
-  }
-  throw new Error(`expected a banner error, got ${JSON.stringify(value)}`);
-};
 
 describe("fetching a banner", () => {
   // Spec: docs/specs/in-progress/executing-nerd-herd-spaces.html#test-case-an-http-banner-link-is-refused@jj:093e16ca
@@ -93,7 +13,7 @@ describe("fetching a banner", () => {
     const error = await rejection(fetchBanner("http://example.test/work.png", deps));
     expect([error.userAction, error.message, downloader.asked.length]).toEqual([
       "fix",
-      "Banner links must start with https://. Use the https version of the link.",
+      "Banner links must start with https://, or name a file on this computer (/…, ~/…, or file://…). Use the https version of a web link.",
       0,
     ]);
   });

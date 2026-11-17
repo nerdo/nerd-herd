@@ -68,7 +68,7 @@ test("a group's settings show its icon, banner links, clip side, sorts, and fold
   // The text reader can drop the capital I of "Icon (an emoji)", a bare bar at the start of a line
   // (a 1200-point window, 2026-11-17: read as "con (an emoji)" while the capture shows "Icon").
   expect(groupSettings.join("\n")).toMatch(
-    /Work settings[\s\S]*I?con \(an emoji\)[\s\S]*Banner link[\s\S]*keep[\s\S]*Sort[\s\S]*Sort machines[\s\S]*Count shown when folded/,
+    /Work settings[\s\S]*I?con \(an emoji\)[\s\S]*Banner link \(https or a file path\)[\s\S]*keep[\s\S]*Sort[\s\S]*Sort machines[\s\S]*Count shown when folded/,
   );
 });
 
