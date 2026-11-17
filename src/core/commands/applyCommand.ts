@@ -11,7 +11,7 @@ import {
   setSort,
 } from "../groups/groupActions";
 import type { GroupId, GroupName, SavedGroups } from "../groups/groupModel";
-import { levelOrderOf, placeItem, setLevelOrder } from "../groups/levelOrder";
+import { freezeSort, levelOrderOf, placeItem, setLevelOrder } from "../groups/levelOrder";
 import { z } from "../schema/zod";
 import type { SidebarSettings } from "../settings/sidebarSettings";
 
@@ -154,7 +154,7 @@ export const applyCommand = (
         groups:
           p.before === undefined
             ? placeMachine(g, p.machine, group)
-            : placeMachine(g, p.machine, group, p.before),
+            : placeMachine(freezeSort(g, group, "machines"), p.machine, group, p.before),
       };
     }
     case "sort-set": {
@@ -192,7 +192,10 @@ export const applyCommand = (
       }
       return {
         ...state,
-        groups: nestGroup(g, id, parent, sibling === undefined ? undefined : { before: sibling }),
+        groups:
+          sibling === undefined
+            ? nestGroup(g, id, parent)
+            : nestGroup(freezeSort(g, parent, "subgroups"), id, parent, { before: sibling }),
       };
     }
     case "level-order": {

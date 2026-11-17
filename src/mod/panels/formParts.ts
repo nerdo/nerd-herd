@@ -132,7 +132,12 @@ export const choice = <V extends string>(
           .text_size(12)
           .text_color(themeColor(t, "foreground"))
           .cursor_pointer()
-          .on_click(() => pick(o.value))
+          // The dialog redraws after a pick, so the chosen button is marked at once (the user's hand
+          // walk, 2026-11-17: picks showed no change until Save).
+          .on_click((_e, cx) => {
+            pick(o.value);
+            cx.notify();
+          })
           .child(o.text),
       ),
     );

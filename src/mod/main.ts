@@ -193,6 +193,7 @@ export default class NerdHerdSpaces extends Spaces {
       row,
       banner,
       t,
+      this.app.view().settings.groupWord,
       (cx) => {
         this.app.apply(`group-fold:${JSON.stringify({ group: row.id, folded: !row.folded })}`);
         cx.notify();

@@ -15,4 +15,10 @@ export const e2eSettings = {
   bannerFixture: resolve(root, "e2e/fixtures/work-banner.png"),
   /** The test window's size in points, set through yabai when it runs (the user, 2026-11-17). */
   windowSize: { width: 1200, height: 900 },
+  /**
+   * Herdr's appearance in the test home. The walks read the screen, and the text reader misses dim
+   * labels on a dark background, so the appearance is set rather than taken from the system's
+   * (2026-11-17: the Mac switched to dark and 16 walks failed to read their labels).
+   */
+  appearance: "light",
 } as const;

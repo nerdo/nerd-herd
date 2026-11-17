@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { GroupNameError } from "../groups/groupModel";
-import { bannerOffset, groupNameMessage, newGroupLabel } from "./spacesText";
+import {
+  bannerOffset,
+  groupNameMessage,
+  groupSettingsLabel,
+  newGroupInsideLabel,
+  newGroupLabel,
+} from "./spacesText";
 
 const environment = { singular: "Environment", plural: "Environments" };
 
@@ -13,6 +19,15 @@ describe("Spaces text and layout", () => {
 
   // Spec: docs/specs/in-progress/executing-nerd-herd-spaces.html#test-case-a-refused-name-explains-itself-in-the-chosen-group-word@jj:093e16ca
   // "The name field shows Environment names can be at most 60 characters. This one has 61."
+  // The user's hand walk, 2026-11-17: "I don't see tooltips on the buttons on the group rows."
+  test("a group's cog is named for that group's settings", () => {
+    expect(groupSettingsLabel("Work")).toBe("Work settings");
+  });
+
+  test("a group's add button is named for a new group inside it, in the chosen word", () => {
+    expect(newGroupInsideLabel(environment, "Work")).toBe("New environment inside Work");
+  });
+
   test("a refused name explains itself in the chosen group word", () => {
     expect(groupNameMessage(new GroupNameError("tooLong", 61), environment)).toBe(
       "Environment names can be at most 60 characters. This one has 61.",

@@ -2,7 +2,7 @@
 // its machines, each kind in its own order. A custom order is one list of both kinds, made when one
 // kind is placed among the other (the user, 2026-11-17), and cleared when the level goes back.
 import { type SortChoice, sortOrder } from "../sorting/sortOrder";
-import { nestGroup, placeMachine } from "./groupActions";
+import { nestGroup, placeMachine, setSort } from "./groupActions";
 import type { GroupId, LevelItem, MachineName, SavedGroup, SavedGroups } from "./groupModel";
 
 export type { LevelItem } from "./groupModel";
@@ -133,4 +133,55 @@ export const setLevelOrder = (saved: SavedGroups, level: Level, order: LevelOrde
     level,
     null,
   );
+};
+
+/**
+ * Before a move to a place in a level sorted A to Z or Z to A: the order the level shows now becomes
+ * its custom order, and that sort becomes custom, so the move lands where it was dropped (the user,
+ * 2026-11-17: "When the user manually moves something, it needs to change to custom").
+ */
+export const freezeSort = (
+  saved: SavedGroups,
+  level: Level,
+  which: "subgroups" | "machines",
+): SavedGroups => {
+  const group = saved.groups.find((g) => g.id === level);
+  const choice =
+    which === "subgroups"
+      ? (group?.subgroupSort ?? saved.topSubgroupSort)
+      : (group?.machineSort ?? saved.topMachineSort);
+  if (choice === "custom") return saved;
+  const frozen =
+    which === "subgroups"
+      ? (() => {
+          const shown = sortedBy(
+            choice,
+            saved.groups.filter((g) => g.parent === level),
+            (g) => g.name,
+          ).map((g) => g.id);
+          return {
+            ...saved,
+            groups: reorder(
+              saved.groups,
+              (g) => g.parent === level,
+              (g) => shown.indexOf(g.id),
+            ),
+          };
+        })()
+      : (() => {
+          const shown = sortedBy(
+            choice,
+            saved.placements.filter((p) => p.group === level).map((p) => p.name),
+            machineLabel,
+          );
+          return {
+            ...saved,
+            placements: reorder(
+              saved.placements,
+              (p) => p.group === level,
+              (p) => shown.indexOf(p.name),
+            ),
+          };
+        })();
+  return setSort(frozen, level, which, "custom");
 };

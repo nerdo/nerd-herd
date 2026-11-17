@@ -5,6 +5,13 @@ import type { GroupWord } from "../settings/sidebarSettings";
 /** The new-group button's label in the user's word for groups, e.g. "New environment". */
 export const newGroupLabel = (word: GroupWord): string => `New ${word.singular.toLowerCase()}`;
 
+/** The tooltip on a group's cog: the title of the settings it opens, e.g. "Work settings". */
+export const groupSettingsLabel = (name: string): string => `${name} settings`;
+
+/** The tooltip on a group's add button, e.g. "New environment inside Work". */
+export const newGroupInsideLabel = (word: GroupWord, name: string): string =>
+  `${newGroupLabel(word)} inside ${name}`;
+
 /** A refused group name's message, rendered from the error's fields in the user's word. */
 export const groupNameMessage = (error: GroupNameError, word: GroupWord): string =>
   error.reason === "empty"

@@ -4,7 +4,12 @@ import { layout } from "herdr";
 import type { BannerState } from "../core/banners/bannerCache";
 import type { SpacesRow } from "../core/groups/groupModel";
 import { type GroupHeaderLook, groupHeaderLook } from "../core/presentation/groupHeaderLook";
-import { bannerOffset } from "../core/presentation/spacesText";
+import {
+  bannerOffset,
+  groupSettingsLabel,
+  newGroupInsideLabel,
+} from "../core/presentation/spacesText";
+import type { GroupWord } from "../core/settings/sidebarSettings";
 import { errorCard } from "./errorCard";
 import { openMenu, openPanel } from "./panels/formParts";
 import { themeColor } from "./themeColor";
@@ -31,12 +36,14 @@ const bannerSpace = (): number => {
  * chevron (Herdr's Spaces mod: 8 points of padding, 7 between), so the "+" and the chevron line
  * up with the machine rows. The dot's place and a hidden chevron's place stay empty.
  */
-const controls = (row: GroupRow, look: GroupHeaderLook, t: Theme): Element[] => {
+const controls = (row: GroupRow, look: GroupHeaderLook, t: Theme, word: GroupWord): Element[] => {
   const has = (c: string) => look.controls.some((x) => x === c);
-  const click = (id: string, act: () => void, child: Element | string) =>
+  // Each button is named in a tooltip, like the Spaces header's (the user's hand walk, 2026-11-17).
+  const click = (id: string, tip: string, act: () => void, child: Element | string) =>
     div()
       .id(`${id}-${row.id}`)
       .flex_none()
+      .tooltip(tip)
       .hover((s) => s.text_color(themeColor(t, "foreground")))
       .on_click((_e, cx) => {
         cx.stop_propagation();
@@ -47,11 +54,13 @@ const controls = (row: GroupRow, look: GroupHeaderLook, t: Theme): Element[] => 
     ...(has("count") ? [div().flex_none().child(String(row.count))] : []),
     click(
       "group-settings",
+      groupSettingsLabel(row.name),
       () => openPanel({ panel: "group-settings", group: row.id }),
       svg("mods/workspace-chrome/settings.svg").size(11),
     ),
     click(
       "group-add",
+      newGroupInsideLabel(word, row.name),
       () => openPanel({ panel: "name", target: { kind: "new", parent: row.id } }),
       // The same folder-plus icon as the Spaces header's new-group button (the user, 2026-11-17).
       div().px(2).child(svg("mods/workspace-chrome/folder-plus.svg").size(11)),
@@ -70,6 +79,7 @@ export const groupHeaderView = (
   row: GroupRow,
   banner: BannerState,
   t: Theme,
+  word: GroupWord,
   fold: (cx: AsyncContext) => void,
   rail = false,
 ): Element => {
@@ -125,7 +135,7 @@ export const groupHeaderView = (
               .flex_1()
               .h(26)
               .justify_end()
-              .children(controls(row, look, t)),
+              .children(controls(row, look, t, word)),
           ),
       );
   }
@@ -144,7 +154,7 @@ export const groupHeaderView = (
         : svg("mods/workspace-chrome/folder.svg").size(13).flex_none(),
     )
     .child(div().flex_1().truncate().text_color(themeColor(t, "muted")).child(row.name))
-    .children(controls(row, look, t));
+    .children(controls(row, look, t, word));
   const card = look.card === null ? null : errorCard(t, look.card);
   return v_flex()
     .flex_none()

@@ -64,6 +64,7 @@ export class HerdrWindow {
     );
     const r = run(["bun", "run", "start"], this.env());
     if (r.code !== 0) throw new Error(`bun run start failed: ${r.out}\n${r.err}`);
+    this.setAppearance();
     this.applySize();
     // Spaces and Agents share the sidebar evenly, so a long Spaces list is cut off at Agents and its
     // reading depends on where Herdr scrolled it. Like a person dragging the divider down, give
@@ -87,6 +88,15 @@ export class HerdrWindow {
 
   /** The size this walk asked for; Herdr would otherwise take the size the window manager gives. */
   private size: WindowPoints = e2eSettings.windowSize;
+
+  /** Adds the walks' appearance to the settings Herdr wrote for this home; Herdr applies it live. */
+  private setAppearance(): void {
+    const file = join(this.home, "settings.json");
+    const saved: unknown = JSON.parse(readFileSync(file, "utf8"));
+    const settings = typeof saved === "object" && saved !== null ? saved : {};
+    writeFileSync(file, JSON.stringify({ ...settings, appearance: e2eSettings.appearance }));
+    sleep(400);
+  }
 
   /** Floats the test window and gives it this walk's size, through yabai when it runs. */
   private applySize(): void {
