@@ -9,6 +9,7 @@
       "!docs",
       "!.e2e-home",
       "!.e2e-bin",
+      "!.hw-home",
       "!src/mod/vendor/**/*.js",
       "!scripts/serve-specs.js"
     ]
