@@ -66,3 +66,36 @@ export const countColor = (
     }
   return count;
 };
+
+/** Where a color first appears in the band: the top row and the left column holding it; null if nowhere. */
+export interface ColorEdge {
+  readonly top: number;
+  readonly left: number;
+}
+export const edgeOf = (png: string, hex: HexColor, band: ImageBand): ColorEdge | null => {
+  const bmp = `${png}.edge.bmp`;
+  const s = spawnSync("sips", ["-s", "format", "bmp", png, "--out", bmp], { encoding: "utf8" });
+  if (s.status !== 0) throw new Error(`sips could not convert ${png}: ${s.stderr}`);
+  const b = readFileSync(bmp);
+  rmSync(bmp);
+  const start = b.readUInt32LE(10);
+  const width = b.readInt32LE(18);
+  const rawHeight = b.readInt32LE(22);
+  const height = Math.abs(rawHeight);
+  const bytes = b.readUInt16LE(28) / 8;
+  const stride = Math.ceil((width * bytes) / 4) * 4;
+  const [r, g, bl] = channels(hex);
+  let top = Number.POSITIVE_INFINITY;
+  let left = Number.POSITIVE_INFINITY;
+  for (let row = 0; row < height; row++)
+    for (let x = Math.floor(width * band.from); x < Math.floor(width * band.to); x++) {
+      const at = start + row * stride + x * bytes;
+      // Rows are kept bottom to top unless the height is negative.
+      const y = rawHeight > 0 ? height - 1 - row : row;
+      if (b[at + 2] === r && b[at + 1] === g && b[at] === bl) {
+        top = Math.min(top, y);
+        left = Math.min(left, x);
+      }
+    }
+  return Number.isFinite(top) ? { top, left } : null;
+};

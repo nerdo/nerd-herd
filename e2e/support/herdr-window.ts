@@ -8,7 +8,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "@playwright/test";
 import { e2eSettings } from "./e2e-settings";
-import { type ColorMatch, countColor, type HexColor } from "./pixels";
+import { type ColorEdge, type ColorMatch, countColor, edgeOf, type HexColor } from "./pixels";
 import { findSidebarPx } from "./sidebar-width";
 import { savedWindowSize, type WindowPoints } from "./saved-window";
 import { linesIn, type PlacedLine, rowsIn } from "./text-rows";
@@ -240,13 +240,24 @@ export class HerdrWindow {
    * once the screen has settled. A walk sets a color the screen holds nowhere else and counts it.
    */
   countColor(hex: HexColor, where: "sidebar" | "beyond", match: ColorMatch = "exact"): number {
+    const { shot, edge } = this.shoot();
+    const band = where === "sidebar" ? { from: 0, to: edge } : { from: edge, to: 1 };
+    return countColor(shot, hex, band, match);
+  }
+
+  /** Where a color first appears in the sidebar, in screenshot pixels, once the screen has settled. */
+  colorEdge(hex: HexColor): ColorEdge | null {
+    const { shot, edge } = this.shoot();
+    return edgeOf(shot, hex, { from: 0, to: edge });
+  }
+
+  /** A screenshot of the settled window, with the sidebar's right edge as a fraction of its width. */
+  private shoot(): { shot: string; edge: number } {
     sleep(1500);
     const shot = this.shotPath();
     const s = run(["herdr-app", "shot", shot], this.env());
     if (s.code !== 0) throw new Error(`herdr-app shot failed: ${s.out}\n${s.err}`);
-    const edge = this.sidebarEdge(shot);
-    const band = where === "sidebar" ? { from: 0, to: edge } : { from: edge, to: 1 };
-    return countColor(shot, hex, band, match);
+    return { shot, edge: this.sidebarEdge(shot) };
   }
 
   /** The window's size in points, as Herdr saved it in window.json; null before Herdr writes it. */
