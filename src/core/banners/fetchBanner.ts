@@ -217,9 +217,14 @@ const keep = async (bytes: Uint8Array, size: ImageSize, deps: BannerDeps): Promi
 
 /** Reads a banner file on this computer, checks it as an image, and keeps a copy. */
 const fetchLocal = async (link: BannerLink, path: FilePath, deps: BannerDeps) => {
-  const bytes = await deps.localFiles.read(path).catch((cause: unknown) => {
+  // Awaited inside try, so a read that throws at once (Herdr's readFile, for a path outside the folders
+  // it lets a mod read) is caught like one that rejects.
+  let bytes: Uint8Array;
+  try {
+    bytes = await deps.localFiles.read(path);
+  } catch (cause) {
     throw new BannerFileUnreadableError(link, path, { cause });
-  });
+  }
   if (bytes.length > maxBytes) throw new BannerTooLargeError(link, bytes.length);
   const size = imageSize(bytes);
   if (!size) throw new BannerFileNotImageError(link, path);

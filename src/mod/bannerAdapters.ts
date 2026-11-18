@@ -47,8 +47,10 @@ export const curlDownloader: Downloader = {
   },
 };
 
+// Every adapter is async: Herdr's file calls can throw at once rather than reject (readFile, for a
+// path outside the folders a mod may read), and an async function turns that throw into a rejection.
 export const herdrFiles: FileStore = {
-  read: (path) => readFile(absolute(path)),
+  read: async (path) => readFile(absolute(path)),
   write: async (path, bytes) => {
     await mkdir(absolute(path).replace(/\/[^/]*$/, ""), { recursive: true });
     await writeFile(absolute(path), bytes);
@@ -60,5 +62,5 @@ export const herdrFiles: FileStore = {
 
 /** Files on this computer by absolute path; Herdr lets a mod read inside the home folder. */
 export const herdrLocalFiles: LocalFiles = {
-  read: (path) => readFile(path),
+  read: async (path) => readFile(path),
 };

@@ -36,6 +36,25 @@ describe("a banner from a file on this computer", () => {
     ]);
   });
 
+  // Herdr's readFile throws at once, without a rejected promise, for a path outside the folders it
+  // lets a mod read (2026-11-18: a /private/tmp banner link ended the mod's command loop).
+  test("a file Herdr refuses at once is reported with its path, to be fixed", async () => {
+    const { deps } = setup({});
+    const refusing = {
+      ...deps,
+      localFiles: {
+        read: (path: string): Promise<Uint8Array> => {
+          throw new Error(`${path} is outside every granted read root`);
+        },
+      },
+    };
+    const error = await rejection(fetchBanner("/private/tmp/work.png", refusing));
+    expect([error.userAction, error.message]).toEqual([
+      "fix",
+      "Couldn't read the banner file /private/tmp/work.png. Check the path in the group's settings; the file has to be inside your home folder.",
+    ]);
+  });
+
   test("a file that is not a PNG, GIF, or JPEG image is refused", async () => {
     const { deps } = setup({}, { "/Users/test/notes.txt": new TextEncoder().encode("hello") });
     const error = await rejection(fetchBanner("~/notes.txt", deps));
