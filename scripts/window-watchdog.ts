@@ -1,5 +1,5 @@
 // Ends one Herdr test window once the program that started it has ended, so an interrupted test run
-// leaves no window behind. Started by scripts/start.ts as
+// leaves no window behind. Started by scripts/herdr-install.ts as
 // `bun scripts/window-watchdog.ts <owner pid> <window pid>`; it touches only that window, so a newer
 // test window on the same home keeps running.
 import { scriptSettings as s } from "./settings";

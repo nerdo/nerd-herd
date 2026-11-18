@@ -62,8 +62,8 @@ export class HerdrWindow {
       join(this.home, "shared.json"),
       JSON.stringify({ "frame.welcomed": "skipped", ...seed }),
     );
-    const r = run(["bun", "run", "start"], this.env());
-    if (r.code !== 0) throw new Error(`bun run start failed: ${r.out}\n${r.err}`);
+    const r = run(["bun", "run", "herdr:install"], this.env());
+    if (r.code !== 0) throw new Error(`bun run herdr:install failed: ${r.out}\n${r.err}`);
     this.setAppearance();
     this.applySize();
     // Spaces and Agents share the sidebar evenly, so a long Spaces list is cut off at Agents and its
@@ -75,8 +75,8 @@ export class HerdrWindow {
   /** Closes the window and starts it again on the same home, as a person restarting Herdr. */
   restart(): void {
     this.stop();
-    const r = run(["bun", "run", "start"], this.env());
-    if (r.code !== 0) throw new Error(`bun run start failed: ${r.out}\n${r.err}`);
+    const r = run(["bun", "run", "herdr:install"], this.env());
+    if (r.code !== 0) throw new Error(`bun run herdr:install failed: ${r.out}\n${r.err}`);
     this.applySize();
   }
 

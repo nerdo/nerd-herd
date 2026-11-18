@@ -1,4 +1,4 @@
-// The project's start command (`bun run start`): builds the Spaces mod, makes sure a Herdr window
+// The project's install command (`bun run herdr:install`): builds the Spaces mod, makes sure a Herdr window
 // runs for the Herdr home, installs the mod and the nerd-herd layout there, and shows that layout.
 import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";

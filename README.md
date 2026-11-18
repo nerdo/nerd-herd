@@ -34,15 +34,15 @@ The full behavior, with every case that is tested, is in the [Spaces spec](docs/
 
 ```sh
 bun install
-bun run start
+bun run herdr:install
 ```
 
-`bun run start` builds the mod, installs it and the nerd-herd layout into your Herdr home (`~/.config/herdr-app`), and switches Herdr to that layout. Run it again after you pull changes.
+`bun run herdr:install` builds the mod, installs it and the nerd-herd layout into your Herdr home (`~/.config/herdr-app`), and switches Herdr to that layout. Run it again after you pull changes.
 
 To try the mod without touching your own Herdr setup, give it a separate home. It then opens a separate Herdr window for that home:
 
 ```sh
-HERDR_APP_HOME="$PWD/.hw-home" bun run start
+HERDR_APP_HOME="$PWD/.hw-home" bun run herdr:install
 HERDR_APP_HOME="$PWD/.hw-home" bun scripts/stop-window.ts   # quit that window when you are done
 ```
 
