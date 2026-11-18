@@ -1,6 +1,7 @@
 {
   "name": "nerd-herd",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "specs:serve": "bun scripts/serve-specs.js docs/specs",
