@@ -8,6 +8,7 @@ import { copyFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { e2eSettings } from "./support/e2e-settings";
+import { colorEdge } from "./support/window-pixels";
 import { HerdrWindow } from "./support/herdr-window";
 import type { ColorEdge } from "./support/pixels";
 
@@ -23,9 +24,9 @@ test.beforeAll(() => {
   window.act("group-make", { name: "Work" });
   window.act("group-banner", { group: "Work", open: source });
   window.readUntil((lines) => lines.join("\n").includes("WORK BANNER"));
-  unmarked = window.colorEdge(gray);
+  unmarked = colorEdge(window, gray);
   window.key("down");
-  focused = window.colorEdge(gray);
+  focused = colorEdge(window, gray);
 });
 
 test.afterAll(() => {

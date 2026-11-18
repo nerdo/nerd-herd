@@ -1,7 +1,7 @@
 // The pieces nerd-herd's dialogs are built from, styled like Herdr's own prompt dialog
 // (~/.config/herdr-app/mods/prompt/main.js), and the one way a dialog changes anything: a command
 // sent to the Spaces mod, which saves it and redraws the sidebar.
-import { h_flex, Input, type InputState, ScrollHandle, v_flex } from "gpui-base";
+import { h_flex, Input, type InputState, ScrollHandle, Scrollbar, v_flex } from "gpui-base";
 import { type Context, div, type Element } from "gpui-kit";
 import { closeOverlay, openOverlay, props, run } from "herdr";
 import { themeColor } from "../themeColor";
@@ -20,13 +20,26 @@ export interface Panel {
 export class DialogScroll {
   readonly handle = ScrollHandle.new();
   count = 0;
+  /** The field the last step brought into view. */
+  private at = 0;
   /** Brings the body's last field into view. */
   end(): void {
-    if (this.count > 0) this.handle.scroll_to_item(this.count - 1);
+    this.at = Math.max(0, this.count - 1);
+    if (this.count > 0) this.handle.scroll_to_item(this.at);
   }
   /** Brings the body's first field into view. */
   start(): void {
+    this.at = 0;
     if (this.count > 0) this.handle.scroll_to_item(0);
+  }
+  /**
+   * Brings the next few fields into view, so a dialog taller than about twice the window can be read
+   * in steps (`dialog-down`, which a keys.json binding or a walk sends).
+   */
+  down(): void {
+    if (this.count === 0) return;
+    this.at = Math.min(this.count - 1, this.at + 6);
+    this.handle.scroll_to_item(this.at);
   }
 }
 
@@ -159,14 +172,24 @@ export const dialog = (
       .bg(themeColor(t, "popover"))
       .text_color(themeColor(t, "foreground"))
       // The content scrolls when it is taller than the dialog; Cancel and Save stay in view below it.
+      // A scrollbar always shows beside it, so a person can see that it scrolls (the user, 2026-11-18:
+      // "the vertical scroll bar is never visible, but it does scroll").
       .child(
         v_flex()
-          .id("dialog-body")
+          .relative()
           .flex_1()
           .min_h(0)
-          .overflow_y_scroll()
-          .track_scroll(scroll.handle)
-          .children(content),
+          .child(
+            v_flex()
+              .id("dialog-body")
+              .flex_1()
+              .min_h(0)
+              .pr(14)
+              .overflow_y_scroll()
+              .track_scroll(scroll.handle)
+              .children(content),
+          )
+          .child(Scrollbar.vertical("dialog-body").mode("always").absolute().inset_0()),
       )
       .child(
         h_flex()

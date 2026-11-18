@@ -48,8 +48,6 @@ export class GroupSettingsPanel implements Panel {
   private order: LevelOrder;
   private readonly backing: ColorField;
   private readonly controlsColor: ColorField;
-  /** Whether the overlay section is unfolded: at first, when the group has an overlay color. */
-  private overlayOpen: boolean;
 
   constructor(
     private readonly group: SavedGroup,
@@ -67,7 +65,6 @@ export class GroupSettingsPanel implements Panel {
     this.count = group.countMode;
     this.chevron = group.chevron ? "shown" : "hidden";
     this.align = group.align;
-    this.overlayOpen = group.backingColor !== null || group.controlsColor !== null;
     // The picker starts at half-see-through black for a backing and at white for the controls.
     this.backing = new ColorField("backing", group.backingColor, { h: 0, s: 0, v: 0, a: 0.5 }, cx);
     this.controlsColor = new ColorField(
@@ -79,37 +76,15 @@ export class GroupSettingsPanel implements Panel {
   }
 
   /**
-   * Reload and the overlay section's toggle, side by side. The section folds behind the toggle, and
-   * the toggle shares Reload's row, so the dialog stays short enough to read in two pieces in a
-   * short window (the dialog walk, 2026-11-18, lost its middle fields with the section always open).
+   * The overlay section, always shown (the user, 2026-11-18: "keep it open always and just make that
+   * be a section"): the preview over the banner, then a field for each color.
    */
-  private bannerButtons(t: Theme) {
-    return h_flex()
-      .pt(8)
-      .gap(8)
-      .child(button(t, "banner-reload", "Reload images", false, () => this.reload()))
-      .child(
-        button(
-          t,
-          "overlay-toggle",
-          this.overlayOpen ? "Hide overlay colors" : "Overlay colors…",
-          false,
-          (cx) => {
-            this.overlayOpen = !this.overlayOpen;
-            cx.notify();
-          },
-        ),
-      );
-  }
-
-  /** The overlay section, when unfolded: the preview over the banner, then a field for each color. */
   private overlay(t: Theme) {
     const file = this.group.openBannerFile ?? this.group.foldedBannerFile ?? null;
     const colors = {
       backingColor: this.backing.shown(),
       controlsColor: this.controlsColor.shown(),
     };
-    if (!this.overlayOpen) return [];
     return [
       label(t, "Overlay on the banner"),
       file
@@ -120,7 +95,10 @@ export class GroupSettingsPanel implements Panel {
             colors,
           )
         : hint(t, "The preview shows here once the group's banner has loaded."),
-      label(t, "Backing behind the controls (empty: none; lower the opacity bar to see through it)"),
+      label(
+        t,
+        "Backing behind the controls (empty: none; lower the opacity bar to see through it)",
+      ),
       ...this.backing.render(t),
       label(t, "Controls color (empty: the theme's)"),
       ...this.controlsColor.render(t),
@@ -184,7 +162,9 @@ export class GroupSettingsPanel implements Panel {
           t,
           "Banner images are copied into nerd-herd when you save, so a banner still shows if its file moves or its web page goes away. When the image at a link changes, load it again with the button below.",
         ),
-        this.bannerButtons(t),
+        h_flex()
+          .pt(8)
+          .child(button(t, "banner-reload", "Reload images", false, () => this.reload())),
         ...this.overlay(t),
         label(t, "When the banner is wider than the sidebar, keep"),
         choice(

@@ -3,12 +3,12 @@
 // tabs, or terminals: they only send commands to nerd-herd and read what the window draws.
 
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "@playwright/test";
 import { e2eSettings } from "./e2e-settings";
-import { type ColorEdge, type ColorMatch, countColor, edgeOf, type HexColor } from "./pixels";
+import { prepareFakeCurl } from "./fake-curl";
 import { findSidebarPx } from "./sidebar-width";
 import { savedWindowSize, type WindowPoints } from "./saved-window";
 import { linesIn, type PlacedLine, rowsIn } from "./text-rows";
@@ -57,7 +57,7 @@ export class HerdrWindow {
     this.sidebarPx = null;
     rmSync(this.home, { recursive: true, force: true });
     mkdirSync(this.home, { recursive: true });
-    this.prepareFakeCurl();
+    prepareFakeCurl();
     // A person closes Herdr's welcome screen once; its close button records "skipped" in Herdr's shared
     // state (frame/welcome/main.js), and Herdr then never shows it again. The fresh home starts so.
     writeFileSync(
@@ -189,12 +189,19 @@ export class HerdrWindow {
 
   /**
    * An open dialog's text, read the way a person reads a dialog taller than the window: the top, then
-   * again after Page Down (the dialog-end key) brings its end into view.
+   * a step down at a time (dialog-down, six fields a step, enough steps for 42 fields), then its end
+   * (dialog-end). A step that moved nothing, because its field was already in view, adds nothing.
    */
   readDialog(): ScreenLines {
-    const top = this.readWindow();
+    const pieces = [this.readWindow()];
+    for (let n = 0; n < 7; n++) {
+      this.key("dialog-down");
+      const next = this.readWindow();
+      if (next.join("\n") !== pieces.at(-1)?.join("\n")) pieces.push(next);
+    }
     this.key("dialog-end");
-    return [...top, ...this.readWindow()];
+    pieces.push(this.readWindow());
+    return pieces.flat();
   }
 
   /**
@@ -235,24 +242,8 @@ export class HerdrWindow {
     return rowsIn(t.out, edge, this.windowPoints(shot));
   }
 
-  /**
-   * How many pixels of one color the window draws in the sidebar, or past it (where dialogs open),
-   * once the screen has settled. A walk sets a color the screen holds nowhere else and counts it.
-   */
-  countColor(hex: HexColor, where: "sidebar" | "beyond", match: ColorMatch = "exact"): number {
-    const { shot, edge } = this.shoot();
-    const band = where === "sidebar" ? { from: 0, to: edge } : { from: edge, to: 1 };
-    return countColor(shot, hex, band, match);
-  }
-
-  /** Where a color first appears in the sidebar, in screenshot pixels, once the screen has settled. */
-  colorEdge(hex: HexColor): ColorEdge | null {
-    const { shot, edge } = this.shoot();
-    return edgeOf(shot, hex, { from: 0, to: edge });
-  }
-
   /** A screenshot of the settled window, with the sidebar's right edge as a fraction of its width. */
-  private shoot(): { shot: string; edge: number } {
+  screenshot(): { shot: string; edge: number } {
     sleep(1500);
     const shot = this.shotPath();
     const s = run(["herdr-app", "shot", shot], this.env());
@@ -303,22 +294,5 @@ export class HerdrWindow {
       }
     }
     throw new Error("No connected machine besides this computer; the walk needs one.");
-  }
-
-  private prepareFakeCurl(): void {
-    mkdirSync(e2eSettings.fakeBin, { recursive: true });
-    const script = [
-      "#!/bin/sh",
-      "# Test double for curl: copies the banner fixture to the -o path and prints what the real call prints.",
-      "# A call with no -o path, such as Herdr's update check, fails as an unreachable server (exit 7).",
-      'out=""; prev=""',
-      'for a in "$@"; do if [ "$prev" = "-o" ]; then out="$a"; fi; prev="$a"; done',
-      '[ -n "$out" ] || exit 7',
-      `cp "${e2eSettings.bannerFixture}" "$out"`,
-      `printf '200 image/png %s' "$(wc -c < "${e2eSettings.bannerFixture}" | tr -d ' ')"`,
-      "",
-    ].join("\n");
-    writeFileSync(join(e2eSettings.fakeBin, "curl"), script);
-    chmodSync(join(e2eSettings.fakeBin, "curl"), 0o755);
   }
 }

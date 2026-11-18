@@ -10,6 +10,7 @@ import { copyFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { e2eSettings } from "./support/e2e-settings";
+import { colorCount } from "./support/window-pixels";
 import { HerdrWindow } from "./support/herdr-window";
 
 const window = new HerdrWindow();
@@ -33,23 +34,23 @@ test.beforeAll(() => {
   window.act("group-make", { name: "Work" });
   window.act("group-banner", { group: "Work", open: source });
   window.readUntil(showsWork);
-  before = window.countColor(red, "sidebar");
+  before = colorCount(window, red, "sidebar");
   window.act("group-set", { group: "Work", backingColor: red });
-  backed = window.countColor(red, "sidebar");
-  beforeControls = window.countColor(magenta, "sidebar", "tinted");
+  backed = colorCount(window, red, "sidebar");
+  beforeControls = colorCount(window, magenta, "sidebar", "tinted");
   window.act("group-set", { group: "Work", controlsColor: magenta });
-  controlled = window.countColor(magenta, "sidebar", "tinted");
+  controlled = colorCount(window, magenta, "sidebar", "tinted");
   window.restart();
   window.readUntil(showsWork);
-  restarted = window.countColor(red, "sidebar");
+  restarted = colorCount(window, red, "sidebar");
   window.act("open", { panel: "group-settings", group: "Work" });
-  preview = window.countColor(red, "beyond");
+  preview = colorCount(window, red, "beyond");
   window.herdr("overlay.close", {});
   window.act("group-set", { group: "Work", backingColor: `${red}00` });
-  transparent = window.countColor(red, "sidebar");
+  transparent = colorCount(window, red, "sidebar");
   window.act("group-set", { group: "Work", backingColor: red });
   window.act("group-set", { group: "Work", backingColor: null });
-  reset = window.countColor(red, "sidebar");
+  reset = colorCount(window, red, "sidebar");
 });
 
 test.afterAll(() => {

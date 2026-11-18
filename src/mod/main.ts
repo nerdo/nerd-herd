@@ -77,7 +77,8 @@ export default class NerdHerdSpaces extends Spaces {
             return;
           }
           // Page Down and Page Up are for an open dialog, whose own copy of the mod moves its body.
-          if (command === "dialog-end" || command === "dialog-start") return;
+          if (command === "dialog-end" || command === "dialog-start" || command === "dialog-down")
+            return;
           if (command === "data-dismiss") {
             this.app.dismiss();
             cx.notify();
@@ -119,6 +120,7 @@ export default class NerdHerdSpaces extends Spaces {
       for await (const command of commands()) {
         if (command === "dialog-end") this.dialogScroll.end();
         else if (command === "dialog-start") this.dialogScroll.start();
+        else if (command === "dialog-down") this.dialogScroll.down();
         else continue;
         cx.notify();
       }

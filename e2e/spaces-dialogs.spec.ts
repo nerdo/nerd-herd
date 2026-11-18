@@ -86,10 +86,9 @@ test("a group's settings say banner images are copied in, and are loaded again a
 });
 
 // The user, 2026-11-17: "Add a reload button".
-// The user, 2026-11-18: a banner's overlay colors, set in the group's settings. The text reader reads
-// the ellipsis as three dots.
-test("a group's settings offer an Overlay colors button", () => {
-  expect(groupSettings.join("\n")).toMatch(/Overlay colors(…|\.\.\.)/);
+// The user, 2026-11-18: a banner's overlay colors, set in an always-open section of the group's settings.
+test("a group's settings show the overlay colors section", () => {
+  expect(groupSettings.join("\n")).toContain("Overlay on the banner");
 });
 
 test("a group's settings offer a Reload images button", () => {
