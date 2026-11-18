@@ -1,3 +1,4 @@
+import { parseColor } from "../colors/overlayColor";
 import { NerdHerdError } from "../errors/nerdHerdError";
 import {
   deleteGroup,
@@ -35,6 +36,16 @@ export class CommandError extends NerdHerdError {
 
 const name = z.string().min(1);
 const sort = z.enum(["custom", "alphabetical", "reverseAlphabetical"]);
+/** A banner overlay color as typed (hex, or a name like "navy"), or null to put back the default. */
+const color = z
+  .string()
+  .transform((text, ctx) => {
+    const parsed = parseColor(text);
+    if (parsed === null) ctx.addIssue({ code: "custom", message: `${text} names no color` });
+    return parsed ?? z.NEVER;
+  })
+  .nullable()
+  .optional();
 /** Each action's payload; a group is named by its name or its id. */
 const payloads = {
   "settings-word": z.object({ singular: name, plural: name }),
@@ -78,6 +89,8 @@ const payloads = {
     countMode: z.enum(["allMachines", "directMachines", "directItems"]).optional(),
     chevron: z.boolean().optional(),
     align: z.enum(["top", "middle", "bottom"]).optional(),
+    backingColor: color,
+    controlsColor: color,
   }),
   "settings-ungrouped": z.object({ header: z.boolean().optional(), name: name.optional() }),
   "settings-indent": z.object({ indent: z.boolean() }),

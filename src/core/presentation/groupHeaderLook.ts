@@ -1,3 +1,4 @@
+import type { HexColor } from "../colors/overlayColor";
 import type { BannerFile, BannerState } from "../banners/bannerCache";
 import type { ControlAlign, SpacesRow } from "../groups/groupModel";
 
@@ -12,6 +13,10 @@ export type GroupHeaderLook =
       readonly file: BannerFile;
       readonly align: ControlAlign;
       readonly controls: readonly HeaderControl[];
+      /** The strip behind the controls; null: none. */
+      readonly backingColor: HexColor | null;
+      /** The controls' color; null: the theme's. */
+      readonly controlsColor: HexColor | null;
     }
   | {
       readonly kind: "row";
@@ -31,6 +36,8 @@ export const groupHeaderLook = (row: GroupRow, banner: BannerState): GroupHeader
       kind: "banner",
       file: banner.file,
       align: row.align,
+      backingColor: row.backingColor,
+      controlsColor: row.controlsColor,
       controls: [...count, "cog", "plus", ...(row.chevron ? (["chevron"] as const) : [])],
     };
   return {

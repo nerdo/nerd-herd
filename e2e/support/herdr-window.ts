@@ -8,6 +8,8 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "@playwright/test";
 import { e2eSettings } from "./e2e-settings";
+import { type ColorMatch, countColor, type HexColor } from "./pixels";
+import { findSidebarPx } from "./sidebar-width";
 import { savedWindowSize, type WindowPoints } from "./saved-window";
 import { linesIn, type PlacedLine, rowsIn } from "./text-rows";
 
@@ -233,6 +235,20 @@ export class HerdrWindow {
     return rowsIn(t.out, edge, this.windowPoints(shot));
   }
 
+  /**
+   * How many pixels of one color the window draws in the sidebar, or past it (where dialogs open),
+   * once the screen has settled. A walk sets a color the screen holds nowhere else and counts it.
+   */
+  countColor(hex: HexColor, where: "sidebar" | "beyond", match: ColorMatch = "exact"): number {
+    sleep(1500);
+    const shot = this.shotPath();
+    const s = run(["herdr-app", "shot", shot], this.env());
+    if (s.code !== 0) throw new Error(`herdr-app shot failed: ${s.out}\n${s.err}`);
+    const edge = this.sidebarEdge(shot);
+    const band = where === "sidebar" ? { from: 0, to: edge } : { from: edge, to: 1 };
+    return countColor(shot, hex, band, match);
+  }
+
   /** The window's size in points, as Herdr saved it in window.json; null before Herdr writes it. */
   windowSize(): WindowPoints | null {
     return savedWindowSize(this.home);
@@ -294,17 +310,4 @@ export class HerdrWindow {
     writeFileSync(join(e2eSettings.fakeBin, "curl"), script);
     chmodSync(join(e2eSettings.fakeBin, "curl"), 0o755);
   }
-}
-
-/** The sidebar block's width in points, found by its id in a layout. */
-function findSidebarPx(node: unknown): number {
-  if (typeof node !== "object" || node === null) return 0;
-  if ("id" in node && node.id === "sidebar" && "size" in node) {
-    const size = node.size;
-    if (typeof size === "object" && size !== null && "px" in size && typeof size.px === "number")
-      return size.px;
-  }
-  const children =
-    "children" in node && Array.isArray(node.children) ? node.children : Object.values(node);
-  return children.reduce((found: number, child: unknown) => found || findSidebarPx(child), 0);
 }

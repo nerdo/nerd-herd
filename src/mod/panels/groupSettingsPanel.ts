@@ -1,9 +1,12 @@
 // A group's settings, opened from its cog or its menu: icon, banner links, clip side, sorts, folded
-// count, and how its banner carries the controls (chevron shown, controls' place).
+// count, and how its banner carries the controls (chevron shown, controls' place, overlay colors).
 import { h_flex, InputState } from "gpui-base";
 import type { AsyncContext } from "gpui-kit";
 import type { ClipSide, ControlAlign, CountMode, SavedGroup } from "../../core/groups/groupModel";
 import type { LevelOrder } from "../../core/groups/levelOrder";
+import { overlayPreview } from "../bannerOverlay";
+import { themeColor } from "../themeColor";
+import { ColorField } from "./colorField";
 import type { SortChoice } from "../../core/sorting/sortOrder";
 import {
   button,
@@ -43,12 +46,16 @@ export class GroupSettingsPanel implements Panel {
   private chevron: "shown" | "hidden";
   private align: ControlAlign;
   private order: LevelOrder;
+  private readonly backing: ColorField;
+  private readonly controlsColor: ColorField;
+  /** Whether the overlay section is unfolded: at first, when the group has an overlay color. */
+  private overlayOpen: boolean;
 
   constructor(
     private readonly group: SavedGroup,
     private readonly word: string,
     order: LevelOrder,
-    _cx: AsyncContext,
+    cx: AsyncContext,
   ) {
     this.order = order;
     this.icon = InputState.new({ value: group.icon?.value ?? "" });
@@ -60,6 +67,64 @@ export class GroupSettingsPanel implements Panel {
     this.count = group.countMode;
     this.chevron = group.chevron ? "shown" : "hidden";
     this.align = group.align;
+    this.overlayOpen = group.backingColor !== null || group.controlsColor !== null;
+    // The picker starts at half-see-through black for a backing and at white for the controls.
+    this.backing = new ColorField("backing", group.backingColor, { h: 0, s: 0, v: 0, a: 0.5 }, cx);
+    this.controlsColor = new ColorField(
+      "controls-color",
+      group.controlsColor,
+      { h: 0, s: 0, v: 100, a: 1 },
+      cx,
+    );
+  }
+
+  /**
+   * Reload and the overlay section's toggle, side by side. The section folds behind the toggle, and
+   * the toggle shares Reload's row, so the dialog stays short enough to read in two pieces in a
+   * short window (the dialog walk, 2026-11-18, lost its middle fields with the section always open).
+   */
+  private bannerButtons(t: Theme) {
+    return h_flex()
+      .pt(8)
+      .gap(8)
+      .child(button(t, "banner-reload", "Reload images", false, () => this.reload()))
+      .child(
+        button(
+          t,
+          "overlay-toggle",
+          this.overlayOpen ? "Hide overlay colors" : "Overlay colors…",
+          false,
+          (cx) => {
+            this.overlayOpen = !this.overlayOpen;
+            cx.notify();
+          },
+        ),
+      );
+  }
+
+  /** The overlay section, when unfolded: the preview over the banner, then a field for each color. */
+  private overlay(t: Theme) {
+    const file = this.group.openBannerFile ?? this.group.foldedBannerFile ?? null;
+    const colors = {
+      backingColor: this.backing.shown(),
+      controlsColor: this.controlsColor.shown(),
+    };
+    if (!this.overlayOpen) return [];
+    return [
+      label(t, "Overlay on the banner"),
+      file
+        ? overlayPreview(
+            file,
+            384,
+            { align: this.align, clip: this.clip, dim: themeColor(t, "dim") },
+            colors,
+          )
+        : hint(t, "The preview shows here once the group's banner has loaded."),
+      label(t, "Backing behind the controls (empty: none; lower the opacity bar to see through it)"),
+      ...this.backing.render(t),
+      label(t, "Controls color (empty: the theme's)"),
+      ...this.controlsColor.render(t),
+    ];
   }
 
   /** Keeps the two banner links as typed, then loads both again (the user, 2026-11-17: "Add a reload button"). */
@@ -76,6 +141,10 @@ export class GroupSettingsPanel implements Panel {
 
   private save(): void {
     const id = this.group.id;
+    const backing = this.backing.value();
+    const controls = this.controlsColor.value();
+    // Text that names no color is marked under its box; nothing is saved until it is fixed.
+    if (backing.kind === "invalid" || controls.kind === "invalid") return;
     const text = (s: InputState) => s.value().trim();
     send("group-set", {
       group: id,
@@ -84,6 +153,8 @@ export class GroupSettingsPanel implements Panel {
       countMode: this.count,
       chevron: this.chevron === "shown",
       align: this.align,
+      backingColor: backing.kind === "color" ? backing.color : null,
+      controlsColor: controls.kind === "color" ? controls.color : null,
     });
     send("group-banner", {
       group: id,
@@ -113,9 +184,8 @@ export class GroupSettingsPanel implements Panel {
           t,
           "Banner images are copied into nerd-herd when you save, so a banner still shows if its file moves or its web page goes away. When the image at a link changes, load it again with the button below.",
         ),
-        h_flex()
-          .pt(8)
-          .child(button(t, "banner-reload", "Reload images", false, () => this.reload())),
+        this.bannerButtons(t),
+        ...this.overlay(t),
         label(t, "When the banner is wider than the sidebar, keep"),
         choice(
           t,

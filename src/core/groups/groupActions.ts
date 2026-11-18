@@ -119,6 +119,8 @@ export const makeGroup = (saved: SavedGroups, group: NewGroup): SavedGroups => {
         countMode: "allMachines",
         chevron: true,
         align: "middle",
+        backingColor: null,
+        controlsColor: null,
       },
     ],
   };
@@ -145,7 +147,10 @@ export const setFolded = (saved: SavedGroups, id: GroupId, folded: boolean): Sav
   update(saved, id, { folded });
 /** The options a group's settings change, set together; a field left out keeps its value. */
 export type GroupLook = Partial<
-  Pick<SavedGroup, "icon" | "clip" | "countMode" | "chevron" | "align">
+  Pick<
+    SavedGroup,
+    "icon" | "clip" | "countMode" | "chevron" | "align" | "backingColor" | "controlsColor"
+  >
 >;
 export const setLook = (saved: SavedGroups, id: GroupId, look: GroupLook): SavedGroups =>
   update(saved, id, look);

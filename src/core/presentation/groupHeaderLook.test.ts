@@ -18,6 +18,8 @@ const work: GroupRow = {
   clip: "left",
   chevron: true,
   align: "middle",
+  backingColor: null,
+  controlsColor: null,
 };
 const loaded: BannerState = {
   kind: "ready",
@@ -74,5 +76,14 @@ describe("a group header's look", () => {
     const message = "The banner link returned 404 Not Found. Check the link in Spaces settings.";
     const look = groupHeaderLook(work, { kind: "failed", message });
     expect(look.kind === "row" ? [look.kind, look.card] : look.kind).toEqual(["row", message]);
+  });
+
+  // The user, 2026-11-18: a banner's overlay takes a backing color and a controls color.
+  test("a banner's look carries the group's backing and controls colors", () => {
+    const look = groupHeaderLook({ ...work, backingColor: "#ff000080", controlsColor: "#ffffff" }, loaded);
+    expect(look.kind === "banner" ? [look.backingColor, look.controlsColor] : look.kind).toEqual([
+      "#ff000080",
+      "#ffffff",
+    ]);
   });
 });

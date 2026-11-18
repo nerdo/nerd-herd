@@ -10,6 +10,7 @@ import {
   newGroupInsideLabel,
 } from "../core/presentation/spacesText";
 import type { GroupWord } from "../core/settings/sidebarSettings";
+import { colorStrip } from "./bannerOverlay";
 import { errorCard } from "./errorCard";
 import { openMenu, openPanel } from "./panels/formParts";
 import { themeColor } from "./themeColor";
@@ -131,11 +132,14 @@ export const groupHeaderView = (
           .inset_0()
           [place]()
           .child(
-            strip
-              .flex_1()
-              .h(26)
-              .justify_end()
-              .children(controls(row, look, t, word)),
+            colorStrip(
+              strip
+                .flex_1()
+                .h(26)
+                .justify_end()
+                .children(controls(row, look, t, word)),
+              look,
+            ),
           ),
       );
   }

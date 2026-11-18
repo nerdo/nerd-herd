@@ -1,0 +1,68 @@
+// Counts the pixels of one color in a screenshot, so a walk can check a color it set. macOS's sips
+// converts the PNG into an uncompressed BMP, whose pixels are read directly: no image library.
+
+import { spawnSync } from "node:child_process";
+import { readFileSync, rmSync } from "node:fs";
+
+export type HexColor = `#${string}`;
+/** A band of the image across its width, as fractions from 0 (left edge) to 1 (right edge). */
+export interface ImageBand {
+  readonly from: number;
+  readonly to: number;
+}
+
+/** How far each channel may stray from the color asked for: color management shifts a value by a few. */
+const tolerance = 8;
+
+const channels = (hex: HexColor): readonly [number, number, number] => {
+  const n = Number.parseInt(hex.slice(1, 7), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+
+/**
+ * How a pixel matches the color: `exact`, within a few steps of it, for a filled area; `tinted`, its
+ * strong channels each clearly above its weak ones, for thin lines whose edges blend into what is
+ * behind them (an 11-point icon is mostly edge).
+ */
+export type ColorMatch = "exact" | "tinted";
+const tintGap = 40;
+
+/** The number of pixels in the band that match `hex` (#rrggbb, its channels 00 or ff for `tinted`). */
+export const countColor = (
+  png: string,
+  hex: HexColor,
+  band: ImageBand,
+  match: ColorMatch = "exact",
+): number => {
+  const bmp = `${png}.bmp`;
+  const s = spawnSync("sips", ["-s", "format", "bmp", png, "--out", bmp], { encoding: "utf8" });
+  if (s.status !== 0) throw new Error(`sips could not convert ${png}: ${s.stderr}`);
+  const b = readFileSync(bmp);
+  rmSync(bmp);
+  const start = b.readUInt32LE(10);
+  const width = b.readInt32LE(18);
+  const height = Math.abs(b.readInt32LE(22));
+  const bytes = b.readUInt16LE(28) / 8;
+  const stride = Math.ceil((width * bytes) / 4) * 4;
+  const [r, g, bl] = channels(hex);
+  const near = (a: number, want: number) => Math.abs(a - want) <= tolerance;
+  const strong = [r, g, bl].map((c) => c >= 128);
+  const tinted = (px: readonly number[]) => {
+    const hi = px.filter((_, i) => strong[i]);
+    const lo = px.filter((_, i) => !strong[i]);
+    return Math.min(...hi) - Math.max(...lo) >= tintGap;
+  };
+  let count = 0;
+  for (let y = 0; y < height; y++)
+    for (let x = Math.floor(width * band.from); x < Math.floor(width * band.to); x++) {
+      const at = start + y * stride + x * bytes;
+      // BMP keeps each pixel as blue, green, red (then alpha when it has one).
+      const px = [b[at + 2] ?? -1, b[at + 1] ?? -1, b[at] ?? -1];
+      const hit =
+        match === "tinted"
+          ? tinted(px)
+          : near(px[0] ?? -1, r) && near(px[1] ?? -1, g) && near(px[2] ?? -1, bl);
+      if (hit) count++;
+    }
+  return count;
+};

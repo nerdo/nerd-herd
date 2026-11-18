@@ -2,7 +2,7 @@
 // (~/.config/herdr-app/mods/prompt/main.js), and the one way a dialog changes anything: a command
 // sent to the Spaces mod, which saves it and redraws the sidebar.
 import { h_flex, Input, type InputState, ScrollHandle, v_flex } from "gpui-base";
-import { div, type Element } from "gpui-kit";
+import { type Context, div, type Element } from "gpui-kit";
 import { closeOverlay, openOverlay, props, run } from "herdr";
 import { themeColor } from "../themeColor";
 
@@ -89,7 +89,7 @@ export const button = (
   id: string,
   text: string,
   primary: boolean,
-  act: () => void,
+  act: (cx: Context) => void,
 ): Element =>
   h_flex()
     .id(id)
@@ -104,7 +104,7 @@ export const button = (
     .text_size(12.5)
     .cursor_pointer()
     .hover((s) => s.opacity(0.88))
-    .on_click(() => act())
+    .on_click((_e, cx) => act(cx))
     .child(text);
 
 /** One choice among a few, drawn as a row of buttons with the chosen one marked. */

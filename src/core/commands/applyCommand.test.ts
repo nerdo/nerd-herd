@@ -152,6 +152,37 @@ describe("applying a command", () => {
     expect(groupNamed(s, "Work")?.icon).toBeNull();
   });
 
+  // The user, 2026-11-18: a banner's overlay takes a backing color and a controls color.
+  test("group-set with a backing color saves it on the named group", () => {
+    const s = run(start, 'group-make:{"name":"Work"}', 'group-set:{"group":"Work","backingColor":"#FF0000"}');
+    expect(groupNamed(s, "Work")?.backingColor).toBe("#ff0000");
+  });
+
+  test("group-set with a controls color saves it on the named group", () => {
+    const s = run(start, 'group-make:{"name":"Work"}', 'group-set:{"group":"Work","controlsColor":"navy"}');
+    expect(groupNamed(s, "Work")?.controlsColor).toBe("#000080");
+  });
+
+  test("group-set with a null backing color puts back no backing", () => {
+    const s = run(
+      start,
+      'group-make:{"name":"Work"}',
+      'group-set:{"group":"Work","backingColor":"#ff0000"}',
+      'group-set:{"group":"Work","backingColor":null}',
+    );
+    expect(groupNamed(s, "Work")?.backingColor).toBeNull();
+  });
+
+  test("group-set with text that names no color is refused", () => {
+    const s = run(start, 'group-make:{"name":"Work"}');
+    expect(() => run(s, 'group-set:{"group":"Work","controlsColor":"not a color"}')).toThrow(CommandError);
+  });
+
+  test("a new group has no backing color and no controls color", () => {
+    const w = groupNamed(run(start, 'group-make:{"name":"Work"}'), "Work");
+    expect([w?.backingColor, w?.controlsColor]).toEqual([null, null]);
+  });
+
   test("settings-ungrouped turns the ungrouped header on and names it", () => {
     const s = run(start, 'settings-ungrouped:{"header":true,"name":"Unsorted"}');
     expect([s.settings.ungroupedHeader, s.settings.ungroupedName]).toEqual([true, "Unsorted"]);

@@ -1,3 +1,4 @@
+import type { HexColor } from "../colors/overlayColor";
 import type { BannerFile, BannerLink } from "../banners/bannerCache";
 import { NerdHerdError } from "../errors/nerdHerdError";
 import type { SortChoice } from "../sorting/sortOrder";
@@ -44,6 +45,10 @@ export interface SavedGroup {
   /** Whether the fold chevron shows on the group's banner. */
   readonly chevron: boolean;
   readonly align: ControlAlign;
+  /** The color filling the strip behind the controls on the group's banner; null: none. */
+  readonly backingColor: HexColor | null;
+  /** The color the controls on the group's banner are drawn in; null: the theme's. */
+  readonly controlsColor: HexColor | null;
   /** The custom order of what is inside, groups and machines together; absent or null: groups first. */
   readonly items?: readonly LevelItem[] | null;
 }
@@ -92,6 +97,8 @@ export type SpacesRow =
       readonly clip: ClipSide;
       readonly chevron: boolean;
       readonly align: ControlAlign;
+      readonly backingColor: HexColor | null;
+      readonly controlsColor: HexColor | null;
     }
   | {
       readonly kind: "machine";

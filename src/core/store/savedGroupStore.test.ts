@@ -7,6 +7,7 @@ import {
   setBanner,
   setFolded,
   setIcon,
+  setLook,
 } from "../groups/groupActions";
 import { emptyGroups } from "../groups/groupModel";
 import { placeItem } from "../groups/levelOrder";
@@ -54,6 +55,25 @@ describe("saved group store", () => {
     const { shared } = memoryShared();
     createGroupStore(shared).save(groups);
     expect(createGroupStore(shared).load().groups).toEqual(groups);
+  });
+
+  // The user, 2026-11-18: a group's overlay colors survive a restart.
+  test("a group's overlay colors read back after a restart", () => {
+    let groups = makeGroup(emptyGroups, { id: "work", name: "Work" });
+    groups = setLook(groups, "work", { backingColor: "#ff000080", controlsColor: "#ffffff" });
+    const { shared } = memoryShared();
+    createGroupStore(shared).save(groups);
+    expect(createGroupStore(shared).load().groups).toEqual(groups);
+  });
+
+  test("groups saved before overlay colors existed load with no overlay colors", () => {
+    const { shared } = memoryShared();
+    createGroupStore(shared).save(makeGroup(emptyGroups, { id: "work", name: "Work" }));
+    const raw = shared.read("nerd-herd.groups") as { groups: Record<string, unknown>[] };
+    const old = { ...raw, groups: raw.groups.map(({ backingColor, controlsColor, ...g }) => g) };
+    const loaded = createGroupStore(memoryShared({ "nerd-herd.groups": old }).shared).load();
+    const w = loaded.groups.groups[0];
+    expect([w?.backingColor, w?.controlsColor]).toEqual([null, null]);
   });
 
   // The user, 2026-11-17: a level switched to a custom order keeps it, in the top level and in a group.

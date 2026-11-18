@@ -1,3 +1,4 @@
+import { type HexColor, isHex } from "../colors/overlayColor";
 import type { SavedDataError } from "../errors/savedDataError";
 import { emptyGroups, type SavedGroups } from "../groups/groupModel";
 import { z } from "../schema/zod";
@@ -44,6 +45,11 @@ const items = z
   )
   .nullable()
   .optional();
+/** A banner overlay color (added 2026-11-18), as parseColor writes it; absent: none. */
+const hexColor = z
+  .custom<HexColor>((v) => typeof v === "string" && isHex(v))
+  .nullable()
+  .default(null);
 /** The saved shape of the group model's data: what Herdr's shared state holds under the groups key. */
 const SavedGroupsSchema = z.object({
   groups: z.array(
@@ -64,6 +70,9 @@ const SavedGroupsSchema = z.object({
       // Added 2026-11-17; groups saved before then take the defaults.
       chevron: z.boolean().default(true),
       align: z.enum(["top", "middle", "bottom"]).default("middle"),
+      // Added 2026-11-18; groups saved before then have no overlay colors.
+      backingColor: hexColor,
+      controlsColor: hexColor,
       items,
     }),
   ),

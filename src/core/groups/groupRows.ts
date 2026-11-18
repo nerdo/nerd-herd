@@ -72,6 +72,8 @@ export const computeRows = (
       clip: g.clip,
       chevron: g.chevron,
       align: g.align,
+      backingColor: g.backingColor,
+      controlsColor: g.controlsColor,
     },
     ...(g.folded ? [] : level(g, depth + 1)),
   ];
