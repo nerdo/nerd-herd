@@ -86,7 +86,11 @@ type Action = keyof typeof payloads;
 const isAction = (a: string): a is Action => a in payloads;
 
 /** The id of the group with this id, else of the first group with this name. */
-const resolve = (groups: SavedGroups, ref: GroupName | GroupId, command: string): GroupId => {
+export const resolve = (
+  groups: SavedGroups,
+  ref: GroupName | GroupId,
+  command: string,
+): GroupId => {
   const found =
     groups.groups.find((g) => g.id === ref) ?? groups.groups.find((g) => g.name === ref);
   if (!found) throw new CommandError(command, { cause: `no group ${ref}` });

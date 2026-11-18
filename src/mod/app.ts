@@ -1,8 +1,13 @@
 import { home } from "herdr";
-import { type BannerCache, createBannerCache } from "../core/banners/bannerCache";
+import {
+  type BannerCache,
+  BannerReloadError,
+  createBannerCache,
+} from "../core/banners/bannerCache";
 import { fetchBanner } from "../core/banners/fetchBanner";
 import { fileHash } from "../core/banners/fileHash";
 import { applyCommand } from "../core/commands/applyCommand";
+import { bannerReloadLinks } from "../core/commands/bannerReload";
 import type { NerdHerdError } from "../core/errors/nerdHerdError";
 import { bannersToLoad, keepBannerFile } from "../core/groups/groupActions";
 import type { GroupId, SavedGroups, SpacesRow } from "../core/groups/groupModel";
@@ -33,6 +38,8 @@ export interface App {
   view(): SpacesViewModel;
   /** Loads every banner link the groups use that has not loaded yet; true when any state changed. */
   loadBanners(): Promise<boolean>;
+  /** Loads a group's banner links again (a `banner-reload:<JSON>` command), replacing their kept copies. */
+  reloadBanners(command: string): Promise<void>;
   /** Reads backed-up saved data again, restoring what can be read now. True when anything was restored. */
   retry(): boolean;
   /** Hides the saved-data problems' cards; the backups are kept for Try again. */
@@ -87,6 +94,17 @@ export function createApp(host: Host, newId: () => GroupId): App {
     dismiss: () => {
       store.dismiss();
       settingsStore.dismiss();
+    },
+    // Reload (the user, 2026-11-17): each of the group's links is loaded again. A new copy replaces
+    // the kept one; when loading fails, the kept copy stays and the person is told why.
+    reloadBanners: async (command) => {
+      for (const link of bannerReloadLinks(store.load().groups, command)) {
+        await banners.load(link);
+        const state = banners.lookup(link);
+        if (state.kind === "failed") throw new BannerReloadError(link, state.message);
+        if (state.kind === "ready")
+          store.save(keepBannerFile(store.load().groups, link, state.file));
+      }
     },
     // Each banner link is loaded once and its copy kept with the group (the user, 2026-11-17: "embed
     // the images"); a link that failed is tried again only after Herdr restarts.

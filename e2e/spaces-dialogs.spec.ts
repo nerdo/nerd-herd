@@ -77,6 +77,19 @@ test("a group's settings show its icon, banner links, clip side, sorts, and fold
   );
 });
 
+// The user, 2026-11-17: "make it clear in the settings dialog how images work (that they're
+// embedded, and that if it changes it needs to be reloaded)".
+test("a group's settings say banner images are copied in, and are loaded again after they change", () => {
+  expect(groupSettings.join("\n")).toMatch(
+    /copied\s+into\s+nerd-herd[\s\S]*changes,\s+load\s+it\s+again/,
+  );
+});
+
+// The user, 2026-11-17: "Add a reload button".
+test("a group's settings offer a Reload images button", () => {
+  expect(groupSettings.join("\n")).toContain("Reload images");
+});
+
 // The user, 2026-11-17: each level orders groups first by default, or in a custom order.
 test("a group's settings offer the order inside, groups first or custom, above its sorts", () => {
   expect(groupSettings.join("\n")).toMatch(

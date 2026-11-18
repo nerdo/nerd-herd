@@ -94,6 +94,11 @@ export default class NerdHerdSpaces extends Spaces {
               throw new CommandError(command);
             return;
           }
+          if (command.startsWith("banner-reload:")) {
+            await this.app.reloadBanners(command);
+            cx.notify();
+            return;
+          }
           if (isKeyCommand(command)) {
             this.key(command);
             cx.notify();

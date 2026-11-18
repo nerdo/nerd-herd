@@ -1,11 +1,12 @@
 // A group's settings, opened from its cog or its menu: icon, banner links, clip side, sorts, folded
 // count, and how its banner carries the controls (chevron shown, controls' place).
-import { InputState } from "gpui-base";
+import { h_flex, InputState } from "gpui-base";
 import type { AsyncContext } from "gpui-kit";
 import type { ClipSide, ControlAlign, CountMode, SavedGroup } from "../../core/groups/groupModel";
 import type { LevelOrder } from "../../core/groups/levelOrder";
 import type { SortChoice } from "../../core/sorting/sortOrder";
 import {
+  button,
   choice,
   close,
   type DialogScroll,
@@ -61,6 +62,18 @@ export class GroupSettingsPanel implements Panel {
     this.align = group.align;
   }
 
+  /** Keeps the two banner links as typed, then loads both again (the user, 2026-11-17: "Add a reload button"). */
+  private reload(): void {
+    const text = (s: InputState) => s.value().trim();
+    const group = this.group.id;
+    send("group-banner", {
+      group,
+      open: text(this.openLink) || null,
+      folded: text(this.foldedLink) || null,
+    });
+    send("banner-reload", { group });
+  }
+
   private save(): void {
     const id = this.group.id;
     const text = (s: InputState) => s.value().trim();
@@ -95,6 +108,14 @@ export class GroupSettingsPanel implements Panel {
         field(t, this.openLink),
         label(t, "Folded banner link (https or a file path), optional"),
         field(t, this.foldedLink),
+        // The user, 2026-11-17: "make it clear in the settings dialog how images work".
+        hint(
+          t,
+          "Banner images are copied into nerd-herd when you save, so a banner still shows if its file moves or its web page goes away. When the image at a link changes, load it again with the button below.",
+        ),
+        h_flex()
+          .pt(8)
+          .child(button(t, "banner-reload", "Reload images", false, () => this.reload())),
         label(t, "When the banner is wider than the sidebar, keep"),
         choice(
           t,

@@ -42,3 +42,15 @@ export const createBannerCache = (
     },
   };
 };
+
+/** A banner link could not be loaded again; the group keeps the copy it had. */
+export class BannerReloadError extends NerdHerdError {
+  readonly userAction = "fix";
+  constructor(
+    public readonly link: BannerLink,
+    reason: string,
+  ) {
+    super();
+    this.setMessage(`${reason} The banner keeps the copy it had.`);
+  }
+}
