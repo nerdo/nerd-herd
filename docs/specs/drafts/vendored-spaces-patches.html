@@ -34,8 +34,16 @@ code { font-size: .92em; }
           <li>The install shows jj-changes in the nerd-herd layout's Changes block when the Herdr home has that mod</li>
           <li>The install shows jj-status in the nerd-herd layout's status block when the Herdr home has that mod</li>
           <li>Without the jj mods, the install keeps Herdr's own Changes and status blocks</li>
+          <li>On this computer, jj runs by its name</li>
+          <li>On another machine, jj runs by the path the user's login shell there reports</li>
+          <li>What the login shell prints before the path is ignored</li>
+          <li>Each machine's login shell is asked once</li>
+          <li>When the login shell finds no jj, jj runs by its name</li>
+          <li>A machine whose login shell found no jj is asked again after a minute</li>
+          <li>The sidebar runs jj by the program the lookup names</li>
         </ul>
       </details>
+      <p>Herdr runs a mod's commands on another machine with that machine's default PATH, not the user's login PATH; Herdr's agent launcher loads the user's login shell, but mod commands do not. On ai-sandbox, jj lives in <code>~/.local/bin</code>, so the sidebar could not find it and showed <code>(detached)</code>. The sidebar therefore asks the user's login shell on each other machine where jj is, once, and runs jj by that path.</p>
       <p>The jj patch draws only the sidebar. The rest of herdr-app-jj is mods of its own: <code>jj-changes</code> for the Changes panel and <code>jj-status</code> for the status bar. <code>bun run herdr:install</code> writes <code>layouts/nerd-herd.json</code> again from Herdr's <code>main</code> layout, which names <code>changes</code> and <code>workspace-status</code>. So the install names the jj mods instead wherever the home has them, and a home without them gets Herdr's own blocks.</p>
     </details>
   </section>
@@ -49,6 +57,10 @@ code { font-size: .92em; }
       <spec-module>
         <h3>Vendor step</h3>
         <p><code>scripts/vendor-spaces.ts</code>: reads Herdr's Spaces mod, applies the patches in <code>patches/spaces/</code>, then nerd-herd's own changes, and writes <code>src/mod/vendor/herdrSpaces.js</code> or the path given as its first argument.</p>
+      </spec-module>
+      <spec-module>
+        <h3>jj program lookup</h3>
+        <p><code>src/core/jj/jjProgram.ts</code>: given a way to run a command on a machine and a clock, answers which program runs jj there. The patch <code>patches/spaces/20-jj-login-shell-path.patch</code> makes the sidebar use it.</p>
       </spec-module>
       <spec-module>
         <h3>Install layout</h3>
@@ -119,6 +131,65 @@ code { font-size: .92em; }
             <dt>Given</dt> <dd data-field="given">A Herdr home with neither jj mod</dd>
             <dt>When</dt> <dd data-field="when">The install writes the nerd-herd layout</dd>
             <dt>Then</dt> <dd data-field="then">The Changes block shows <code>changes</code> and the status block shows <code>workspace-status</code>, so no block names a mod the home lacks</dd>
+          </dl>
+        </test-case>
+      </test-group>
+      <test-group category="remote-machines">
+        <h3>Other machines</h3>
+        <test-case id="test-case-on-this-computer-jj-runs-by-name" traces-to="On this computer, jj runs by its name" covers-module="jj program lookup" status="pending">
+          <h4>On this computer, jj runs by its name</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">No machine (this computer)</dd>
+            <dt>When</dt> <dd data-field="when">The sidebar asks which program runs jj</dd>
+            <dt>Then</dt> <dd data-field="then">It answers <code>jj</code> and runs no shell</dd>
+          </dl>
+        </test-case>
+        <test-case id="test-case-on-another-machine-the-login-shell-names-jj" traces-to="On another machine, jj runs by the path the user's login shell there reports" covers-module="jj program lookup" status="pending">
+          <h4>On another machine, the login shell names jj</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A machine whose login shell reports <code>/home/dana/.local/bin/jj</code></dd>
+            <dt>When</dt> <dd data-field="when">The sidebar asks which program runs jj there</dd>
+            <dt>Then</dt> <dd data-field="then">It answers <code>/home/dana/.local/bin/jj</code></dd>
+          </dl>
+        </test-case>
+        <test-case id="test-case-what-the-login-shell-prints-first-is-ignored" traces-to="What the login shell prints before the path is ignored" covers-module="jj program lookup" status="pending">
+          <h4>What the login shell prints first is ignored</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A login shell that prints <code>Last connected from: 10.0.0.1</code> before the path</dd>
+            <dt>When</dt> <dd data-field="when">The sidebar asks which program runs jj there</dd>
+            <dt>Then</dt> <dd data-field="then">It answers the path</dd>
+          </dl>
+        </test-case>
+        <test-case id="test-case-each-machine-s-login-shell-is-asked-once" traces-to="Each machine's login shell is asked once" covers-module="jj program lookup" status="pending">
+          <h4>Each machine's login shell is asked once</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A machine whose login shell found jj</dd>
+            <dt>When</dt> <dd data-field="when">The sidebar asks twice</dd>
+            <dt>Then</dt> <dd data-field="then">The machine ran one command</dd>
+          </dl>
+        </test-case>
+        <test-case id="test-case-without-jj-in-the-login-shell-jj-runs-by-name" traces-to="When the login shell finds no jj, jj runs by its name" covers-module="jj program lookup" status="pending">
+          <h4>Without jj in the login shell, jj runs by its name</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A machine whose login shell prints no path</dd>
+            <dt>When</dt> <dd data-field="when">The sidebar asks which program runs jj there</dd>
+            <dt>Then</dt> <dd data-field="then">It answers <code>jj</code>, so the sidebar falls back to git as before</dd>
+          </dl>
+        </test-case>
+        <test-case id="test-case-a-machine-without-jj-is-asked-again-after-a-minute" traces-to="A machine whose login shell found no jj is asked again after a minute" covers-module="jj program lookup" status="pending">
+          <h4>A machine without jj is asked again after a minute</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A machine whose login shell found no jj a minute ago</dd>
+            <dt>When</dt> <dd data-field="when">The sidebar asks again</dd>
+            <dt>Then</dt> <dd data-field="then">The machine runs the lookup a second time</dd>
+          </dl>
+        </test-case>
+        <test-case id="test-case-the-sidebar-runs-jj-by-the-looked-up-program" traces-to="The sidebar runs jj by the program the lookup names" covers-module="Vendor step" status="pending">
+          <h4>The sidebar runs jj by the looked-up program</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The vendored Spaces file</dd>
+            <dt>When</dt> <dd data-field="when">Its <code>checkJj()</code> method is read</dd>
+            <dt>Then</dt> <dd data-field="then">Its jj commands run the program from the lookup, not the bare name <code>jj</code></dd>
           </dl>
         </test-case>
       </test-group>
