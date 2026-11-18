@@ -1,7 +1,7 @@
 // The walking skeleton for the nerd-herd Spaces mod (spec: docs/specs/in-progress/executing-nerd-herd-spaces.html).
 // It walks the Narrative's skeleton journey in a test Herdr window and reads what the sidebar draws.
 
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { HerdrWindow, type MachineName, type ScreenLines } from "./support/herdr-window";
@@ -12,6 +12,7 @@ let foldedAfterRestart: ScreenLines;
 let openedAfterRestart: ScreenLines;
 let bannerFiles: string[];
 let newGroupDialog: ScreenLines;
+let strayBanner: boolean;
 
 test.beforeAll(() => {
   machine = window.remoteMachine();
@@ -35,6 +36,7 @@ test.beforeAll(() => {
   window.act("open", { panel: "name", target: { kind: "new", parent: null } });
   newGroupDialog = window.readWindow();
   window.herdr("overlay.close", {});
+  strayBanner = existsSync(join(import.meta.dirname, "..", "work-banner.png"));
 });
 
 test.afterAll(() => window.stop());
@@ -69,4 +71,10 @@ test("a downloaded banner is saved under a name of hex digits", () => {
   expect(bannerFiles.filter((f) => !f.endsWith(".tmp"))).toEqual([
     expect.stringMatching(/^[0-9a-f]{16}\.png$/),
   ]);
+});
+
+// Found 2026-11-18: after this walk, a copy of the banner fixture sat in the repository root. The
+// fake curl answered Herdr's own update check, which names no -o path, by copying the fixture.
+test("the walk leaves no copy of the banner fixture in the repository root", () => {
+  expect(strayBanner).toBe(false);
 });

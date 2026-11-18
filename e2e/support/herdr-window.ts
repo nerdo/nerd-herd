@@ -283,8 +283,10 @@ export class HerdrWindow {
     const script = [
       "#!/bin/sh",
       "# Test double for curl: copies the banner fixture to the -o path and prints what the real call prints.",
+      "# A call with no -o path, such as Herdr's update check, fails as an unreachable server (exit 7).",
       'out=""; prev=""',
       'for a in "$@"; do if [ "$prev" = "-o" ]; then out="$a"; fi; prev="$a"; done',
+      '[ -n "$out" ] || exit 7',
       `cp "${e2eSettings.bannerFixture}" "$out"`,
       `printf '200 image/png %s' "$(wc -c < "${e2eSettings.bannerFixture}" | tr -d ' ')"`,
       "",
