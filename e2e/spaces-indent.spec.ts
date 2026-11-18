@@ -25,7 +25,7 @@ const firstSpace = (lines: readonly PlacedLine[]) =>
   lines[lines.findIndex((l) => l.text.includes("This computer")) + 1];
 /** The line holding the same space: found by the space's name, the longest word on the line. The
  *  rest of the line (a badge letter, a count such as "↑2") is the person's live state and can read
- *  differently from one capture to the next (2026-11-17: "a-project 12" in one reading only). */
+ *  differently from one capture to the next (2026-11-17: "a space name followed by 12" in one reading only). */
 const sameLine = (lines: readonly PlacedLine[], text: string | undefined) => {
   const name = (text ?? "").split(/\s+/).reduce((a, b) => (b.length > a.length ? b : a), "");
   return name ? lines.find((l) => l.text.split(/\s+/).includes(name)) : undefined;

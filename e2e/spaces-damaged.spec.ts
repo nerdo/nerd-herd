@@ -7,8 +7,10 @@ import { HerdrWindow, type ScreenLines } from "./support/herdr-window";
 const window = new HerdrWindow();
 let first: ScreenLines;
 let later: ScreenLines;
+let remote: string;
 
 test.beforeAll(() => {
+  remote = window.remoteMachine();
   window.start({ "nerd-herd.groups": { groups: "not a list" } });
   first = window.readUntil((lines) => lines.some((l) => l.includes("could not be read")));
   window.act("sort-set", { group: null, machines: "custom" });
@@ -49,7 +51,10 @@ test("with the saved groups damaged, Spaces lists This computer first, as Herdr 
       first.findIndex((l) => /^Agents\b/.test(l)),
     ),
   );
-  expect(spaces.find((l) => /This computer|^\S*\s?desk|sandbox/.test(l))).toMatch(
+  // A machine row is This computer or a remote machine, found by the start of its name (the text
+  // reader can cut a long name short).
+  const machineRow = (l: string) => l.includes("This computer") || l.includes(remote.slice(0, 8));
+  expect(spaces.find(machineRow)).toMatch(
     /This computer/,
   );
 });
