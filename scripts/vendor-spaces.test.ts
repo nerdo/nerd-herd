@@ -33,3 +33,15 @@ test("the vendored Spaces check() asks jj before its first git command", async (
   const git = check.indexOf('exec("git"');
   expect(jj !== -1 && jj < git).toBe(true);
 });
+
+// docs/specs/drafts/vendored-spaces-patches.html#test-case-the-sidebar-runs-jj-by-the-looked-up-program@jj:eee79aca
+test("the vendored Spaces checkJj() runs jj by the looked-up program, not by the bare name", async () => {
+  const text = await Bun.file(vendored).text();
+  const start = text.indexOf("  async checkJj(on, cwd) {");
+  const body = text.slice(start, text.indexOf("\n  }\n", start));
+  expect([start !== -1, body.includes("await jjProgram(on)"), body.includes('exec("jj"')]).toEqual([
+    true,
+    true,
+    false,
+  ]);
+});

@@ -15,6 +15,11 @@
 import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex, ScrollHandle } from "gpui-base";
 import { spaces, machines, panes, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout, readTextFile } from "herdr";
+import { jjProgramLookup } from "../../core/jj/jjProgram";
+
+// Which program runs jj on a machine: on another machine, the path its login shell reports, since
+// Herdr runs mod commands there without the user's login PATH (src/core/jj/jjProgram.ts).
+const jjProgram = jjProgramLookup((machine, script) => exec("sh", ["-c", script], { on: machine }), Date.now);
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -283,7 +288,8 @@ export class Spaces extends View {
   // since it (as `branch` / `ahead`), else @'s change id. Null: not jj (or no jj there).
   // --ignore-working-copy: no snapshot, so nothing is written and the watch stays quiet.
   async checkJj(on, cwd) {
-    const jj = (args) => exec("jj", ["--ignore-working-copy", "--no-pager", "--color=never", ...args], { cwd, on }).catch(() => null);
+    const program = await jjProgram(on);
+    const jj = (args) => exec(program, ["--ignore-working-copy", "--no-pager", "--color=never", ...args], { cwd, on }).catch(() => null);
     const root = await jj(["root"]);
     if (!root || root.code !== 0) return null;
     const top = root.stdout.trim();
