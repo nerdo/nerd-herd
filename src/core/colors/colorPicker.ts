@@ -19,6 +19,12 @@ export const squarePick = (at: SquarePoint, size: SquareSize): { s: number; v: n
   };
 };
 
+/** The value (from `min` to `max`, whole numbers) a point `x` points along a bar `width` long picks. */
+export const barPick = (x: number, width: number, min: number, max: number): number => {
+  const share = Math.min(1, Math.max(0, width > 0 ? x / width : 0));
+  return Math.round(min + share * (max - min));
+};
+
 /** What a color field's text holds: the default (empty), a color, or text that names no color. */
 export type FieldColor =
   | { readonly kind: "default" }

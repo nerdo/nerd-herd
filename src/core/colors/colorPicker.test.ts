@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { fieldColor, squarePick } from "./colorPicker";
+import { barPick, fieldColor, squarePick } from "./colorPicker";
 
 // The overlay color picker (the user, 2026-11-18: "a button to reset it to the default, along with
 // a color picker (not just a text box for color entry)"; asked which picker: "full picker").
@@ -21,6 +21,20 @@ describe("picking in the color square", () => {
 
   test("a point dragged past the square's edge picks the edge", () => {
     expect(squarePick({ x: -30, y: 250 }, { width: 200, height: 100 })).toEqual({ s: 0, v: 0 });
+  });
+});
+
+describe("picking on a bar", () => {
+  test("a bar's left end is its lowest value and its right end its highest", () => {
+    expect([barPick(0, 200, 0, 360), barPick(200, 200, 0, 360)]).toEqual([0, 360]);
+  });
+
+  test("a point halfway along a bar picks the middle value", () => {
+    expect(barPick(100, 200, 0, 100)).toBe(50);
+  });
+
+  test("a point dragged past a bar's end picks that end", () => {
+    expect([barPick(-40, 200, 0, 100), barPick(260, 200, 0, 100)]).toEqual([0, 100]);
   });
 });
 

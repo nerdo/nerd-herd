@@ -54,6 +54,7 @@ export class GroupSettingsPanel implements Panel {
     private readonly word: string,
     order: LevelOrder,
     cx: AsyncContext,
+    picker: "backing" | "controls" | null = null,
   ) {
     this.order = order;
     this.icon = InputState.new({ value: group.icon?.value ?? "" });
@@ -66,11 +67,18 @@ export class GroupSettingsPanel implements Panel {
     this.chevron = group.chevron ? "shown" : "hidden";
     this.align = group.align;
     // The picker starts at half-see-through black for a backing and at white for the controls.
-    this.backing = new ColorField("backing", group.backingColor, { h: 0, s: 0, v: 0, a: 0.5 }, cx);
+    this.backing = new ColorField(
+      "backing",
+      group.backingColor,
+      { h: 0, s: 0, v: 0, a: 0.5 },
+      picker === "backing",
+      cx,
+    );
     this.controlsColor = new ColorField(
       "controls-color",
       group.controlsColor,
       { h: 0, s: 0, v: 100, a: 1 },
+      picker === "controls",
       cx,
     );
   }
@@ -238,6 +246,10 @@ export class GroupSettingsPanel implements Panel {
       ],
       "Save",
       () => this.save(),
-    );
+    ).on_mouse_up("left", () => {
+      // A drag in a picker ends at any release inside the dialog, even off the part it started in.
+      this.backing.release();
+      this.controlsColor.release();
+    });
   }
 }

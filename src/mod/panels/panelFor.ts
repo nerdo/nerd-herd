@@ -29,7 +29,12 @@ export const PanelProps = z.discriminatedUnion("panel", [
     ]),
   }),
   z.object({ panel: z.literal("move"), group: id }),
-  z.object({ panel: z.literal("group-settings"), group: id }),
+  z.object({
+    panel: z.literal("group-settings"),
+    group: id,
+    /** A color picker to show open; otherwise each opens from its swatch. */
+    picker: z.enum(["backing", "controls"]).optional(),
+  }),
   z.object({ panel: z.literal("spaces-settings") }),
 ]);
 
@@ -49,7 +54,13 @@ export const panelFor = (props: unknown, view: SpacesViewModel, cx: AsyncContext
     case "group-settings": {
       const group = view.groups.groups.find((g) => g.id === p.group);
       return group
-        ? new GroupSettingsPanel(group, word.singular, levelOrderOf(view.groups, group.id), cx)
+        ? new GroupSettingsPanel(
+            group,
+            word.singular,
+            levelOrderOf(view.groups, group.id),
+            cx,
+            p.picker ?? null,
+          )
         : null;
     }
     case "spaces-settings":

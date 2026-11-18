@@ -1,48 +1,53 @@
 // One overlay color in a group's settings (the user, 2026-11-18): a swatch that opens the picker,
 // a text box for a hex color or a color name, and Reset, which puts back the default. Typing, the
 // square, and the bars keep each other in step; an empty box is the default.
-import { h_flex, InputState, SliderState, v_flex } from "gpui-base";
+import { h_flex, InputState, v_flex } from "gpui-base";
 import { type AsyncContext, type Context, div, type Element } from "gpui-kit";
-import { type FieldColor, fieldColor, squarePick } from "../../core/colors/colorPicker";
+import { barPick, type FieldColor, fieldColor, squarePick } from "../../core/colors/colorPicker";
 import { fromHsva, type HexColor, type Hsva, toHsva } from "../../core/colors/overlayColor";
 import { themeColor } from "../themeColor";
-import { colorSquare, hueBar, opacityBar, squareSize } from "./colorPickerView";
+import {
+  barWidth,
+  colorSquare,
+  hueBar,
+  opacityBar,
+  type PickEvent,
+  squareSize,
+} from "./colorPickerView";
 import { button, field, hint, type Theme } from "./formParts";
 
-const percent = (v: number | [number, number]) => (Array.isArray(v) ? v[1] : v);
+/** The part of the picker the pointer is dragging in. */
+type Part = "square" | "hue" | "opacity";
 
 export class ColorField {
   readonly input: InputState;
   private hsva: Hsva;
-  private open = false;
-  private pressed = false;
+  private open: boolean;
+  private pressed: Part | null = null;
   /** Set while this field writes its own text box, so the box's change event does not echo back. */
   private writing = false;
-  private readonly hue: SliderState;
-  private readonly opacity: SliderState;
 
   /**
    * @param saved the group's saved color; null: the default.
    * @param start where the picker starts when the field holds the default.
+   * @param open whether the picker shows from the start.
    */
   constructor(
     private readonly id: string,
     saved: HexColor | null,
     private readonly start: Hsva,
+    open: boolean,
     _cx: AsyncContext,
   ) {
+    this.open = open;
     this.input = InputState.new({ value: saved ?? "" });
     this.hsva = saved === null ? start : toHsva(saved);
-    this.hue = SliderState.new({ min: 0, max: 360, value: this.hsva.h });
-    this.opacity = SliderState.new({ min: 0, max: 100, value: Math.round(this.hsva.a * 100) });
     this.input.on("change", (_e, cx) => {
       if (this.writing) return;
       const typed = fieldColor(this.input.value());
-      if (typed.kind === "color") this.follow(toHsva(typed.color));
+      if (typed.kind === "color") this.hsva = toHsva(typed.color);
       cx.notify();
     });
-    this.hue.on("change", (v, cx) => this.pick({ ...this.hsva, h: percent(v) }, cx));
-    this.opacity.on("change", (v, cx) => this.pick({ ...this.hsva, a: percent(v) / 100 }, cx));
   }
 
   /** What the field holds now: the default, a color, or text that names no color. */
@@ -56,15 +61,13 @@ export class ColorField {
     return v.kind === "color" ? v.color : null;
   }
 
-  /** Moves the bars to a color typed in the box. */
-  private follow(hsva: Hsva): void {
-    this.hsva = hsva;
-    this.hue.set_value(hsva.h);
-    this.opacity.set_value(Math.round(hsva.a * 100));
+  /** Ends a drag; the dialog calls this on any release inside it. */
+  release(): void {
+    this.pressed = null;
   }
 
   /** A color picked in the square or on a bar: written to the box. */
-  private pick(hsva: Hsva, cx: Context): void {
+  private set(hsva: Hsva, cx: Context): void {
     this.hsva = hsva;
     this.writing = true;
     this.input.set_value(fromHsva(hsva));
@@ -72,11 +75,24 @@ export class ColorField {
     cx.notify();
   }
 
+  /**
+   * Follows the pointer in one part: a press starts a drag there, moves pick while it lasts, and the
+   * release picks once more and ends it.
+   */
+  private drag(part: Part, pick: (x: number, y: number) => Hsva) {
+    return (x: number, y: number, event: PickEvent, cx: Context) => {
+      if (event === "down") this.pressed = part;
+      if (this.pressed !== part) return;
+      if (event === "up") this.pressed = null;
+      this.set(pick(x, y), cx);
+    };
+  }
+
   private reset(): void {
     this.writing = true;
     this.input.set_value("");
     this.writing = false;
-    this.follow(this.start);
+    this.hsva = this.start;
   }
 
   render(t: Theme): Element[] {
@@ -111,19 +127,26 @@ export class ColorField {
       .gap(6)
       .w(squareSize.width)
       .child(
-        colorSquare(`${this.id}-square`, this.hsva, (x, y, event, cx) => {
-          if (event === "down") this.pressed = true;
-          if (!this.pressed) return;
-          if (event === "up") this.pressed = false;
-          this.hsva = { ...this.hsva, ...squarePick({ x, y }, squareSize) };
-          this.writing = true;
-          this.input.set_value(fromHsva(this.hsva));
-          this.writing = false;
-          cx.notify();
-        }),
+        colorSquare(
+          `${this.id}-square`,
+          this.hsva,
+          this.drag("square", (x, y) => ({ ...this.hsva, ...squarePick({ x, y }, squareSize) })),
+        ),
       )
-      .child(hueBar(this.hue))
-      .child(opacityBar(this.opacity, this.hsva));
+      .child(
+        hueBar(
+          `${this.id}-hue`,
+          this.hsva,
+          this.drag("hue", (x) => ({ ...this.hsva, h: barPick(x, barWidth, 0, 360) })),
+        ),
+      )
+      .child(
+        opacityBar(
+          `${this.id}-opacity`,
+          this.hsva,
+          this.drag("opacity", (x) => ({ ...this.hsva, a: barPick(x, barWidth, 0, 100) / 100 })),
+        ),
+      );
     return [
       row,
       ...(held.kind === "invalid" ? [hint(t, `"${held.text.trim()}" is not a color.`, true)] : []),

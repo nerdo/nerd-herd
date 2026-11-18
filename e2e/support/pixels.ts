@@ -28,11 +28,12 @@ const channels = (hex: HexColor): readonly [number, number, number] => {
 
 /**
  * How a pixel matches the color: `exact`, within a few steps of it, for a filled area; `other`, not
- * the color at all, for what is drawn on a plain background; `tinted`, its
+ * the color at all, for what is drawn on a plain background; `shaded`, mixed with white or gray;
+ * `tinted`, its
  * strong channels each clearly above its weak ones, for thin lines whose edges blend into what is
  * behind them (an 11-point icon is mostly edge).
  */
-export type ColorMatch = "exact" | "tinted" | "other";
+export type ColorMatch = "exact" | "tinted" | "other" | "shaded";
 const tintGap = 40;
 
 /** The number of pixels in the band that match `hex` (#rrggbb, its channels 00 or ff for `tinted`). */
@@ -61,6 +62,12 @@ export const countColor = (
     return Math.min(...hi) - Math.max(...lo) >= tintGap;
   };
   const topDown = b.readInt32LE(22) < 0;
+  // `shaded`: the color's strong channels above its weak ones, the weak ones equal and above 30, as
+  // where a color is mixed with white or gray rather than drawn pure.
+  const shaded = (px: readonly number[]) => {
+    const lo = px.filter((_, i) => !strong[i]);
+    return tinted(px) && Math.max(...lo) - Math.min(...lo) <= 10 && Math.min(...lo) >= 30;
+  };
   let count = 0;
   for (let y = 0; y < height; y++)
     for (let x = Math.floor(width * band.from); x < Math.floor(width * band.to); x++) {
@@ -70,7 +77,14 @@ export const countColor = (
       const px = [b[at + 2] ?? -1, b[at + 1] ?? -1, b[at] ?? -1];
       const same = near(px[0] ?? -1, r) && near(px[1] ?? -1, g) && near(px[2] ?? -1, bl);
       // `other`: any pixel that is not the color, such as anything drawn on a plain background.
-      const hit = match === "tinted" ? tinted(px) : match === "other" ? !same : same;
+      const hit =
+        match === "tinted"
+          ? tinted(px)
+          : match === "shaded"
+            ? shaded(px)
+            : match === "other"
+              ? !same
+              : same;
       if (hit) count++;
     }
   return count;

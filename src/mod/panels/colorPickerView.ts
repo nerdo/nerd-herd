@@ -1,67 +1,32 @@
 // The overlay color picker's parts (the user, 2026-11-18: "full picker"): a square for saturation
-// and brightness, a hue bar, and a see-through bar. Herdr's kit has no picker, so the square is
-// painted from gradients and takes the pointer itself; the bars are the kit's native sliders,
-// which carry their own drag.
-import { Slider, SliderIndicator, type SliderState, SliderThumb, SliderTrack } from "gpui-base";
-import { Background, type Color, type Context, div, type Element, PathBuilder } from "gpui-kit";
+// and brightness, a hue bar, and an opacity bar. Herdr's kit has no picker, and its painted
+// gradients (window.paint_path) drew nothing here (a walk, 2026-11-18: the square was flat red and
+// the bars were bare), so each gradient is a row of thin solid strips. All three take the pointer
+// the same way: a press, its moves, and its release, each with the point in the part.
+import { h_flex, v_flex } from "gpui-base";
+import { type Color, type Context, div, type Element } from "gpui-kit";
 import { fromHsva, type Hsva } from "../../core/colors/overlayColor";
 
-/** A rectangle filling its parent, painted with a native background such as a gradient. */
-const painted = (fill: Background): Element =>
-  div()
-    .absolute()
-    .inset_0()
-    .child(
-      window.paint_path(
-        PathBuilder.fill()
-          .add_polygon([
-            [0, 0],
-            ["100%", 0],
-            ["100%", "100%"],
-            [0, "100%"],
-          ])
-          .build(),
-        fill,
-      ),
-    );
+/** What a part reports: where the pointer is in it, and whether it was pressed, moved, or let go. */
+export type PickEvent = "down" | "move" | "up";
+export type Pick = (x: number, y: number, event: PickEvent, cx: Context) => void;
 
+export const squareSize = { width: 360, height: 120 };
+export const barWidth = squareSize.width;
+
+const range = (n: number) => Array.from({ length: n }, (_, i) => i);
+const alpha = (share: number) =>
+  Math.round(Math.min(1, Math.max(0, share)) * 255)
+    .toString(16)
+    .padStart(2, "0");
 const opaque = (h: number): Color => fromHsva({ h, s: 100, v: 100, a: 1 });
 
-export const squareSize = { width: 384, height: 120 };
-
-/**
- * The saturation and brightness square at the color's hue: the hue in full, white fading in from
- * the left, black from the bottom. A press, a move, and a release in it each call `pick` with the
- * point; the pointer's moves count only while it is pressed, which the caller tracks.
- */
-export const colorSquare = (
-  id: string,
-  hsva: Hsva,
-  pick: (x: number, y: number, event: "down" | "move" | "up", cx: Context) => void,
-): Element =>
-  div()
-    .id(id)
-    .relative()
-    .w(squareSize.width)
-    .h(squareSize.height)
-    .rounded(6)
-    .overflow_hidden()
+/** Makes a part take the pointer. A press does not reach the dialog behind it. */
+const dragArea = (el: Element, pick: Pick): Element =>
+  el
     .cursor_pointer()
-    .bg(opaque(hsva.h))
-    .child(painted(Background.linear_gradient(90, "#ffffffff", "#ffffff00")))
-    .child(painted(Background.linear_gradient(0, "#000000ff", "#00000000")))
-    .child(
-      // The chosen point, as a ring.
-      div()
-        .absolute()
-        .left((hsva.s / 100) * squareSize.width - 6)
-        .top((1 - hsva.v / 100) * squareSize.height - 6)
-        .size(12)
-        .rounded(6)
-        .border_2()
-        .border_color("#ffffff"),
-    )
     .on_mouse_down("left", (e, cx) => {
+      cx.stop_propagation();
       if (e.local_position) pick(e.local_position.x, e.local_position.y, "down", cx);
     })
     .on_mouse_move((e, cx) => pick(e.local_position.x, e.local_position.y, "move", cx))
@@ -69,61 +34,133 @@ export const colorSquare = (
       if (e.local_position) pick(e.local_position.x, e.local_position.y, "up", cx);
     });
 
-/** A native slider whose groove is painted by `groove`. */
-const bar = (state: SliderState, groove: Element[]): Element =>
-  Slider.new(state).child(
-    SliderTrack.new(state)
-      .flex()
-      .items_center()
-      .h(22)
+/** A ring marking the chosen point, centered on (x, y). */
+const ring = (x: number, y: number): Element =>
+  div()
+    .absolute()
+    .left(x - 7)
+    .top(y - 7)
+    .size(14)
+    .rounded(7)
+    .border_2()
+    .border_color("#ffffff");
+
+/**
+ * The saturation and brightness square at the color's hue: the hue in full, white fading out
+ * toward the right, and black fading in toward the bottom.
+ */
+export const colorSquare = (id: string, hsva: Hsva, pick: Pick): Element =>
+  dragArea(
+    div()
+      .id(id)
+      .relative()
       .w(squareSize.width)
+      .h(squareSize.height)
+      .rounded(6)
+      .overflow_hidden()
+      .bg(opaque(hsva.h))
       .child(
-        SliderIndicator.new(state)
-          .relative()
-          .w_full()
-          .h(12)
-          .rounded(6)
-          .overflow_hidden()
-          .children(groove)
-          .child(
-            SliderThumb.new(state)
-              .size(16)
-              .rounded(8)
-              .border_2()
-              .border_color("#ffffff")
-              .bg("#00000033")
-              .ml(-8),
+        h_flex()
+          .absolute()
+          .inset_0()
+          .children(
+            range(60).map((i) =>
+              div()
+                .flex_1()
+                .h_full()
+                .bg(`#ffffff${alpha(1 - i / 59)}`),
+            ),
           ),
-      ),
+      )
+      .child(
+        v_flex()
+          .absolute()
+          .inset_0()
+          .children(
+            range(30).map((j) =>
+              div()
+                .flex_1()
+                .w_full()
+                .bg(`#000000${alpha(j / 29)}`),
+            ),
+          ),
+      )
+      .child(ring((hsva.s / 100) * squareSize.width, (1 - hsva.v / 100) * squareSize.height)),
+    pick,
   );
 
-/** The hue bar: red, yellow, green, cyan, blue, magenta, and back to red. */
-export const hueBar = (state: SliderState): Element =>
-  bar(state, [
+/** A bar: its strips in a rounded groove, and a knob at `share` (0 to 1) of its length. */
+const bar = (id: string, strips: Element, share: number, pick: Pick): Element =>
+  dragArea(
+    div()
+      .id(id)
+      .relative()
+      .w(barWidth)
+      .h(22)
+      .flex()
+      .items_center()
+      .child(div().w_full().h(12).rounded(6).overflow_hidden().relative().child(strips))
+      .child(
+        div()
+          .absolute()
+          .top(3)
+          .left(share * barWidth - 8)
+          .size(16)
+          .rounded(8)
+          .border_2()
+          .border_color("#ffffff")
+          .bg("#00000033"),
+      ),
+    pick,
+  );
+
+/** The hue bar: every hue from red around to red again. */
+export const hueBar = (id: string, hsva: Hsva, pick: Pick): Element =>
+  bar(
+    id,
+    h_flex()
+      .absolute()
+      .inset_0()
+      .children(range(72).map((i) => div().flex_1().h_full().bg(opaque(i * 5)))),
+    hsva.h / 360,
+    pick,
+  );
+
+/** The opacity bar: the color from fully see-through to opaque, over a checkerboard. */
+export const opacityBar = (id: string, hsva: Hsva, pick: Pick): Element => {
+  const cells = 60;
+  const checker = (row: number) =>
+    h_flex()
+      .flex_1()
+      .w_full()
+      .children(
+        range(cells).map((i) =>
+          div()
+            .flex_1()
+            .h_full()
+            .bg((i + row) % 2 === 0 ? "#c8c8c8" : "#ffffff"),
+        ),
+      );
+  return bar(
+    id,
     div()
       .absolute()
       .inset_0()
-      .flex()
-      .children(
-        [0, 60, 120, 180, 240, 300].map((h) =>
-          div()
-            .relative()
-            .flex_1()
-            .h_full()
-            .child(painted(Background.linear_gradient(90, opaque(h), opaque(h + 60)))),
-        ),
+      .child(v_flex().absolute().inset_0().child(checker(0)).child(checker(1)))
+      .child(
+        h_flex()
+          .absolute()
+          .inset_0()
+          .children(
+            range(cells).map((i) =>
+              div()
+                .flex_1()
+                .h_full()
+                .bg(fromHsva({ ...hsva, a: i / (cells - 1) })),
+            ),
+          ),
       ),
-  ]);
-
-/** The see-through bar: the color from fully see-through to opaque, over a checkerboard. */
-export const opacityBar = (state: SliderState, hsva: Hsva): Element =>
-  bar(state, [
-    painted(Background.checkerboard("#c8c8c8", 6)),
-    painted(
-      Background.linear_gradient(
-        90,
-        fromHsva({ ...hsva, a: 0 }),
-        fromHsva({ ...hsva, a: 1 }),
-      ),
-    ),
-  ]);
+    hsva.a,
+    pick,
+  );
+};
