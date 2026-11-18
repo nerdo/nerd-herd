@@ -14,6 +14,15 @@ const replace = (from: string, to: string) => {
 };
 
 replace("export default class Spaces extends View {", "export class Spaces extends View {");
+// nerd-herd: a button on a row keeps its press from reaching the row, as Herdr's own dialogs do, so
+// pressing it does not start dragging the row (the user, 2026-11-18: a row outline showed on hover
+// after using a row's buttons). Herdr's buttons stop only their click.
+const clickStop = ".on_click((_e, cx) => { cx.stop_propagation();";
+if (!text.includes(clickStop)) throw new Error(`Herdr's Spaces mod changed; not found:\n${clickStop}`);
+text = text.replaceAll(
+  clickStop,
+  `.on_mouse_down("left", (_e, cx) => cx.stop_propagation())${clickStop}`,
+);
 replace(
   `    if (!remote.length) {
       if (loading(null) && !rows.length) return [loadingRow(null)];

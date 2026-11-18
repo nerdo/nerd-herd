@@ -46,6 +46,9 @@ const controls = (row: GroupRow, look: GroupHeaderLook, t: Theme, word: GroupWor
       .flex_none()
       .tooltip(tip)
       .hover((s) => s.text_color(themeColor(t, "foreground")))
+      // A press on a button is not a press on the row, so it does not start dragging the group (the
+      // user, 2026-11-18: an outline showed on hover after using a banner's buttons).
+      .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
       .on_click((_e, cx) => {
         cx.stop_propagation();
         act();
