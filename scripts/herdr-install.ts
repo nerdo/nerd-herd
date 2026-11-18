@@ -1,8 +1,10 @@
 // The project's install command (`bun run herdr:install`): builds the Spaces mod, makes sure a Herdr window
 // runs for the Herdr home, installs the mod and the nerd-herd layout there, and shows that layout.
+import { existsSync } from "node:fs";
 import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { keyBindings, mergeKeys } from "../src/core/keyboard/keyBindings";
+import { withJjMods } from "./installLayout";
 import { scriptSettings as s } from "./settings";
 import { testWindows } from "./testWindows";
 
@@ -69,9 +71,11 @@ async function installLayout(): Promise<void> {
   const main = await readFile(join(s.herdrHome, "layouts/main.json"), "utf8");
   if (!main.includes('"mod": "spaces"'))
     throw new Error("layouts/main.json has no Spaces block to replace");
+  // herdr-app-jj's Changes panel and status bar, where this home has them (scripts/installLayout.ts).
+  const homeHas = (mod: string) => existsSync(join(s.herdrHome, "mods", mod));
   await writeFile(
     join(s.herdrHome, "layouts/nerd-herd.json"),
-    main.replace('"mod": "spaces"', `"mod": "${modName}"`),
+    withJjMods(main.replace('"mod": "spaces"', `"mod": "${modName}"`), homeHas),
   );
 }
 
