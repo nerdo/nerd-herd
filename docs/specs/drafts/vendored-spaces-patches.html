@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spec: Patches for the vendored Spaces mod</title>
+<style>
+:root { color-scheme: light dark; --ink:#1a1a1a; --bg:#fff; --muted:#595959; --rule:#d4d4d4; --link:#0b5fa5; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+        --ink:#e8e8e8; --bg:#16181c; --muted:#a8a8a8; --rule:#3a3d44; --link:#7ab8f5; } }
+:root[data-theme="dark"] { --ink:#e8e8e8; --bg:#16181c; --muted:#a8a8a8; --rule:#3a3d44; --link:#7ab8f5; }
+body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.55; color: var(--ink);
+       background: var(--bg); max-width: 46rem; margin: 0 auto; padding: 2rem 1rem; }
+a { color: var(--link); }
+dt { font-weight: 600; }
+test-case, spec-module { display: block; border-top: 1px solid var(--rule); padding-top: .5rem; margin-top: 1rem; }
+code { font-size: .92em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Patches for the vendored Spaces mod</h1>
+
+  <section class="narrative">
+    <details open><summary><h2>Narrative</h2></summary>
+      <p>nerd-herd builds its sidebar on a copy of Herdr's shipped Spaces mod. <code>scripts/vendor-spaces.ts</code> makes that copy and applies nerd-herd's own changes to it. The build then bundles everything into one file, so a change made to the built mod is lost on the next build.</p>
+      <p>Other people publish changes to Herdr's Spaces mod as patch files. One example is the jj patch from <a href="https://github.com/sebcbi1/herdr-app-jj">herdr-app-jj</a>, which shows a Jujutsu (jj) repository's bookmark in the sidebar and opens a menu with jj workspace items. Dannel wants such patches to survive every build. The vendor step therefore applies the patch files kept in <code>patches/spaces/</code> to Herdr's Spaces mod before nerd-herd's own changes.</p>
+      <details open class="claims"><summary>Claims</summary>
+        <ul>
+          <li>The vendor step applies every patch in patches/spaces to Herdr's Spaces mod, in file-name order</li>
+          <li>A patch that does not apply stops the vendor step and names the patch</li>
+          <li>The vendored Spaces file is what the vendor step produces</li>
+          <li>The vendored Spaces asks jj before git about a space's repository</li>
+        </ul>
+      </details>
+    </details>
+  </section>
+
+  <section class="module-definitions" data-roles="build">
+    <details open><summary><h2>Module Definitions</h2></summary>
+      <spec-module>
+        <h3>Spaces patching</h3>
+        <p><code>scripts/vendorPatches.ts</code>: applies patch files to the text of Herdr's Spaces mod with the <code>patch</code> program, and names the patch that does not apply.</p>
+      </spec-module>
+      <spec-module>
+        <h3>Vendor step</h3>
+        <p><code>scripts/vendor-spaces.ts</code>: reads Herdr's Spaces mod, applies the patches in <code>patches/spaces/</code>, then nerd-herd's own changes, and writes <code>src/mod/vendor/herdrSpaces.js</code> or the path given as its first argument.</p>
+      </spec-module>
+    </details>
+  </section>
+
+  <section class="ambiguity-resolution">
+    <details open><summary><h2>Ambiguity Resolution</h2></summary>
+      <ul>
+        <li><strong>Patch order against nerd-herd's changes:</strong> patches apply first, because a published patch is written against Herdr's shipped Spaces mod, not against nerd-herd's copy.</li>
+        <li><strong>The jj patch's text:</strong> the published patch was written for a clone with project icons. Its import line names <code>home</code> and it changes a <code>roots()</code> method, and Herdr's shipped Spaces mod has neither. The copy in <code>patches/spaces/</code> adds <code>readTextFile</code> to the shipped import line and leaves out the <code>roots()</code> hunk, as the patch's own install steps direct. Herdr 0.1.16 rewrote <code>check()</code>, so the copy places the jj lookup at the start of the new <code>check()</code>; the record it stores has the same fields as 0.1.16's git record.</li>
+      </ul>
+    </details>
+  </section>
+
+  <section class="test-cases" data-roles="qa">
+    <details open><summary><h2>Test Cases</h2></summary>
+      <test-group category="happy-paths">
+        <h3>Happy paths</h3>
+        <test-case id="test-case-patches-apply-in-file-name-order" traces-to="The vendor step applies every patch in patches/spaces to Herdr's Spaces mod, in file-name order" covers-module="Spaces patching" status="pending">
+          <h4>Patches apply in file-name order</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Two patches, where the second changes a line the first one wrote</dd>
+            <dt>When</dt> <dd data-field="when">They are applied to the Spaces text</dd>
+            <dt>Then</dt> <dd data-field="then">The text carries both changes</dd>
+          </dl>
+        </test-case>
+        <test-case id="test-case-the-vendored-file-matches-the-vendor-step" traces-to="The vendored Spaces file is what the vendor step produces" covers-module="Vendor step" status="pending">
+          <h4>The vendored file matches the vendor step</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Herdr's installed Spaces mod and the patches in <code>patches/spaces/</code></dd>
+            <dt>When</dt> <dd data-field="when">The vendor step writes to a scratch path</dd>
+            <dt>Then</dt> <dd data-field="then">That output equals <code>src/mod/vendor/herdrSpaces.js</code></dd>
+          </dl>
+        </test-case>
+        <test-case id="test-case-the-sidebar-asks-jj-first" traces-to="The vendored Spaces asks jj before git about a space's repository" covers-module="Vendor step" status="pending">
+          <h4>The sidebar asks jj first</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The vendored Spaces file</dd>
+            <dt>When</dt> <dd data-field="when">Its <code>check()</code> method is read</dd>
+            <dt>Then</dt> <dd data-field="then">It calls <code>checkJj()</code> before its first git command (Herdr 0.1.16 starts with <code>git rev-parse</code>; 0.1.14, which the published patch targets, started with <code>git status</code>)</dd>
+          </dl>
+        </test-case>
+      </test-group>
+      <test-group category="error-paths">
+        <h3>Error paths</h3>
+        <test-case id="test-case-a-patch-that-does-not-apply-is-named" traces-to="A patch that does not apply stops the vendor step and names the patch" covers-module="Spaces patching" status="pending">
+          <h4>A patch that does not apply is named</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A patch whose context is not in the Spaces text</dd>
+            <dt>When</dt> <dd data-field="when">It is applied</dd>
+            <dt>Then</dt> <dd data-field="then">The step fails with an error that names the patch file</dd>
+          </dl>
+        </test-case>
+      </test-group>
+    </details>
+  </section>
+
+  <section class="end-user-validation">
+    <details open><summary><h2>End-User Validation</h2></summary>
+      <table>
+        <thead><tr><th>What Dannel sees</th><th>How it is checked</th></tr></thead>
+        <tbody>
+          <tr><td>A colocated jj repository's space shows its nearest bookmark and <code>↑N</code> in the sidebar, not <code>detached</code></td><td>A test window's screenshot</td></tr>
+          <tr><td>Right-clicking a jj repository's space shows New jj workspace and Open jj workspace</td><td>Needs pointer</td></tr>
+        </tbody>
+      </table>
+    </details>
+  </section>
+</main>
+</body>
+</html>
