@@ -167,7 +167,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
   <h1>nerd-herd Spaces mod: groups of machines</h1>
   <p>nerd-herd is a set of Herdr mods, and its full scope is not settled yet. This spec covers one of them: a Spaces mod that replaces the sidebar’s Spaces section and gathers machines into groups (for example Personal and Work). The Agents section has <a href="../drafts/nerd-herd-agents.html">its own spec</a>.</p>
   <dl class="spec-meta">
-    <dt>Stage</dt> <dd data-field="stage">in-progress</dd>
+    <dt>Stage</dt> <dd data-field="stage">completed</dd>
     <dt>Complexity</dt> <dd data-field="complexity">6 / 10 for the first build &mdash; one mod with nested groups, drag and drop, per-group sorts, settings, downloaded banners with error cards, and a test harness for a native app not yet proven</dd>
     <dt>Toolchain</dt> <dd data-field="toolchain">TypeScript on Bun. <code>bun build</code> compiles each mod into one ES module with <code>herdr</code>, <code>gpui-kit</code>, and <code>gpui-base</code> left as imports; a probe built this way passed <code>herdr-app check</code> on 2026-11-16.</dd>
     <dt>Herdr version</dt> <dd data-field="herdr-version">0.1.16 (app), read from <code>/Applications/Herdr.app/Contents/Info.plist</code></dd>
