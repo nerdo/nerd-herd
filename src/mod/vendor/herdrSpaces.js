@@ -4,7 +4,8 @@
 // "nerd-herd:": the class is exported for subclassing; the machine sections follow layoutRows()
 // (groups interleaved, sections indented by depth, a machine's spaces indented by
 // spaceIndent()); and the header has headerTools() and
-// belowHeader() hooks. Herdr's guide: duplicate a shipped mod before editing.
+// belowHeader() hooks. Herdr's guide: duplicate a shipped mod before editing. Before those
+// changes, the patches in patches/spaces/ are applied in file-name order; each names its source.
 
 // Workspace spaces: stable colored avatars, worktrees under their checkout,
 // grouped by machine when more than one is known. After a space's name, the repo
@@ -13,7 +14,7 @@
 
 import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex, ScrollHandle } from "gpui-base";
-import { spaces, machines, panes, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout } from "herdr";
+import { spaces, machines, panes, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout, readTextFile } from "herdr";
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -239,6 +240,13 @@ export class Spaces extends View {
     this.checked[key] = Date.now();
     this.unsure.delete(key);
     try {
+      // A jj repo (colocated or not) answers first: git there only sees a detached HEAD.
+      const jjInfo = await this.checkJj(on, cwd);
+      if (jjInfo) {
+        this.git[key] = jjInfo;
+        if (!on) this.watch(JSON.parse(jjInfo.repo)[1], cx);
+        return;
+      }
       // Ref-only reads avoid scanning the worktree or waking its index watch.
       // Two reads: a folder name may itself contain a newline.
       const [r, common] = await both(
@@ -271,6 +279,41 @@ export class Spaces extends View {
     }
   }
 
+  // One place's jj: the nearest local bookmark at or below @ and the non-empty changes
+  // since it (as `branch` / `ahead`), else @'s change id. Null: not jj (or no jj there).
+  // --ignore-working-copy: no snapshot, so nothing is written and the watch stays quiet.
+  async checkJj(on, cwd) {
+    const jj = (args) => exec("jj", ["--ignore-working-copy", "--no-pager", "--color=never", ...args], { cwd, on }).catch(() => null);
+    const root = await jj(["root"]);
+    if (!root || root.code !== 0) return null;
+    const top = root.stdout.trim();
+    // A secondary workspace's .jj/repo is a file naming the main one's, relative to its .jj/.
+    const pointer = await readTextFile(`${top}/.jj/repo`, { on }).catch(() => null);
+    const resolve = (p) => {
+      const out = [];
+      for (const part of (p.startsWith("/") ? p : `${top}/.jj/${p}`).split("/")) {
+        if (part === "..") out.pop(); else if (part && part !== ".") out.push(part);
+      }
+      return "/" + out.join("/");
+    };
+    const repo = pointer?.trim() ? resolve(pointer.trim()) : `${top}/.jj/repo`;
+    const name = base(repo.replace(/\/\.jj\/repo$/, ""));
+    const info = { name, branch: null, ahead: 0, behind: 0, repo: JSON.stringify([on, repo]), linked: Boolean(pointer?.trim()), jj: true };
+    const T = 'change_id.shortest(8) ++ "\\t" ++ local_bookmarks.map(|b| b.name()).join(" ") ++ "\\n"';
+    const near = await jj(["log", "-r", "heads(::@ & bookmarks())", "--no-graph", "-T", T]);
+    const bookmark = near?.code === 0 ? near.stdout.split("\n")[0]?.split("\t")[1]?.split(" ")[0] : null;
+    if (bookmark) {
+      info.branch = bookmark;
+      const since = await jj(["log", "-r", "heads(::@ & bookmarks())..@ ~ empty()", "--no-graph", "-T", '"x"']);
+      info.ahead = since?.code === 0 ? since.stdout.trim().length : 0;
+    } else {
+      const at = await jj(["log", "-r", "@", "--no-graph", "-T", T]);
+      const id = at?.code === 0 ? at.stdout.split("\t")[0].trim() : "";
+      info.branch = id ? `@${id}` : null;
+    }
+    return info;
+  }
+
   watch(repo, cx) {
     if (this.watching.has(repo)) return;
     const pending = watchFolder(repo);
@@ -295,7 +338,7 @@ export class Spaces extends View {
 
   menu(w) {
     // A popup is as tall as its items; height is only the most.
-    openOverlay({ mod: "menu", kind: "popup", width: 200, height: 260, props: { tab: "space", target: { id: w.id } } });
+    openOverlay({ mod: "jj-menu", kind: "popup", width: 200, height: 260, props: { tab: "space", target: { id: w.id } } });
   }
 
   orderingDue(now) {

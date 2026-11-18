@@ -65,7 +65,8 @@ The walks never move your pointer or type on your keyboard. Their test windows o
 |---|---|
 | `src/core` | The logic, with no Herdr imports: groups, ordering, sorting, commands, banners, saved data, and keyboard steps. Unit tested. |
 | `src/mod` | The Herdr side: the view, the dialogs, and the adapters that connect the core to Herdr. |
-| `src/mod/vendor` | Herdr's own Spaces mod, copied by `scripts/vendor-spaces.ts` with nerd-herd's changes marked. |
+| `src/mod/vendor` | Herdr's own Spaces mod, copied by `scripts/vendor-spaces.ts` with the patches in `patches/spaces/` applied and nerd-herd's changes marked. |
+| `patches/spaces` | Patch files for Herdr's Spaces mod, such as other people's mods' sidebar changes. `10-jj-sidebar.patch` is from [herdr-app-jj](https://github.com/sebcbi1/herdr-app-jj) (MIT). |
 | `e2e` | The end-to-end walks and their harness. |
 | `scripts` | Start, build, the test window's sizing and shutdown, and the Herdr mod copy. |
 | `docs/specs` | Specs, one folder per stage: ideas, drafts, finalized, in progress, completed, and abandoned. |

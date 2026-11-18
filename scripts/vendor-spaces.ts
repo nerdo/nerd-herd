@@ -1,13 +1,22 @@
-// Copies Herdr's shipped Spaces mod into src/mod/vendor/herdrSpaces.js and applies nerd-herd's
-// marked changes (`bun scripts/vendor-spaces.ts`). Re-run it when Herdr updates its Spaces mod;
-// it stops on any change it cannot find, so an upstream edit is noticed rather than lost.
+// Copies Herdr's shipped Spaces mod into src/mod/vendor/herdrSpaces.js (or the path given as the
+// first argument), applies the patch files in patches/spaces/ in file-name order, then nerd-herd's
+// marked changes (`bun scripts/vendor-spaces.ts`). Re-run it when Herdr updates its Spaces mod or a
+// patch is added; it stops on any change or patch it cannot place, so an upstream edit is noticed
+// rather than lost. Patches apply first because published ones are written against Herdr's own file.
+import { readdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { applyPatches } from "./vendorPatches";
 
 const source = join(homedir(), ".config/herdr-app/mods/spaces/main.js");
-const target = join(import.meta.dir, "../src/mod/vendor/herdrSpaces.js");
+const target = process.argv[2] ?? join(import.meta.dir, "../src/mod/vendor/herdrSpaces.js");
+const patchDir = join(import.meta.dir, "../patches/spaces");
 
-let text = await Bun.file(source).text();
+const patchNames = (await readdir(patchDir)).filter((n) => n.endsWith(".patch"));
+const patches = await Promise.all(
+  patchNames.map(async (name) => ({ name, text: await Bun.file(join(patchDir, name)).text() })),
+);
+let text = applyPatches(await Bun.file(source).text(), patches);
 const replace = (from: string, to: string) => {
   if (!text.includes(from)) throw new Error(`Herdr's Spaces mod changed; not found:\n${from}`);
   text = text.replace(from, to);
@@ -100,7 +109,8 @@ const header = `// Vendored from Herdr 0.1.16's shipped Spaces mod (~/.config/he
 // "nerd-herd:": the class is exported for subclassing; the machine sections follow layoutRows()
 // (groups interleaved, sections indented by depth, a machine's spaces indented by
 // spaceIndent()); and the header has headerTools() and
-// belowHeader() hooks. Herdr's guide: duplicate a shipped mod before editing.
+// belowHeader() hooks. Herdr's guide: duplicate a shipped mod before editing. Before those
+// changes, the patches in patches/spaces/ are applied in file-name order; each names its source.
 
 `;
 await Bun.write(target, header + text);
