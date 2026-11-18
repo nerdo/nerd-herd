@@ -31,8 +31,12 @@ code { font-size: .92em; }
           <li>A patch that does not apply stops the vendor step and names the patch</li>
           <li>The vendored Spaces file is what the vendor step produces</li>
           <li>The vendored Spaces asks jj before git about a space's repository</li>
+          <li>The install shows jj-changes in the nerd-herd layout's Changes block when the Herdr home has that mod</li>
+          <li>The install shows jj-status in the nerd-herd layout's status block when the Herdr home has that mod</li>
+          <li>Without the jj mods, the install keeps Herdr's own Changes and status blocks</li>
         </ul>
       </details>
+      <p>The jj patch draws only the sidebar. The rest of herdr-app-jj is mods of its own: <code>jj-changes</code> for the Changes panel and <code>jj-status</code> for the status bar. <code>bun run herdr:install</code> writes <code>layouts/nerd-herd.json</code> again from Herdr's <code>main</code> layout, which names <code>changes</code> and <code>workspace-status</code>. So the install names the jj mods instead wherever the home has them, and a home without them gets Herdr's own blocks.</p>
     </details>
   </section>
 
@@ -45,6 +49,10 @@ code { font-size: .92em; }
       <spec-module>
         <h3>Vendor step</h3>
         <p><code>scripts/vendor-spaces.ts</code>: reads Herdr's Spaces mod, applies the patches in <code>patches/spaces/</code>, then nerd-herd's own changes, and writes <code>src/mod/vendor/herdrSpaces.js</code> or the path given as its first argument.</p>
+      </spec-module>
+      <spec-module>
+        <h3>Install layout</h3>
+        <p><code>scripts/installLayout.ts</code>: turns the text of Herdr's <code>main</code> layout into the nerd-herd layout, given the mod folders the Herdr home has. <code>scripts/herdr-install.ts</code> writes its result to <code>layouts/nerd-herd.json</code>.</p>
       </spec-module>
     </details>
   </section>
@@ -84,6 +92,33 @@ code { font-size: .92em; }
             <dt>Given</dt> <dd data-field="given">The vendored Spaces file</dd>
             <dt>When</dt> <dd data-field="when">Its <code>check()</code> method is read</dd>
             <dt>Then</dt> <dd data-field="then">It calls <code>checkJj()</code> before its first git command (Herdr 0.1.16 starts with <code>git rev-parse</code>; 0.1.14, which the published patch targets, started with <code>git status</code>)</dd>
+          </dl>
+        </test-case>
+      </test-group>
+      <test-group category="install">
+        <h3>Install</h3>
+        <test-case id="test-case-the-install-shows-jj-changes" traces-to="The install shows jj-changes in the nerd-herd layout's Changes block when the Herdr home has that mod" covers-module="Install layout" status="pending">
+          <h4>The install shows jj-changes</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A Herdr home with a <code>mods/jj-changes</code> folder</dd>
+            <dt>When</dt> <dd data-field="when">The install writes the nerd-herd layout</dd>
+            <dt>Then</dt> <dd data-field="then">The block with id <code>changes</code> shows <code>jj-changes</code>, and keeps its id</dd>
+          </dl>
+        </test-case>
+        <test-case id="test-case-the-install-shows-jj-status" traces-to="The install shows jj-status in the nerd-herd layout's status block when the Herdr home has that mod" covers-module="Install layout" status="pending">
+          <h4>The install shows jj-status</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A Herdr home with a <code>mods/jj-status</code> folder</dd>
+            <dt>When</dt> <dd data-field="when">The install writes the nerd-herd layout</dd>
+            <dt>Then</dt> <dd data-field="then">The block with id <code>status</code> shows <code>jj-status</code></dd>
+          </dl>
+        </test-case>
+        <test-case id="test-case-without-jj-mods-herdr-s-blocks-stay" traces-to="Without the jj mods, the install keeps Herdr's own Changes and status blocks" covers-module="Install layout" status="pending">
+          <h4>Without jj mods, Herdr's blocks stay</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A Herdr home with neither jj mod</dd>
+            <dt>When</dt> <dd data-field="when">The install writes the nerd-herd layout</dd>
+            <dt>Then</dt> <dd data-field="then">The Changes block shows <code>changes</code> and the status block shows <code>workspace-status</code>, so no block names a mod the home lacks</dd>
           </dl>
         </test-case>
       </test-group>
