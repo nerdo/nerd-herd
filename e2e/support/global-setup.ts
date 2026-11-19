@@ -6,8 +6,8 @@ import { e2eSettings } from "./e2e-settings";
 
 export default function globalSetup(): void {
   // The user, 2026-11-17: "use caffeinate to keep every thing awake during testing". A sleeping
-  // display put the test window on a desktop yabai could not reach. caffeinate keeps the displays
-  // (-d), the system (-i, -s), and the disk (-m) awake until this run's process (-w) ends.
+  // display put the test window on a desktop the window manager could not reach. caffeinate keeps
+  // the displays (-d), the system (-i, -s), and the disk (-m) awake until this run's process (-w) ends.
   if (process.platform === "darwin")
     spawn("caffeinate", ["-dims", "-w", String(process.pid)], {
       stdio: "ignore",

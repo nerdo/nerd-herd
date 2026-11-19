@@ -13,7 +13,7 @@ export const e2eSettings = {
   /** Where every screenshot a walk reads is kept, so a failed reading can be checked afterward. */
   shots: process.env.E2E_SHOTS ?? resolve(root, ".e2e-bin/shots"),
   bannerFixture: resolve(root, "e2e/fixtures/work-banner.png"),
-  /** The test window's size in points, set through yabai when it runs (the user, 2026-11-17). */
+  /** The test window's size in points, seeded in the test home's window.json (the user, 2026-11-17). */
   windowSize: { width: 1200, height: 900 },
   /**
    * Herdr's appearance in the test home. The walks read the screen, and the text reader misses dim

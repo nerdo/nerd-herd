@@ -52,7 +52,6 @@ export class HerdrWindow {
     size: WindowPoints = e2eSettings.windowSize,
     launch: "background" | "direct" = "background",
   ): void {
-    this.size = size;
     this.direct = launch === "direct";
     this.sidebarPx = null;
     rmSync(this.home, { recursive: true, force: true });
@@ -64,10 +63,16 @@ export class HerdrWindow {
       join(this.home, "shared.json"),
       JSON.stringify({ "frame.welcomed": "skipped", ...seed }),
     );
+    // Herdr opens at the size its home's window.json saved: seeded 1200 by 634, it opened 1200 by 634;
+    // with none, 1280 by 820 (2026-11-18). Herdr picks the position itself. A tiling window manager
+    // still resizes a window it manages, so float the test windows there (AGENTS.md).
+    writeFileSync(
+      join(this.home, "window.json"),
+      JSON.stringify({ state: "windowed", bounds: [0, 0, size.width, size.height] }),
+    );
     const r = run(["bun", "run", "herdr:install"], this.env());
     if (r.code !== 0) throw new Error(`bun run herdr:install failed: ${r.out}\n${r.err}`);
     this.setAppearance();
-    this.applySize();
     // Spaces and Agents share the sidebar evenly, so a long Spaces list is cut off at Agents and its
     // reading depends on where Herdr scrolled it. Like a person dragging the divider down, give
     // Spaces most of the height; Herdr keeps the size in this home, through restarts too.
@@ -79,7 +84,6 @@ export class HerdrWindow {
     this.stop();
     const r = run(["bun", "run", "herdr:install"], this.env());
     if (r.code !== 0) throw new Error(`bun run herdr:install failed: ${r.out}\n${r.err}`);
-    this.applySize();
   }
 
   /** True when this walk's window runs Herdr directly, keeping the fake curl on its PATH. */
@@ -88,8 +92,6 @@ export class HerdrWindow {
   /** The sidebar width this walk last set, in points; null until it sets one. */
   private sidebarPx: number | null = null;
 
-  /** The size this walk asked for; Herdr would otherwise take the size the window manager gives. */
-  private size: WindowPoints = e2eSettings.windowSize;
 
   /** Adds the walks' appearance to the settings Herdr wrote for this home; Herdr applies it live. */
   private setAppearance(): void {
@@ -97,14 +99,6 @@ export class HerdrWindow {
     const saved: unknown = JSON.parse(readFileSync(file, "utf8"));
     const settings = typeof saved === "object" && saved !== null ? saved : {};
     writeFileSync(file, JSON.stringify({ ...settings, appearance: e2eSettings.appearance }));
-    sleep(400);
-  }
-
-  /** Floats the test window and gives it this walk's size, through yabai when it runs. */
-  private applySize(): void {
-    const { width, height } = this.size;
-    const r = run(["bun", "scripts/size-window.ts", String(width), String(height)], this.env());
-    if (r.code !== 0) throw new Error(`size-window failed: ${r.out}\n${r.err}`);
     sleep(400);
   }
 
@@ -249,6 +243,20 @@ export class HerdrWindow {
     const s = run(["herdr-app", "shot", shot], this.env());
     if (s.code !== 0) throw new Error(`herdr-app shot failed: ${s.out}\n${s.err}`);
     return { shot, edge: this.sidebarEdge(shot) };
+  }
+
+  /**
+   * The window's size in points, read from a screenshot of it: what the window manager gave the
+   * window, whatever its home's window.json asked for. The walks' displays show one pixel per point
+   * (a 1200 by 634 point window gave a 1200 by 634 pixel screenshot, 2026-11-18).
+   */
+  shownSize(): WindowPoints {
+    const shot = this.shotPath();
+    const s = run(["herdr-app", "shot", shot], this.env());
+    if (s.code !== 0) throw new Error(`herdr-app shot failed: ${s.out}\n${s.err}`);
+    const png = readFileSync(shot);
+    // A PNG's header holds its width and height as 32-bit numbers at bytes 16 and 20.
+    return { width: png.readUInt32BE(16), height: png.readUInt32BE(20) };
   }
 
   /** The window's size in points, as Herdr saved it in window.json; null before Herdr writes it. */

@@ -28,7 +28,6 @@ The full behavior, with every case that is tested, is in the [Spaces spec](docs/
 - For the end-to-end walks only:
   - Xcode's `swiftc`, which builds the text reader that reads the window through Apple's Vision framework.
   - The `hc` command from herdr-core, and at least one connected machine besides this computer.
-  - [yabai](https://github.com/koekeishiya/yabai) is optional. When it is present, the walks float and size their own test window, so a tiling layout cannot change the window's size.
 
 ## Install
 

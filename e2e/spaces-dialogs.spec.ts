@@ -35,7 +35,7 @@ test.beforeAll(() => {
   window.act("open", { panel: "menu", target: { kind: "group", group: "Work", name: "Work" } });
   menu = whole(window);
   window.herdr("overlay.close", {});
-  size = window.windowSize();
+  size = window.shownSize();
   window.act("level-order", { group: "Work", order: "custom" });
   window.act("open", { panel: "group-settings", group: "Work" });
   customSettings = whole(window);

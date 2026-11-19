@@ -36,6 +36,7 @@ The reflex these rules catch: a test window looks like a sandbox, so the shared 
 - Each walk makes a `new HerdrWindow()` and calls its `start()` to open its own Herdr window in `.e2e-home`, which `start()` deletes and recreates, sends commands, and reads the window's text with Apple's Vision framework (`.e2e-bin/read-text`).
 - A walk sets every input it depends on: the window size, light appearance, and the saved data. Do not rely on the person's settings.
 - The walks run one at a time (`workers: 1`), because they share one display.
+- A walk sets its window's size by starting the test home with that size in `window.json`. A tiling window manager resizes every window it manages, so on a desktop that runs one, the walks see the size it gives instead. Before a run, make the window manager leave Herdr's windows floating, for example with a rule for the Herdr app. Remove that rule after the run, because it also floats the person's own Herdr window. Set this up in the window manager, never in this repository.
 - Screenshots land in `.e2e-bin/shots`. Look at them when a reading surprises you, before you change a test.
 
 ## Version control
