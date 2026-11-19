@@ -209,7 +209,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         </ol>
       </details>
       <p>The desk-client session finishes its turn on "THRD: Reset leader election" while Dannel is reading in another tab, and it shows under Done. Dannel means to click the NAS session but clicks the desk-client one, sees the wrong session, and clicks away. Today, Herdr would count that click as having dealt with it and move it to Idle, where it gets lost. With nerd-herd it stays under Done, because looking at a session is not dealing with it.</p>
-      <p>Later Dannel opens the desk-client session on purpose and reads what the agent did. It needs no reply, so they press the dismiss key, or click Dismiss above the session's pane, and the session moves to Idle. The NAS session is also under Done; Dannel types a follow-up question to that agent instead, and the session moves to Working. When the agent answers, it shows under Done again.</p>
+      <p>Later Dannel opens the desk-client session on purpose and reads what the agent did. It needs no reply, so they press the dismiss key, or click the purple Dismiss button in the middle of the status bar at the bottom of the window, and the session moves to Idle. The NAS session is also under Done; Dannel types a follow-up question to that agent instead, and the session moves to Working. When the agent answers, it shows under Done again.</p>
       <p>That evening Dannel opens Herdr on another computer connected to desk-client. The desk-client session is still under Idle there, and anything still waiting under Done on this computer is waiting there too, because the record of what was dismissed is kept on the machine the session runs on.</p>
     </details>
   </section>
@@ -270,17 +270,39 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Resolution</dt> <dd data-field="resolution">Not in this spec. A wrong click would mark it seen, and a time-based rule would still be error-prone (the user, 2026-11-19: “I would pause on that”).</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved">
         <h3>Dismiss button placement</h3>
         <dl>
-          <dt>Question</dt> <dd data-field="body">Where on the main pane does the Dismiss button go? The user wants it on the main pane rather than on the sidebar row (2026-11-19).</dd>
-          <dt>Context</dt> <dd data-field="context">The nerd-herd layout's work column holds the tabs bar, then the focused pane. A nerd-herd block can be added to that column.</dd>
+          <dt>Question</dt> <dd data-field="body">Where does the Dismiss button go?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">In the center of the status bar at the bottom of the window, the bar that ends with the command palette hint, shown only while the focused session is under Done. It has a color, so it does not blend into the grey bar; purple was suggested (the user, 2026-11-19: “Put the button on the status bar at the bottom … maybe in the center though and give it a color so it isn't just grey and blends in (purple?)”).</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>How Dismiss gets into the status bar</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">The status bar is not nerd-herd's: the nerd-herd layout shows Herdr's <code>workspace-status</code> mod, or the jj mod's <code>jj-status</code> where jj is installed, as one block 28 points high. How does a nerd-herd button get into its center?</dd>
+          <dt>Context</dt> <dd data-field="context"><code>scripts/installLayout.ts</code> already picks which of the two status mods the layout names. Both draw their whole row themselves: the machine, the branch, the agent count on the left, and the command palette hint on the right.</dd>
           <dt>Options</dt>
           <dd data-field="options"><ul>
-            <li>A thin bar between the tabs bar and the pane, shown only while the focused session is under Done: “Finished. Dismiss”</li>
-            <li>A Dismiss button at the end of the tabs bar, shown only while the focused session is under Done</li>
+            <li>Split the status row into three layout blocks: the status mod on the left, a nerd-herd Dismiss block in the middle, and the right part of the bar. The status mods stay untouched, but each one draws its palette hint at its own right end, so the hint would sit left of Dismiss unless the status mod's row is cut in two, which a layout block cannot do.</li>
+            <li>A nerd-herd status bar mod: a copy of whichever status mod the install picks, with Dismiss added in its center. The install script names it in place of the original. Dismiss sits where asked, but nerd-herd then carries a copy that has to follow upstream changes to both status mods, like the vendored Spaces patches.</li>
+            <li>Ask upstream for a slot: the status mods gain a center slot another mod can fill. Cleanest, but it waits on Herdr and on the jj mod's author.</li>
           </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">The thin bar: it says why the button is there, and it does not move the tabs.</dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">The nerd-herd status bar mod, built as a patch over the chosen status mod the way the vendored Spaces patches are, so an upstream change shows up as a failed patch rather than silent drift. The upstream slot can be filed alongside it.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Dismiss color</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Which purple does Dismiss use?</dd>
+          <dt>Context</dt> <dd data-field="context">Mods color themselves from <code>theme()</code>, whose names every theme defines, so a mod follows light and dark themes. A theme has no color named purple.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>The theme's magenta (<code>ansi5</code>): purple-ish in most themes, and it follows the theme</li>
+            <li>The theme's done color: ties the button to the Done section, but it is not purple in every theme (the Windows 98 theme's is blue)</li>
+            <li>One fixed purple: the same in every theme, but it may clash with a light theme</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">The theme's magenta.</dd>
         </dl>
       </spec-question>
       <spec-question status="open">
@@ -386,8 +408,8 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       <spec-module>
         <h3>Dismiss control</h3>
         <dl>
-          <dt>Responsibility</dt> <dd data-field="responsibility">Shows Dismiss on the main pane while the focused session is under Done, and handles the dismiss key.</dd>
-          <dt>Owns</dt> <dd data-field="owns">The button, the key, and the label it writes.</dd>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Shows Dismiss in the center of the status bar, in purple, while the focused session is under Done, and handles the dismiss key.</dd>
+          <dt>Owns</dt> <dd data-field="owns">The button, the key, and the label it writes. How the button reaches the status bar waits on the question about it.</dd>
           <dt>Delegates</dt> <dd data-field="delegates">Whether the focused session is under Done to Done ledger; storing the dismissal to herdr-core, through <code>hc label &lt;terminal&gt; nerd-herd.handled=&lt;turn&gt;</code>.</dd>
         </dl>
       </spec-module>
@@ -537,7 +559,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dl>
             <dt>Given</dt> <dd data-field="given">A session under Done that Dannel opened and left (pending the testing question)</dd>
             <dt>When</dt> <dd data-field="when">Dannel focuses it again and dismisses it</dd>
-            <dt>Then (experience)</dt> <dd data-field="then" data-aspect="experience">Before the dismissal, the screenshot shows the session under Done and Dismiss above its pane; after it, the session is under Idle and Dismiss is gone</dd>
+            <dt>Then (experience)</dt> <dd data-field="then" data-aspect="experience">Before the dismissal, the screenshot shows the session under Done and a purple Dismiss in the center of the status bar; after it, the session is under Idle and Dismiss is gone from the status bar</dd>
             <dt>Then (technical)</dt> <dd data-field="then" data-aspect="technical"><code>hc get &lt;terminal&gt; --json</code> on the session's machine shows <code>nerd-herd.handled</code> equal to its <code>turn</code></dd>
             <dt>Incremental</dt> <dd data-field="incremental">Testable once Done ledger and Dismiss control are in the copied layout</dd>
           </dl>
