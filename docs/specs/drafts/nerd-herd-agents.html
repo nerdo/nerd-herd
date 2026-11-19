@@ -165,10 +165,10 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
 </nav>
 <main id="content">
   <h1>nerd-herd Agents mod: sessions by machine</h1>
-  <p>nerd-herd is a set of Herdr mods, and its full scope is not settled yet. This spec covers one of them: an Agents mod that replaces the sidebar’s Agents section, lists each session under the machine it runs on, wraps long subjects instead of cutting them off, and renames sessions with Herdr’s own rename. The Spaces mod has <a href="../in-progress/executing-nerd-herd-spaces.html">its own spec</a>. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
+  <p>nerd-herd is a set of Herdr mods, and its full scope is not settled yet. This spec covers one of them: an Agents mod that replaces the sidebar’s Agents section, lists each session under the machine it runs on, wraps long subjects instead of cutting them off, renames sessions with Herdr’s own rename, and keeps a finished session under Done until Dannel deals with it. The Spaces mod has <a href="../in-progress/executing-nerd-herd-spaces.html">its own spec</a>. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
   <dl class="spec-meta">
     <dt>Stage</dt> <dd data-field="stage">drafts</dd>
-    <dt>Complexity</dt> <dd data-field="complexity">3 / 10 &mdash; one mod, a session list model, and Herdr commands it already offers</dd>
+    <dt>Complexity</dt> <dd data-field="complexity">4 / 10 &mdash; one mod, a session list model, Herdr commands it already offers, and a Done record kept as herdr-core labels</dd>
     <dt>Sequence</dt> <dd data-field="sequence">Built after the <a href="../in-progress/executing-nerd-herd-spaces.html">Spaces mod</a>, whose groups the Agents list may reuse (<a href="#spec-question-agents-grouping">Agents grouping</a>)</dd>
     <dt>Herdr version</dt> <dd data-field="herdr-version">0.1.16 (app), read from <code>/Applications/Herdr.app/Contents/Info.plist</code></dd>
     <dt>Toolchain</dt> <dd data-field="toolchain">TypeScript on Bun, compiled by <code>bun build</code> into the mod’s <code>main.js</code>, the same as the Spaces mod.</dd>
@@ -197,6 +197,20 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       <p>Dannel has three agent sessions running: one on desk-client working on "THRD: Reset leader election", one on this computer fixing a Python virtual environment, and one on desk-home about NAS hardware. Today the Agents section shows them in one list, cut off at the right edge, with the machine's name in tiny text.</p>
       <p>With nerd-herd, Agents shows a header for each machine and the sessions running there beneath it. The desk-client session's full subject, "π 🧵 THRD: Reset leader election", wraps onto a second line instead of ending in "…". The two sessions both called "sandbox" are easy to tell apart because each sits under its own machine.</p>
       <p>One session still has a vague automatic subject, so they rename it "NAS drive health" from its row, and the row and the Herdr tab bar both show the new name. Later they clear the name, and the session goes back to its automatic name. They click a row, and Herdr focuses that session's pane.</p>
+
+      <h3>Keeping finished sessions until they are dealt with</h3>
+      <details open class="claims"><summary>Claims</summary>
+        <ol>
+          <li>A session that finishes a turn shows under Done</li>
+          <li>Opening a Done session and leaving it keeps it under Done</li>
+          <li>Dismissing the focused Done session moves it to Idle</li>
+          <li>Replying to a Done session moves it to Working, and its next finished turn shows under Done again</li>
+          <li>A session dismissed in one Herdr window shows as dismissed in every Herdr window connected to its machine</li>
+        </ol>
+      </details>
+      <p>The desk-client session finishes its turn on "THRD: Reset leader election" while Dannel is reading in another tab, and it shows under Done. Dannel means to click the NAS session but clicks the desk-client one, sees the wrong session, and clicks away. Today, Herdr would count that click as having dealt with it and move it to Idle, where it gets lost. With nerd-herd it stays under Done, because looking at a session is not dealing with it.</p>
+      <p>Later Dannel opens the desk-client session on purpose and reads what the agent did. It needs no reply, so they press the dismiss key, or click Dismiss above the session's pane, and the session moves to Idle. The NAS session is also under Done; Dannel types a follow-up question to that agent instead, and the session moves to Working. When the agent answers, it shows under Done again.</p>
+      <p>That evening Dannel opens Herdr on another computer connected to desk-client. The desk-client session is still under Idle there, and anything still waiting under Done on this computer is waiting there too, because the record of what was dismissed is kept on the machine the session runs on.</p>
     </details>
   </section>
 
@@ -235,6 +249,85 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Resolution</dt> <dd data-field="resolution">No. Headers keep Herdr’s current size (11 to 11.5 pixel text) for now.</dd>
         </dl>
       </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-19">
+        <h3>Leaving Done</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">What moves a session out of Done? Herdr moves it to Idle as soon as its pane is focused, so a wrong click loses it.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Two deliberate acts, never looking: Dannel dismisses it, or Dannel replies and it goes back to Working (the user, 2026-11-19: “I want a more deliberate way to move things out of done”).</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-19">
+        <h3>Where the Done record lives</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Where is the record of which finished turns were dismissed kept, so every Herdr window shows the same Done list?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">On the machine the session runs on, as a label on the session's terminal in that machine's herdr-core (<code>hc label &lt;terminal&gt; nerd-herd.handled=&lt;turn&gt;</code>), the way Herdr keeps its own <code>herdr.seen</code> label. Every Herdr window that connects to that machine reads the same label (the user, 2026-11-19: “the state should probably live on the server that the session belongs to”). Seen 2026-11-19 with <code>hc get --json</code>: a terminal carries <code>turn</code> and a <code>herdr.seen</code> label; Herdr showed it as done where <code>herdr.seen</code> (11) was below <code>turn</code> (13), and as idle where the two were equal.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-19">
+        <h3>Seen marker</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Should a Done session Dannel has opened look different from one Dannel has not opened?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Not in this spec. A wrong click would mark it seen, and a time-based rule would still be error-prone (the user, 2026-11-19: “I would pause on that”).</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Dismiss button placement</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Where on the main pane does the Dismiss button go? The user wants it on the main pane rather than on the sidebar row (2026-11-19).</dd>
+          <dt>Context</dt> <dd data-field="context">The nerd-herd layout's work column holds the tabs bar, then the focused pane. A nerd-herd block can be added to that column.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>A thin bar between the tabs bar and the pane, shown only while the focused session is under Done: “Finished. Dismiss”</li>
+            <li>A Dismiss button at the end of the tabs bar, shown only while the focused session is under Done</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">The thin bar: it says why the button is there, and it does not move the tabs.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Dismiss key</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Which key dismisses the focused session, and does a nerd-herd key reach the mod while a terminal has the keyboard?</dd>
+          <dt>Context</dt> <dd data-field="context">Keyboard access is required (the user, 2026-11-19). nerd-herd's keys live in their own section of <code>keys.json</code>; whether that section's keys fire while a terminal pane is focused has not been checked.</dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Check how Herdr routes a mod section's keys first, then pick a key that no terminal program uses.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Starting point for the Done record</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">A session with no <code>nerd-herd.handled</code> label yet, such as every session on the day nerd-herd is installed: which of its finished turns count as dealt with?</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>Every turn Herdr counts as seen (<code>herdr.seen</code>): what is Idle today stays Idle, and only what Herdr shows as done starts under Done</li>
+            <li>No turn: every session that ever finished a turn starts under Done</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Every turn Herdr counts as seen, so installing nerd-herd does not fill Done with old sessions.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>A turn that finishes while Dannel watches</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">When a session finishes its turn while its pane is focused, does it go under Done?</dd>
+          <dt>Context</dt> <dd data-field="context">Herdr's own type file says done means “it finished while you weren't looking”, so Herdr shows such a session as Idle straight away.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>Yes: it waits under Done until dismissed or replied to, like any finished turn</li>
+            <li>No: a turn Dannel watched finish counts as dealt with</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Yes. Watching a turn finish is still only looking.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open">
+        <h3>Testing against the shared herdr-core</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">How do the walks check Done, dismiss, and reply, when every test window shares the person's real herdr-core and the walks may not create or change real sessions?</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>Unit tests over the Done ledger with recorded terminal data, and the dismiss command checked by the label call it sends; the real label write is a hand walk</li>
+            <li>A test-only session the person allows the walks to create and label</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Unit tests plus a hand walk, unless the person allows a test-only session.</dd>
+        </dl>
+      </spec-question>
     </details>
   </section>
 
@@ -246,8 +339,12 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
   model --> rows["Agents shows machines and their sessions"]
   rename["Dannel renames a session"] --> herdr["Herdr tab.rename"]
   click["Dannel clicks a session row"] --> focus["Herdr pane.focus"]
-  herdr --> data</pre>
-        <figcaption>The Agents mod only reads Herdr’s data and calls Herdr’s own commands, so a rename shows up everywhere Herdr names that tab.</figcaption>
+  herdr --> data
+  terminals["herdr-core terminals: turn and labels"] --> ledger["Done ledger picks the sessions under Done"]
+  ledger --> rows
+  dismiss["Dannel dismisses the focused session"] --> label["hc label nerd-herd.handled on its machine"]
+  label --> terminals</pre>
+        <figcaption>The Agents mod only reads Herdr’s data and calls Herdr’s own commands, so a rename shows up everywhere Herdr names that tab, and a dismissal shows up in every window connected to the session's machine.</figcaption>
       </figure>
     </details>
   </section>
@@ -271,7 +368,27 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <dl>
           <dt>Responsibility</dt> <dd data-field="responsibility">Draws the Agents rows and turns clicks into Herdr commands.</dd>
           <dt>Owns</dt> <dd data-field="owns">Layout, wrapping, the rename control.</dd>
-          <dt>Delegates</dt> <dd data-field="delegates">Grouping to Session list model; renaming to Herdr <code>tab.rename</code>; focusing to Herdr <code>pane.focus</code>.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Grouping to Session list model; renaming to Herdr <code>tab.rename</code>; focusing to Herdr <code>pane.focus</code>; which sessions are under Done to Done ledger.</dd>
+        </dl>
+      </spec-module>
+      <spec-module>
+        <h3>Done ledger</h3>
+        <dl>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Decides which sessions are under Done: a session that is not working and whose finished turn is above the turn its <code>nerd-herd.handled</code> label records.</dd>
+          <dt>Owns</dt> <dd data-field="owns">The rule for Done, and the starting point for a session with no label.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Nothing. Data in, data out.</dd>
+          <dt>Input <code>terminals()</code></dt>
+          <dd data-field="input">Herdr's core terminals: address, status, <code>turn</code>, and labels.</dd>
+          <dt>Output <code>Set&lt;address&gt;</code></dt>
+          <dd data-field="output">The sessions under Done.</dd>
+        </dl>
+      </spec-module>
+      <spec-module>
+        <h3>Dismiss control</h3>
+        <dl>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Shows Dismiss on the main pane while the focused session is under Done, and handles the dismiss key.</dd>
+          <dt>Owns</dt> <dd data-field="owns">The button, the key, and the label it writes.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Whether the focused session is under Done to Done ledger; storing the dismissal to herdr-core, through <code>hc label &lt;terminal&gt; nerd-herd.handled=&lt;turn&gt;</code>.</dd>
         </dl>
       </spec-module>
     </details>
@@ -282,6 +399,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       <ul>
         <li><strong>Herdr’s agents, spaces, and terminals</strong> come typed from <code>herdr.d.ts</code>. An agent’s title is text the agent chose, so the row shows it as text and never interprets it.</li>
         <li><strong>A session name typed by the user</strong> goes to Herdr’s <code>tab.rename</code>, which owns its rules; an empty name returns the tab to its automatic name.</li>
+        <li><strong>The <code>nerd-herd.handled</code> label</strong> is external data: another Herdr window, another nerd-herd version, or a hand edit with <code>hc label</code> may have written it. Done ledger reads it as a whole turn number; any other value counts as no label.</li>
       </ul>
     </details>
   </section>
@@ -290,6 +408,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
     <details open><summary><h2>Ambiguity Resolution</h2></summary>
       <p>"Session" means a Herdr tab that runs an agent. Herdr's Agents section already labels each row from its tab name when the tab is named, so renaming a session means renaming its tab (<code>tab.rename</code>), which also follows the standing rule to use Herdr's own features.</p>
       <p>The shipped <code>agents</code> mod belongs to Herdr. Herdr’s guide says to copy shipped mods with <code>mod.clone</code> before changing them, so nerd-herd’s Agents mod goes into a copied layout and the user’s <code>main</code> layout stays as it is.</p>
+      <p>"Done" in this spec means a session that finished a turn Dannel has not dealt with, by dismissing it or replying. Herdr's own done means a session that finished while nobody was looking at it, and it ends when someone looks. The Agents mod shows nerd-herd's meaning under the Done header. Herdr's done and idle both feed it, and its Idle header holds the rest.</p>
       <p>End-to-end tests share the harness the Spaces spec researches (its question “End-to-end test harness”).</p>
     </details>
   </section>
@@ -304,6 +423,25 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Given</dt> <dd data-field="given">A session whose tab is named "NAS drive health"</dd>
             <dt>When</dt> <dd data-field="when">Dannel renames it to an empty name</dd>
             <dt>Then</dt> <dd data-field="then">Herdr receives <code>tab.rename</code> with an empty name, and the row shows the session's automatic name (Herdr documents an empty name as returning a tab to its number)</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A session that finishes a turn shows under Done" covers-module="Done ledger" status="pending">
+          <h4>A label that is not a turn number counts as no label</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A finished session at turn 13 whose <code>herdr.seen</code> is 11 and whose <code>nerd-herd.handled</code> label is "soon"</dd>
+            <dt>When</dt> <dd data-field="when">Done ledger runs</dd>
+            <dt>Then</dt> <dd data-field="then">The session is under Done, as a session with no label would be</dd>
+          </dl>
+        </test-case>
+      </test-group>
+      <test-group category="edge-cases">
+        <h3>Edge cases</h3>
+        <test-case traces-to="A session that finishes a turn shows under Done" covers-module="Done ledger" status="pending">
+          <h4>A session with no label starts from Herdr's seen turn</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Two finished sessions with no <code>nerd-herd.handled</code> label: one at turn 28 with <code>herdr.seen</code> 28, one at turn 13 with <code>herdr.seen</code> 11</dd>
+            <dt>When</dt> <dd data-field="when">Done ledger runs</dd>
+            <dt>Then</dt> <dd data-field="then">Only the session at turn 13 is under Done (pending the starting-point question)</dd>
           </dl>
         </test-case>
       </test-group>
@@ -341,6 +479,46 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">Herdr reports pane P as focused</dd>
           </dl>
         </test-case>
+        <test-case traces-to="A session that finishes a turn shows under Done" covers-module="Done ledger" status="pending">
+          <h4>A finished turn above the handled turn is under Done</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A finished session at turn 9 whose <code>nerd-herd.handled</code> label is 8</dd>
+            <dt>When</dt> <dd data-field="when">Done ledger runs</dd>
+            <dt>Then</dt> <dd data-field="then">The session is under Done</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Opening a Done session and leaving it keeps it under Done" covers-module="Done ledger" status="pending">
+          <h4>A session Herdr counts as seen stays under Done</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A finished session at turn 9 whose <code>herdr.seen</code> is 9 and whose <code>nerd-herd.handled</code> label is 8</dd>
+            <dt>When</dt> <dd data-field="when">Done ledger runs</dd>
+            <dt>Then</dt> <dd data-field="then">The session is under Done</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Dismissing the focused Done session moves it to Idle" covers-module="Dismiss control" status="pending">
+          <h4>Dismissing records the session's turn on its machine</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The focused session is desk-client's terminal t1y at turn 28, under Done</dd>
+            <dt>When</dt> <dd data-field="when">Dannel presses the dismiss key</dd>
+            <dt>Then</dt> <dd data-field="then">nerd-herd runs <code>hc label desk-client/t1y nerd-herd.handled=28</code>, and Done ledger then puts the session under Idle</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Replying to a Done session moves it to Working, and its next finished turn shows under Done again" covers-module="Done ledger" status="pending">
+          <h4>A working session is not under Done</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A working session at turn 10 whose <code>nerd-herd.handled</code> label is 8</dd>
+            <dt>When</dt> <dd data-field="when">Done ledger runs</dd>
+            <dt>Then</dt> <dd data-field="then">The session is under Working</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Replying to a Done session moves it to Working, and its next finished turn shows under Done again" covers-module="Done ledger" status="pending">
+          <h4>The turn after a reply comes back under Done</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session dismissed at turn 9, which Dannel replied to and which has finished turn 10</dd>
+            <dt>When</dt> <dd data-field="when">Done ledger runs</dd>
+            <dt>Then</dt> <dd data-field="then">The session is under Done</dd>
+          </dl>
+        </test-case>
       </test-group>
       <test-group category="ux-validation">
         <h3>UX validation</h3>
@@ -352,6 +530,16 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then (experience)</dt> <dd data-field="then" data-aspect="experience">The screenshot shows the session under its machine's header, its row reading "NAS drive health"</dd>
             <dt>Then (technical)</dt> <dd data-field="then" data-aspect="technical"><code>herdr-app ls</code> lists the tab named "NAS drive health"</dd>
             <dt>Incremental</dt> <dd data-field="incremental">Testable once the Agents mod is in the copied layout</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A session dismissed in one Herdr window shows as dismissed in every Herdr window connected to its machine" covers-module="Dismiss control" status="pending">
+          <h4>Dismissing a Done session after a wrong click</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session under Done that Dannel opened and left (pending the testing question)</dd>
+            <dt>When</dt> <dd data-field="when">Dannel focuses it again and dismisses it</dd>
+            <dt>Then (experience)</dt> <dd data-field="then" data-aspect="experience">Before the dismissal, the screenshot shows the session under Done and Dismiss above its pane; after it, the session is under Idle and Dismiss is gone</dd>
+            <dt>Then (technical)</dt> <dd data-field="then" data-aspect="technical"><code>hc get &lt;terminal&gt; --json</code> on the session's machine shows <code>nerd-herd.handled</code> equal to its <code>turn</code></dd>
+            <dt>Incremental</dt> <dd data-field="incremental">Testable once Done ledger and Dismiss control are in the copied layout</dd>
           </dl>
         </test-case>
       </test-group>
@@ -387,6 +575,23 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         </dl>
       </spec-phase>
       <spec-phase depends-on="Agents sidebar mod" parallel-safe="no" agent-suitable="no">
+        <h3>Done ledger</h3>
+        <dl>
+          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">src/sessions/*</li></ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Done ledger" parallel-safe="no" agent-suitable="no">
+        <h3>Dismiss control</h3>
+        <dl>
+          <dt>Writes</dt> <dd><ul>
+            <li data-field="shared-artifact">mods/nerd-herd-agents/*</li>
+            <li data-field="shared-artifact">copied Herdr layout</li>
+          </ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Dismiss control" parallel-safe="no" agent-suitable="no">
         <h3>Skeleton re-walk</h3>
         <dl>
           <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">e2e test harness</li></ul></dd>
@@ -404,7 +609,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <li><h4>A security scan runs clean</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
       </ol>
-      <execution-plan>Walking skeleton &rarr; Session list model &rarr; Agents sidebar mod &rarr; Skeleton re-walk</execution-plan>
+      <execution-plan>Walking skeleton &rarr; Session list model &rarr; Agents sidebar mod &rarr; Done ledger &rarr; Dismiss control &rarr; Skeleton re-walk</execution-plan>
     </details>
   </section>
 </main>
