@@ -215,3 +215,22 @@ test("the card of the session in the focused pane is marked focused, and the oth
     ["t2", true],
   ]);
 });
+
+// Spec: docs/specs/in-progress/executing-nerd-herd-agents.html#test-case-a-folded-status-section-shows-its-pill-alone@jj:607ab1aa
+// "An Idle session and a Done session sorted by Priority, with Idle folded: the Idle section is its
+//  pill alone, marked folded, and the Done section holds its card."
+test("sorted by Priority, a folded Idle section shows its pill alone while Done keeps its card", () => {
+  const rows = arrangeSessions({
+    sort: "priority",
+    sessions: [session({ terminal: "t1" }), session({ terminal: "t2", status: "done" })],
+    foldedStatuses: ["idle"],
+  });
+  expect(
+    rows.map((r) =>
+      r.kind === "card"
+        ? r.terminal
+        : `${r.kind}:${"label" in r ? r.label : ""}${"folded" in r && r.folded ? ":folded" : ""}`,
+    ),
+    "Done with t2, then Idle folded and empty",
+  ).toEqual(["section:Done", "t2", "section:Idle:folded"]);
+});

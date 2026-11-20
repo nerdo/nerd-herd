@@ -3,6 +3,7 @@ import { type AgentsRow, arrangeSessions } from "../../core/sessions/sessionList
 import { type SortChoice, sortChoices } from "../../core/sessions/sortChoices";
 import { doneSessions, startingLabels, withLedger } from "../../core/sessions/doneLedger";
 import { dismissal } from "../../core/sessions/dismiss";
+import { readJjState, vcsLabel } from "../../core/jj/vcsLabel";
 import { duration, type SinceRecord, statusSince } from "../../core/sessions/statusTime";
 import type { BannerFile } from "../../core/banners/bannerCache";
 import { groupLook } from "../../core/groups/groupLook";
@@ -11,15 +12,19 @@ import {
   focusSession,
   promptRename,
   readFolded,
+  readFoldedStatuses,
   readGroups,
   readGroupWord,
   readSessions,
   readSort,
   readTerminals,
+  readVcsTargets,
+  jjIn,
   focusedTerminal,
   runHc,
   renameSession,
   saveFolded,
+  saveFoldedStatuses,
   saveSort,
   type TerminalAddress,
 } from "./herdrAgents";
@@ -64,10 +69,27 @@ let since: SinceRecord = (() => {
   }
 })();
 
+/** Each session's version control label, read in the background (refreshVcs). */
+const vcs = new Map<string, string | null>();
+
 /** Starting points already sent, so a session is labeled once while the label is on its way. */
 const sent = new Set<string>();
 
 export const agentsApp = {
+  /** Reads every session's version control label again; true when any label changed. */
+  refreshVcs: async (): Promise<boolean> => {
+    let changed = false;
+    for (const target of readVcsTargets()) {
+      const label = vcsLabel(await readJjState(jjIn(target.cwd, target.machine)), target.gitBranch);
+      if (vcs.get(target.terminal) !== label) {
+        vcs.set(target.terminal, label);
+        changed = true;
+      }
+    }
+    return changed;
+  },
+  /** A session's version control label, once read; null before it was read or with none. */
+  vcs: (terminal: string): string | null => vcs.get(terminal) ?? null,
   /** Records the starting point of each session nerd-herd reads for the first time. */
   recordStartingPoints: (): void => {
     for (const args of startingLabels(readTerminals())) {
@@ -105,6 +127,7 @@ export const agentsApp = {
       sessions,
       groups: readGroups(),
       folded: readFolded(),
+      foldedStatuses: readFoldedStatuses(),
     });
   },
   /** How long a session has been in its status, as Herdr writes it; null before it was seen. */
@@ -114,6 +137,11 @@ export const agentsApp = {
   },
   sortChoices: (): SortChoice[] => sortChoices(readGroupWord()),
   currentSort: (): unknown => readSort(),
+  /** Folds or unfolds a status section ("done") or folder ("<group>/done") in Agents. */
+  foldStatus: (key: string): void => {
+    const folded = readFoldedStatuses();
+    saveFoldedStatuses(folded.includes(key) ? folded.filter((k) => k !== key) : [...folded, key]);
+  },
   /** Folds or unfolds a group in Agents, named by its id or its name; Spaces' fold is untouched. */
   fold: (ref: string): void => {
     const groups = readGroups().groups;

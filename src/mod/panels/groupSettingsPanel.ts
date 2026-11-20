@@ -59,7 +59,7 @@ export class GroupSettingsPanel implements Panel {
     picker: "backing" | "controls" | null = null,
   ) {
     this.order = order;
-    this.looks = new GroupLooksSection(group);
+    this.looks = new GroupLooksSection(group, cx);
     this.icon = InputState.new({ value: group.icon?.value ?? "" });
     this.openLink = InputState.new({ value: group.openBanner ?? "" });
     this.foldedLink = InputState.new({ value: group.foldedBanner ?? "" });
@@ -133,7 +133,7 @@ export class GroupSettingsPanel implements Panel {
     const backing = this.backing.value();
     const controls = this.controlsColor.value();
     // Text that names no color is marked under its box; nothing is saved until it is fixed.
-    if (backing.kind === "invalid" || controls.kind === "invalid") return;
+    if (backing.kind === "invalid" || controls.kind === "invalid" || this.looks.invalid()) return;
     const text = (s: InputState) => s.value().trim();
     const looks = this.looks.saved();
     send("group-set", {
@@ -257,6 +257,7 @@ export class GroupSettingsPanel implements Panel {
       // A drag in a picker ends at any release inside the dialog, even off the part it started in.
       this.backing.release();
       this.controlsColor.release();
+      this.looks.release();
     });
   }
 }

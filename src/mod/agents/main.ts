@@ -4,7 +4,7 @@ import { h_flex, v_flex } from "gpui-base";
 import { type AsyncContext, div, svg, View } from "gpui-kit";
 import { nextCommand, props, theme } from "herdr";
 import { AgentsListError, rowsOrError } from "../../core/sessions/rowsOrError";
-import type { AgentsRow } from "../../core/sessions/sessionList";
+import { type AgentsRow, folderKey } from "../../core/sessions/sessionList";
 import { errorCard } from "../errorCard";
 import { themeColor } from "../themeColor";
 import { agentsApp } from "./app";
@@ -37,7 +37,9 @@ const rowView = (t: Theme, row: AgentsRow) => {
     case "section":
       return row.status === undefined || row.count === undefined
         ? div().pt(6).text_color(themeColor(t, "muted")).child(row.label)
-        : statusPill(t, row.status, row.label, row.count);
+        : statusPill(t, row.status, row.label, row.count, row.status, () =>
+            agentsApp.foldStatus(row.status ?? ""),
+          );
     case "group":
       return agentsGroupHeader(t, row, agentsApp.groupHeader(row.id, row.folded === true), () =>
         agentsApp.fold(row.id),
@@ -45,12 +47,15 @@ const rowView = (t: Theme, row: AgentsRow) => {
     case "ungrouped":
       return div().pt(8).font_semibold().text_color(themeColor(t, "foreground")).child(row.label);
     case "folder":
-      return statusPill(t, row.status, row.label, row.count);
+      return statusPill(t, row.status, row.label, row.count, folderKey(row.group, row.status), () =>
+        agentsApp.foldStatus(folderKey(row.group, row.status)),
+      );
     case "card":
       return cardView(
         t,
         row,
         agentsApp.since(row.terminal),
+        agentsApp.vcs(row.terminal),
         () => agentsApp.focus(row.terminal),
         () => agentsApp.promptRename(row.terminal),
       );
@@ -90,6 +95,13 @@ export default class AgentsMod extends View {
       agentsApp.recordStartingPoints();
       cx.notify();
     });
+    // Version control labels: read now, then every 10 s, in the background (never while drawing).
+    const readVcs = () =>
+      cx.spawn(async (cx) => {
+        if (await agentsApp.refreshVcs()) cx.notify();
+      });
+    readVcs();
+    cx.timer.every(10_000, () => readVcs());
     cx.spawn(async (cx) => {
       for (;;) {
         const command = await nextCommand();
@@ -98,6 +110,8 @@ export default class AgentsMod extends View {
         const focused = field(command, "focus", "terminal");
         const sort = field(command, "sort", "id");
         const fold = field(command, "fold", "group");
+        const foldStatus = field(command, "fold-status", "key");
+        if (foldStatus !== null) agentsApp.foldStatus(foldStatus);
         if (fold !== null) agentsApp.fold(fold);
         if (command === "open-sort") openSortMenu();
         if (command === "dismiss") await agentsApp.dismiss();

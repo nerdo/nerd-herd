@@ -50,6 +50,11 @@ const hexColor = z
   .custom<HexColor>((v) => typeof v === "string" && isHex(v))
   .nullable()
   .default(null);
+/** An Agents color: absent follows Spaces' color, so it has no default; null is none. */
+const agentsColor = z
+  .custom<HexColor>((v) => typeof v === "string" && isHex(v))
+  .nullable()
+  .optional();
 /** The saved shape of the group model's data: what Herdr's shared state holds under the groups key. */
 const SavedGroupsSchema = z.object({
   groups: z.array(
@@ -82,6 +87,9 @@ const SavedGroupsSchema = z.object({
       secondFoldedBanner: link.optional(),
       secondOpenBannerFile: bannerFile.optional(),
       secondFoldedBannerFile: bannerFile.optional(),
+      agentsAlign: z.enum(["top", "middle", "bottom"]).optional(),
+      agentsBackingColor: agentsColor,
+      agentsControlsColor: agentsColor,
     }),
   ),
   placements: z.array(z.object({ name: z.string().nullable(), group: z.string().nullable() })),

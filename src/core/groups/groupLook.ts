@@ -1,6 +1,7 @@
 // What a panel draws for a group: one of its banner styles' images, or the folder with its icon.
 import type { BannerLink } from "../banners/bannerCache";
-import type { SavedGroup } from "./groupModel";
+import type { HexColor } from "../colors/overlayColor";
+import type { ControlAlign, SavedGroup } from "./groupModel";
 
 export type Panel = "spaces" | "agents";
 export type GroupLook =
@@ -46,3 +47,17 @@ export const groupLook = (group: SavedGroup, panel: Panel, folded: boolean): Gro
   panel === "spaces"
     ? spacesLook(group, folded)
     : (chosenLook(group.agentsLook, group, folded) ?? spacesLook(group, folded));
+
+/** Where Agents draws the strip on a group's banner, and in which colors. */
+export interface AgentsOverlay {
+  readonly align: ControlAlign;
+  readonly backingColor: HexColor | null;
+  readonly controlsColor: HexColor | null;
+}
+
+/** Agents' strip: each of its settings the group has not set for Agents follows Spaces'. */
+export const agentsOverlay = (g: SavedGroup): AgentsOverlay => ({
+  align: g.agentsAlign ?? g.align,
+  backingColor: g.agentsBackingColor === undefined ? g.backingColor : g.agentsBackingColor,
+  controlsColor: g.agentsControlsColor === undefined ? g.controlsColor : g.agentsControlsColor,
+});

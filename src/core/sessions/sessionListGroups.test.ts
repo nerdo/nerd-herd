@@ -112,6 +112,56 @@ test("grouped by group, a group folded in Agents shows its section header, folde
     folded: ["work"],
   });
   expect(rows, "only Work's header, marked folded").toEqual([
-    { kind: "group", id: "work", name: "Work", inside: null, folded: true },
+    {
+      kind: "group",
+      id: "work",
+      name: "Work",
+      inside: null,
+      folded: true,
+      attention: { working: 0, done: 0, blocked: 0 },
+    },
+  ]);
+});
+
+// Spec: docs/specs/in-progress/executing-nerd-herd-agents.html#test-case-a-folded-status-folder-inside-a-group-shows-its-pill-alone@jj:607ab1aa
+// "Work holding a Done session, its Done folder folded: Work's Done folder is its pill alone, marked folded."
+test("grouped by group, a group's folded Done folder shows its pill alone", () => {
+  const rows = arrangeSessions({
+    sort: "groups",
+    groups: groups([{ id: "work", name: "Work", machines: ["desk-work"] }]),
+    sessions: [session({ terminal: "desk-work/t1", status: "done", machine: "desk-work" })],
+    foldedStatuses: ["work/done"],
+  });
+  expect(
+    rows.map((r) =>
+      r.kind === "card" ? r.terminal : `${r.kind}${"folded" in r && r.folded ? ":folded" : ""}`,
+    ),
+    "Work, then its Done folder folded and empty",
+  ).toEqual(["group", "folder:folded"]);
+});
+
+// Spec: docs/specs/in-progress/executing-nerd-herd-agents.html#test-case-a-folded-group-carries-what-needs-attention-inside-it@jj:607ab1aa
+// "Work, folded in Agents, holding a working session and two Done sessions: Work's header is marked
+//  folded, with 1 working and 2 done."
+test("grouped by group, a folded group's header counts the working, done and blocked sessions inside it", () => {
+  const rows = arrangeSessions({
+    sort: "groups",
+    groups: groups([{ id: "work", name: "Work", machines: ["desk-work"] }]),
+    sessions: [
+      session({ terminal: "desk-work/t1", status: "working", machine: "desk-work" }),
+      session({ terminal: "desk-work/t2", status: "done", machine: "desk-work" }),
+      session({ terminal: "desk-work/t3", status: "done", machine: "desk-work" }),
+    ],
+    folded: ["work"],
+  });
+  expect(rows, "Work alone, folded, with its attention counts").toEqual([
+    {
+      kind: "group",
+      id: "work",
+      name: "Work",
+      inside: null,
+      folded: true,
+      attention: { working: 1, done: 2, blocked: 0 },
+    },
   ]);
 });

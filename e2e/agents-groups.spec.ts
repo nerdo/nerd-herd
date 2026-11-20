@@ -34,8 +34,10 @@ test.afterAll(() => window.stop());
 // Spec: docs/specs/finalized/nerd-herd-agents.html#test-case-folding-in-agents-does-not-fold-spaces@jj:14ab73a0
 // "The Work group open in Spaces: when Dannel folds the Work section in Agents, the Work section in
 //  Agents is folded, and Spaces still shows Work open."
-test("folding Work in Agents leaves Work's header there and hides its sessions", () => {
-  expect(folded, "the Work header alone").toBe("Work");
+// And #test-case-a-folded-group-carries-what-needs-attention-inside-it (docs/specs/in-progress/
+// executing-nerd-herd-agents.html@jj:607ab1aa): folded, the header shows a Done dot and its count.
+test("folding Work in Agents hides its sessions and leaves its header showing its one Done session", () => {
+  expect(folded, "the Work header with a Done dot and 1").toBe("Work · 1");
 });
 
 test("folding Work in Agents leaves Work open in Spaces, with This computer inside it", () => {

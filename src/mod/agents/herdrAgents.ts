@@ -1,6 +1,8 @@
 // The Agents mod's adapter to Herdr: reads the agent sessions, renames a session's tab, focuses its
 // pane.
-import { agents, focused, hc, run, setShared, shared, spaces, terminals } from "herdr";
+import { agents, exec, focused, hc, panes, run, setShared, shared, spaces, terminals } from "herdr";
+import { jjProgramLookup } from "../../core/jj/jjProgram";
+import type { JjRun } from "../../core/jj/vcsLabel";
 import type { CoreTerminal } from "../../core/sessions/doneLedger";
 import type { SavedGroups } from "../../core/groups/groupModel";
 import type { SortId } from "../../core/sessions/sortChoices";
@@ -102,3 +104,51 @@ export const focusedTerminal = (): string | null => focused()?.terminal ?? null;
 
 /** Runs hc with these arguments (labels are set on the terminal's own machine). */
 export const runHc = (args: readonly string[]): Promise<unknown> => hc([...args]);
+
+const foldedStatusesKey = "nerd-herd-agents.folded-statuses";
+
+/** The status sections and folders folded in Agents. */
+export const readFoldedStatuses = (): string[] => {
+  const saved: unknown = shared(foldedStatusesKey);
+  return Array.isArray(saved) ? saved.filter((k): k is string => typeof k === "string") : [];
+};
+export const saveFoldedStatuses = (keys: readonly string[]): void => {
+  setShared(foldedStatusesKey, keys);
+};
+
+/** Where each session's version control is read: its pane's folder on its machine, and Herdr's git
+ *  branch for that folder. */
+export const readVcsTargets = (): {
+  terminal: TerminalAddress;
+  cwd: string;
+  machine: string | null;
+  gitBranch: string | null;
+}[] => {
+  const machineOf = new Map(spaces().map((space) => [space.id, space.machine]));
+  const paneOf = new Map(panes().map((p) => [p.pane, p]));
+  return agents().flatMap((a) => {
+    const pane = paneOf.get(a.pane);
+    return pane?.cwd
+      ? [
+          {
+            terminal: a.address,
+            cwd: pane.cwd,
+            machine: machineOf.get(a.space) ?? null,
+            gitBranch: pane.branch,
+          },
+        ]
+      : [];
+  });
+};
+
+/** jj by the path the machine's login shell finds it at (src/core/jj/jjProgram.ts). */
+const jjProgram = jjProgramLookup(
+  (machine, script) => exec("sh", ["-c", script], { on: machine }),
+  () => Date.now(),
+);
+
+/** Runs jj in a folder on a machine, for reading its version control state. */
+export const jjIn =
+  (cwd: string, machine: string | null): JjRun =>
+  async (args) =>
+    exec(await jjProgram(machine), [...args], { cwd, on: machine }).catch(() => null);

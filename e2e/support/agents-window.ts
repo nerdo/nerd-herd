@@ -3,8 +3,8 @@
 // (AGENTS.md, rule 4). The session's state folder is deleted before each start and after the stop.
 
 import { spawnSync } from "node:child_process";
-import { readFileSync, rmSync } from "node:fs";
-import { homedir } from "node:os";
+import { mkdirSync, readFileSync, rmSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { e2eSettings } from "./e2e-settings";
@@ -36,6 +36,14 @@ const markAndTime = (line: string): string => line.replace(/\s+[·•o]?\s*<?[\d
 
 /** Section headers Herdr's Agents list draws above its rows, such as "Idle 1". */
 const sectionHeader = /^(Agents|Blocked|Done|Working|Idle)(\s+\d+)?$/;
+
+/** Where a stand-in agent works unless a walk names a folder: outside any repository, so its card
+ *  shows no version control label (inside this repository it read this repository's bookmark). */
+const neutralFolder = (): string => {
+  const dir = join(tmpdir(), "nerd-herd-e2e-work");
+  mkdirSync(dir, { recursive: true });
+  return dir;
+};
 
 /** A stand-in machine is another private herdr-core session on this computer, reached by `sh -c`.
  *  Sessions are numbered, not named: herdr-core's socket path has a length limit (2026-11-20). */
@@ -91,10 +99,15 @@ export class AgentsWindow extends HerdrWindow {
 
   /** Makes a space running the stand-in agent with this title (on `machine`, else this computer);
    *  returns the agent's terminal. */
-  startFakeAgent(o: { space: string; title: string; machine?: string }): TerminalAddress {
+  startFakeAgent(o: {
+    space: string;
+    title: string;
+    machine?: string;
+    folder?: string;
+  }): TerminalAddress {
     const space = {
       name: o.space,
-      folder: root,
+      folder: o.folder ?? neutralFolder(),
       argv: [join(root, "e2e/support/fake-agent.sh"), o.title],
       ...(o.machine ? { machine: o.machine } : {}),
     };
@@ -216,6 +229,13 @@ export class AgentsWindow extends HerdrWindow {
       .map((b) => b.line)
       .join("\n");
     return ["Agents", ...rowsIn(below, edge, 1).map((l) => l.text)];
+  }
+
+  /** Reads the Agents section until it shows what `shows` looks for, for up to 30 s. */
+  readUntilAgents(shows: (text: string) => boolean): string {
+    let text = this.readAgents();
+    for (let waited = 0; !shows(text) && waited < 30_000; waited += 3_000) text = this.readAgents();
+    return text;
   }
 
   /** Sends one command to the nerd-herd Agents mod as written, readable or not. */

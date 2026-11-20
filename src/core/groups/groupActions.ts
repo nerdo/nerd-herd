@@ -162,6 +162,9 @@ export type GroupLook = Partial<
     | "secondFoldedBanner"
     | "secondOpenBannerFile"
     | "secondFoldedBannerFile"
+    | "agentsAlign"
+    | "agentsBackingColor"
+    | "agentsControlsColor"
   >
 >;
 export const setLook = (saved: SavedGroups, id: GroupId, look: GroupLook): SavedGroups =>

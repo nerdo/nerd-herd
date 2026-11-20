@@ -62,6 +62,11 @@ export interface SavedGroup {
   readonly spacesLook?: string;
   /** What Agents draws for it, as spacesLook; absent, "spaces" or anything else: as Spaces does. */
   readonly agentsLook?: string;
+  /** Agents' own strip on the banner: its place and colors; absent: as Spaces' (align, backingColor,
+   *  controlsColor). A color of null is none, as in Spaces. */
+  readonly agentsAlign?: ControlAlign;
+  readonly agentsBackingColor?: HexColor | null;
+  readonly agentsControlsColor?: HexColor | null;
 }
 
 /** One member of a level (a group's contents, or the top): a group, or a machine. */

@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { emptyGroups, make } from "./groupFixtures";
 import { setBanner } from "./groupActions";
 import type { SavedGroup } from "./groupModel";
-import { groupLook } from "./groupLook";
+import { agentsOverlay, groupLook } from "./groupLook";
 
 const open = "https://banners.example/open.png";
 
@@ -91,5 +91,22 @@ test("a banner group folded in Agents and open in Spaces draws the folded image 
   ).toEqual([
     { kind: "banner", link: folded },
     { kind: "banner", link: open },
+  ]);
+});
+
+// Spec: docs/specs/in-progress/executing-nerd-herd-agents.html#test-case-the-agents-overlay-follows-spaces-until-set@jj:607ab1aa
+// "A group with Spaces' strip at the bottom and a red backing, and no Agents overlay settings: it is
+//  at the bottom with the red backing; once the Agents strip is set to top, Agents reads top while
+//  Spaces stays bottom."
+test("Agents' banner overlay follows Spaces' until set, then keeps its own place", () => {
+  const spaces = work({ align: "bottom", backingColor: "#ff000080" });
+  const own: SavedGroup = { ...spaces, agentsAlign: "top" };
+  expect(
+    [agentsOverlay(spaces), agentsOverlay(own), own.align],
+    "bottom and red, then top and red, with Spaces still bottom",
+  ).toEqual([
+    { align: "bottom", backingColor: "#ff000080", controlsColor: null },
+    { align: "top", backingColor: "#ff000080", controlsColor: null },
+    "bottom",
   ]);
 });

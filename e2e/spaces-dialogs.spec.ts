@@ -86,6 +86,14 @@ test("a group's settings offer the second banner's links and Show as in Spaces a
   );
 });
 
+// Spec: docs/specs/in-progress/executing-nerd-herd-agents.html#test-case-the-agents-overlay-follows-spaces-until-set@jj:607ab1aa
+// The group's settings set Agents' own strip on the banner: its place and its two colors.
+test("a group's settings offer the Agents strip's place, backing and controls color", () => {
+  expect(groupSettings.join("\n")).toMatch(
+    /Strip on the banner in Agents[\s\S]*Agents strip backing[\s\S]*Agents strip controls color/,
+  );
+});
+
 // The user, 2026-11-17: "make it clear in the settings dialog how images work (that they're
 // embedded, and that if it changes it needs to be reloaded)".
 test("a group's settings say banner images are copied in, and are loaded again after they change", () => {

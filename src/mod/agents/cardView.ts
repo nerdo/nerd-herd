@@ -20,12 +20,17 @@ export const statusPill = (
   status: SessionStatus,
   label: string,
   count: number,
+  key: string,
+  fold: () => void,
 ): Element =>
   h_flex()
     .pt(8)
     .pb(4)
     .child(
       h_flex()
+        .id(`pill-${key}`)
+        .cursor_pointer()
+        .on_click(fold)
         .gap(6)
         .px(9)
         .h(22)
@@ -45,7 +50,7 @@ const iconView = (t: Theme, icon: AgentIcon): Element =>
     : image(icon.path).w(14).h(14).flex_none();
 
 /** Herdr's status marks: a spinner while working, Needs you when blocked, a dot when done, a ring when idle. */
-const statusMark = (t: Theme, status: SessionStatus): Element => {
+export const statusMark = (t: Theme, status: SessionStatus): Element => {
   if (status === "working")
     return svg("mods/workspace-chrome/spinner.svg")
       .size(12)
@@ -84,6 +89,7 @@ export const cardView = (
   t: Theme,
   row: AgentsCard,
   since: string | null,
+  vcs: string | null,
   focus: () => void,
   rename: () => void,
 ): Element =>
@@ -118,18 +124,31 @@ export const cardView = (
             .child(row.title),
         )
         .child(
-          h_flex()
-            .h(line)
-            .gap(5)
-            .items_center()
+          v_flex()
             .flex_none()
-            .child(statusMark(t, row.status))
-            .when(since !== null, (el) =>
+            .items_end()
+            .child(
+              h_flex()
+                .h(line)
+                .gap(5)
+                .items_center()
+                .child(statusMark(t, row.status))
+                .when(since !== null, (el) =>
+                  el.child(
+                    div()
+                      .text_size(11)
+                      .text_color(themeColor(t, "dim"))
+                      .child(since ?? ""),
+                  ),
+                ),
+            )
+            // The session's version control, under its time (the user, 2026-11-20).
+            .when(vcs !== null, (el) =>
               el.child(
                 div()
                   .text_size(11)
-                  .text_color(themeColor(t, "dim"))
-                  .child(since ?? ""),
+                  .text_color(themeColor(t, "muted"))
+                  .child(vcs ?? ""),
               ),
             ),
         ),
