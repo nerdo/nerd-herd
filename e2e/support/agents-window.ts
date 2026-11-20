@@ -92,6 +92,11 @@ export class AgentsWindow extends HerdrWindow {
       .join(" ");
   }
 
+  /** Sends one command to the nerd-herd Agents mod as written, readable or not. */
+  sendAgents(command: string): void {
+    this.send(`nerd-herd-agents.${command}`);
+  }
+
   /** Sends one action to the nerd-herd Agents mod. */
   actAgents(action: string, payload: unknown): void {
     this.send(`nerd-herd-agents.${action}:${JSON.stringify(payload)}`);

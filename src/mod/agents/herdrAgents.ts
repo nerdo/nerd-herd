@@ -1,5 +1,5 @@
 // The Agents mod's adapter to Herdr: reads the agent sessions, renames a session's tab, focuses its
-// pane. Walking-skeleton stubs: each names itself and passes what it received inward.
+// pane.
 import { agents, run, spaces } from "herdr";
 import type { SessionInput, TerminalAddress } from "../../core/sessions/sessionList";
 
@@ -25,10 +25,17 @@ export const readSessions = (): SessionInput[] => {
 };
 
 export const renameSession = (terminal: TerminalAddress, name: string): void => {
+  // Without an id Herdr renames the tab it has selected, so a terminal it does not list renames none.
   const tab = agents().find((a) => a.address === terminal)?.tab;
-  run("tab.rename", { id: tab, name });
+  if (tab !== undefined) run("tab.rename", { id: tab, name });
 };
 
 export const focusSession = (terminal: TerminalAddress): void => {
   run("pane.focus", { terminal });
+};
+
+/** Opens Herdr's own rename prompt for the session's tab (tab.rename with no name asks the person). */
+export const promptRename = (terminal: TerminalAddress): void => {
+  const tab = agents().find((a) => a.address === terminal)?.tab;
+  if (tab !== undefined) run("tab.rename", { id: tab });
 };
