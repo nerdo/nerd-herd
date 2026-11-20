@@ -103,6 +103,8 @@ export default class AgentsMod extends View {
   init(_props: unknown, cx: AsyncContext): void {
     // The sort menu is a second copy of this mod in a popup; only the sidebar's copy takes commands.
     if (isSortMenu()) return;
+    agentsApp.recordStartingPoints();
+    cx.timer.every(2000, () => agentsApp.recordStartingPoints());
     cx.spawn(async (cx) => {
       for (;;) {
         const command = await nextCommand();
@@ -113,6 +115,7 @@ export default class AgentsMod extends View {
         const fold = field(command, "fold", "group");
         if (fold !== null) agentsApp.fold(fold);
         if (command === "open-sort") openSortMenu();
+        if (command === "dismiss") await agentsApp.dismiss();
         if (sort !== null) agentsApp.sort(sort);
         if (renamed !== null && name !== null) agentsApp.rename(renamed, name);
         if (focused !== null) agentsApp.focus(focused);

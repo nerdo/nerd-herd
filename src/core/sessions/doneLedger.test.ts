@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { type CoreTerminal, doneSessions, withLedger } from "./doneLedger";
+import { type CoreTerminal, doneSessions, startingLabels, withLedger } from "./doneLedger";
 
 const terminal = (o: Partial<CoreTerminal> & Pick<CoreTerminal, "turn">): CoreTerminal => ({
   address: o.address ?? "desk-client/t1y",
@@ -73,5 +73,24 @@ test("sessions the ledger names are Done, and a session Herdr calls done that th
     ["t1", "idle"],
     ["t2", "done"],
     ["t3", "working"],
+  ]);
+});
+
+// Spec: docs/specs/finalized/nerd-herd-agents.html#spec-question-starting-point-for-the-done-record@jj:14ab73a0
+// "Every turn Herdr counts as seen (herdr.seen), so installing nerd-herd does not fill Done with old
+//  sessions", with the claim "Opening a Done session and leaving it keeps it under Done": the seen
+//  turn is the starting point once, when nerd-herd first reads the session, so it is recorded then;
+//  opening the session later moves herdr.seen but not that record.
+test("a session with no handled label gets its seen turn recorded as handled, once; one with a label gets nothing", () => {
+  expect(
+    startingLabels([
+      terminal({ address: "t1", turn: 13, labels: { "herdr.seen": "11" } }),
+      terminal({ address: "t2", turn: 4 }),
+      terminal({ address: "t3", turn: 9, labels: { "nerd-herd.handled": "8", "herdr.seen": "9" } }),
+    ]),
+    "label t1 at 11 and t2 at 0; t3 already has its record",
+  ).toEqual([
+    ["label", "t1", "nerd-herd.handled=11"],
+    ["label", "t2", "nerd-herd.handled=0"],
   ]);
 });

@@ -1,6 +1,6 @@
 // The Agents mod's adapter to Herdr: reads the agent sessions, renames a session's tab, focuses its
 // pane.
-import { agents, run, setShared, shared, spaces, terminals } from "herdr";
+import { agents, focused, hc, run, setShared, shared, spaces, terminals } from "herdr";
 import type { CoreTerminal } from "../../core/sessions/doneLedger";
 import type { SavedGroups } from "../../core/groups/groupModel";
 import type { SortId } from "../../core/sessions/sortChoices";
@@ -95,3 +95,9 @@ export const readTerminals = (): CoreTerminal[] =>
     );
     return [{ address, status, turn, labels }];
   });
+
+/** The terminal in the focused pane, or null. */
+export const focusedTerminal = (): string | null => focused()?.terminal ?? null;
+
+/** Runs hc with these arguments (labels are set on the terminal's own machine). */
+export const runHc = (args: readonly string[]): Promise<unknown> => hc([...args]);

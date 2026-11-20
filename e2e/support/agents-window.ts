@@ -36,7 +36,7 @@ export class AgentsWindow extends HerdrWindow {
   private readonly machines: string[] = [];
 
   constructor() {
-    super({ HC_SESSION: session });
+    super({ HC_SESSION: session, NERD_HERD_MODS: "spaces,agents" });
   }
 
   override start(...args: Parameters<HerdrWindow["start"]>): void {
@@ -149,6 +149,18 @@ export class AgentsWindow extends HerdrWindow {
   label(terminal: TerminalAddress, ...pairs: string[]): void {
     const r = hc("label", terminal, ...pairs);
     if (r.status !== 0) throw new Error(`hc label failed: ${r.stdout}${r.stderr}`);
+  }
+
+  /** A terminal's labels as the core of the machine it runs on holds them: `machine` names a
+   *  stand-in machine this window added (its own private session), else the window's core. */
+  labelsOn(terminal: TerminalAddress, machine?: string): unknown {
+    const n = machine === undefined ? -1 : this.machines.indexOf(machine);
+    if (machine !== undefined && n < 0) throw new Error(`no stand-in machine ${machine}`);
+    const r = spawnSync("hc", ["get", terminal, "--json"], {
+      env: { ...process.env, HC_SESSION: n < 0 ? session : machineSession(n + 1) },
+      encoding: "utf8",
+    });
+    return field(JSON.parse(r.stdout), "labels");
   }
 
   /** A terminal's turn count in the private core. */

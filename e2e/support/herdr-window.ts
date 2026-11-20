@@ -47,6 +47,8 @@ export class HerdrWindow {
       // The test process owns the window: when it ends, even interrupted, the window is quit.
       NERD_HERD_OWNER_PID: String(process.pid),
       ...(this.direct ? { NERD_HERD_LAUNCH: "direct" } : {}),
+      // On the person's own herdr-core, only the Spaces mod (scripts/settings.ts, mods).
+      NERD_HERD_MODS: "spaces",
       ...this.core,
     };
   }

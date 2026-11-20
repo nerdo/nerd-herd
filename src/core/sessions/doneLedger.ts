@@ -44,3 +44,9 @@ export const withLedger = <
         ? { ...s, status: "idle" }
         : s,
   );
+
+/** The hc label commands recording each unlabeled session's starting point: its seen turn. */
+export const startingLabels = (terminals: readonly CoreTerminal[]): string[][] =>
+  terminals
+    .filter((t) => turnIn(t.labels[handledKey]) === null)
+    .map((t) => ["label", t.address, `${handledKey}=${turnIn(t.labels[seenKey]) ?? 0}`]);

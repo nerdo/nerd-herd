@@ -17,4 +17,10 @@ export const scriptSettings = {
    * this PATH (Herdr gives a Finder-style launch the login shell's PATH instead).
    */
   launch: process.env.NERD_HERD_LAUNCH === "direct" ? "direct" : "background",
+  /**
+   * The nerd-herd mods the install places in the layout, comma-separated (default: both). A test
+   * window on the person's own herdr-core places Spaces only, so the Agents mod, which records
+   * labels on the sessions it reads, never writes to the person's terminals from a walk.
+   */
+  mods: (process.env.NERD_HERD_MODS ?? "spaces,agents").split(",").map((m) => m.trim()),
 } as const;

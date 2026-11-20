@@ -1,7 +1,8 @@
 // The Agents mod's composition root: wires the Herdr adapter to the session list.
 import { type AgentsRow, arrangeSessions } from "../../core/sessions/sessionList";
 import { type SortChoice, sortChoices } from "../../core/sessions/sortChoices";
-import { doneSessions, withLedger } from "../../core/sessions/doneLedger";
+import { doneSessions, startingLabels, withLedger } from "../../core/sessions/doneLedger";
+import { dismissal } from "../../core/sessions/dismiss";
 import type { BannerFile } from "../../core/banners/bannerCache";
 import { groupLook } from "../../core/groups/groupLook";
 import type { SavedGroup } from "../../core/groups/groupModel";
@@ -14,6 +15,8 @@ import {
   readSessions,
   readSort,
   readTerminals,
+  focusedTerminal,
+  runHc,
   renameSession,
   saveFolded,
   saveSort,
@@ -33,7 +36,25 @@ const keptFile = (g: SavedGroup, link: string): BannerFile | null =>
       ? (g.foldedBannerFile ?? null)
       : null;
 
+/** Starting points already sent, so a session is labeled once while the label is on its way. */
+const sent = new Set<string>();
+
 export const agentsApp = {
+  /** Records the starting point of each session nerd-herd reads for the first time. */
+  recordStartingPoints: (): void => {
+    for (const args of startingLabels(readTerminals())) {
+      const terminal = args[1] ?? "";
+      if (sent.has(terminal)) continue;
+      sent.add(terminal);
+      void runHc(args);
+    }
+  },
+  /** Dismisses the focused session when it is under Done: its turn becomes its handled turn. */
+  dismiss: async (): Promise<void> => {
+    const terminals = readTerminals();
+    const args = dismissal(focusedTerminal(), terminals, doneSessions(terminals));
+    if (args) await runHc(args);
+  },
   /** The group's Agents look, as its header draws it; null for a group nerd-herd no longer has. */
   groupHeader: (id: string, folded: boolean): AgentsGroupHeader | null => {
     const group = readGroups().groups.find((g) => g.id === id);

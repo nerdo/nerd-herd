@@ -3,6 +3,7 @@
 import { existsSync } from "node:fs";
 import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { withDismissKey } from "../src/core/keyboard/dismissKey";
 import { keyBindings, mergeKeys } from "../src/core/keyboard/keyBindings";
 import { withJjMods } from "./installLayout";
 import { scriptSettings as s } from "./settings";
@@ -77,7 +78,10 @@ async function installLayout(): Promise<void> {
     withJjMods(
       main
         .replace('"mod": "spaces"', `"mod": "${modName}"`)
-        .replace('"mod": "agents"', `"mod": "${agentsModName}"`),
+        .replace(
+          '"mod": "agents"',
+          s.mods.includes("agents") ? `"mod": "${agentsModName}"` : '"mod": "agents"',
+        ),
       homeHas,
     ),
   );
@@ -91,7 +95,9 @@ async function installLayout(): Promise<void> {
 async function installKeys(): Promise<void> {
   const file = join(s.herdrHome, "keys.json");
   const before = await readFile(file, "utf8").catch(() => "{}");
-  const merged = mergeKeys(JSON.parse(before), keyBindings(process.platform));
+  const spacesKeys = mergeKeys(JSON.parse(before), keyBindings(process.platform));
+  // The Agents mod's dismiss key (cmd-e), in the global keys, unless the person bound cmd-e.
+  const merged = s.mods.includes("agents") ? withDismissKey(spacesKeys) : spacesKeys;
   const after = `${JSON.stringify(merged, null, 2)}\n`;
   if (JSON.stringify(JSON.parse(before)) === JSON.stringify(merged)) return;
   const backup = join(s.herdrHome, "keys.json.before-nerd-herd");
@@ -101,7 +107,7 @@ async function installKeys(): Promise<void> {
 
 const built = build();
 await ensureWindow();
-for (const name of [modName, agentsModName]) {
+for (const name of s.mods.includes("agents") ? [modName, agentsModName] : [modName]) {
   await mkdir(join(s.herdrHome, "mods", name), { recursive: true });
   await cp(join(built, name), join(s.herdrHome, "mods", name), { recursive: true });
 }
