@@ -277,77 +277,46 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Resolution</dt> <dd data-field="resolution">In the center of the status bar at the bottom of the window, the bar that ends with the command palette hint, shown only while the focused session is under Done. It has a color, so it does not blend into the grey bar; purple was suggested (the user, 2026-11-19: “Put the button on the status bar at the bottom … maybe in the center though and give it a color so it isn't just grey and blends in (purple?)”).</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved">
         <h3>How Dismiss gets into the status bar</h3>
         <dl>
-          <dt>Question</dt> <dd data-field="body">The status bar is not nerd-herd's: the nerd-herd layout shows Herdr's <code>workspace-status</code> mod, or the jj mod's <code>jj-status</code> where jj is installed, as one block 28 points high. How does a nerd-herd button get into its center?</dd>
-          <dt>Context</dt> <dd data-field="context"><code>scripts/installLayout.ts</code> already picks which of the two status mods the layout names. Both draw their whole row themselves: the machine, the branch, the agent count on the left, and the command palette hint on the right.</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>Split the status row into three layout blocks: the status mod on the left, a nerd-herd Dismiss block in the middle, and the right part of the bar. The status mods stay untouched, but each one draws its palette hint at its own right end, so the hint would sit left of Dismiss unless the status mod's row is cut in two, which a layout block cannot do.</li>
-            <li>A nerd-herd status bar mod: a copy of whichever status mod the install picks, with Dismiss added in its center. The install script names it in place of the original. Dismiss sits where asked, but nerd-herd then carries a copy that has to follow upstream changes to both status mods, like the vendored Spaces patches.</li>
-            <li>Ask upstream for a slot: the status mods gain a center slot another mod can fill. Cleanest, but it waits on Herdr and on the jj mod's author.</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">The nerd-herd status bar mod, built as a patch over the chosen status mod the way the vendored Spaces patches are, so an upstream change shows up as a failed patch rather than silent drift. The upstream slot can be filed alongside it.</dd>
+          <dt>Question</dt> <dd data-field="body">The status bar is drawn whole by Herdr's <code>workspace-status</code> mod, or by the jj mod's <code>jj-status</code> where jj is installed. How does a nerd-herd button get into its center?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">nerd-herd ships its own status bar mod: the status mod that <code>scripts/installLayout.ts</code> picks, with patch files in <code>patches/</code> that add Dismiss in its center, applied the way <code>scripts/vendor-spaces.ts</code> applies the Spaces patches. The install names it in the status block in place of the original. An upstream change then shows up as a patch that no longer applies. A request for a center slot in the status mods can be filed upstream beside it (the user, 2026-11-19: “go with your recommendations”).</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved">
         <h3>Dismiss color</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Which purple does Dismiss use?</dd>
-          <dt>Context</dt> <dd data-field="context">Mods color themselves from <code>theme()</code>, whose names every theme defines, so a mod follows light and dark themes. A theme has no color named purple.</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>The theme's magenta (<code>ansi5</code>): purple-ish in most themes, and it follows the theme</li>
-            <li>The theme's done color: ties the button to the Done section, but it is not purple in every theme (the Windows 98 theme's is blue)</li>
-            <li>One fixed purple: the same in every theme, but it may clash with a light theme</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">The theme's magenta.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">The theme's magenta, <code>theme().ansi5</code>, so it stays purple-ish and follows light and dark themes (the user, 2026-11-19: “go with your recommendations”).</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved">
         <h3>Dismiss key</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Which key dismisses the focused session, and does a nerd-herd key reach the mod while a terminal has the keyboard?</dd>
-          <dt>Context</dt> <dd data-field="context">Keyboard access is required (the user, 2026-11-19). nerd-herd's keys live in their own section of <code>keys.json</code>; whether that section's keys fire while a terminal pane is focused has not been checked.</dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Check how Herdr routes a mod section's keys first, then pick a key that no terminal program uses.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Checked in <code>~/.config/herdr-app/keys.json</code> on 2026-11-19. A mod section's keys, such as <code>mod:nerd-herd-spaces</code> with plain up and down, act only while that mod has the keyboard, so they cannot reach Dismiss while a terminal is focused. The <code>global</code> section is where keys that work over a terminal live (⇧⌘P for the command palette is one). On macOS a terminal program never receives ⌘ keys, and <code>cmd-e</code> is bound in neither the global nor the terminal section. So Dismiss is <code>cmd-e</code>, bound in the global section to the status bar mod's dismiss command, which the mod reads with <code>nextCommand()</code>. Not yet observed: that a global binding reaches a mod's <code>nextCommand()</code>. The first test of the dismiss key checks it, and a failure there reopens this question (the user, 2026-11-19: “go with your recommendations”).</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved">
         <h3>Starting point for the Done record</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">A session with no <code>nerd-herd.handled</code> label yet, such as every session on the day nerd-herd is installed: which of its finished turns count as dealt with?</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>Every turn Herdr counts as seen (<code>herdr.seen</code>): what is Idle today stays Idle, and only what Herdr shows as done starts under Done</li>
-            <li>No turn: every session that ever finished a turn starts under Done</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Every turn Herdr counts as seen, so installing nerd-herd does not fill Done with old sessions.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Every turn Herdr counts as seen (<code>herdr.seen</code>), so installing nerd-herd does not fill Done with old sessions (the user, 2026-11-19: “go with your recommendations”).</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved">
         <h3>A turn that finishes while Dannel watches</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">When a session finishes its turn while its pane is focused, does it go under Done?</dd>
-          <dt>Context</dt> <dd data-field="context">Herdr's own type file says done means “it finished while you weren't looking”, so Herdr shows such a session as Idle straight away.</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>Yes: it waits under Done until dismissed or replied to, like any finished turn</li>
-            <li>No: a turn Dannel watched finish counts as dealt with</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Yes. Watching a turn finish is still only looking.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Yes. Watching a turn finish is still only looking, so it waits under Done until dismissed or replied to (the user, 2026-11-19: “go with your recommendations”).</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved">
         <h3>Testing against the shared herdr-core</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">How do the walks check Done, dismiss, and reply, when every test window shares the person's real herdr-core and the walks may not create or change real sessions?</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>Unit tests over the Done ledger with recorded terminal data, and the dismiss command checked by the label call it sends; the real label write is a hand walk</li>
-            <li>A test-only session the person allows the walks to create and label</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Unit tests plus a hand walk, unless the person allows a test-only session.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Unit tests over the Done ledger with recorded terminal data, and the dismiss command checked by the label call it sends. The real label write on a real session is a hand walk that Dannel runs (the user, 2026-11-19: “go with your recommendations”).</dd>
         </dl>
       </spec-question>
     </details>
@@ -409,7 +378,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <h3>Dismiss control</h3>
         <dl>
           <dt>Responsibility</dt> <dd data-field="responsibility">Shows Dismiss in the center of the status bar, in purple, while the focused session is under Done, and handles the dismiss key.</dd>
-          <dt>Owns</dt> <dd data-field="owns">The button, the key, and the label it writes. How the button reaches the status bar waits on the question about it.</dd>
+          <dt>Owns</dt> <dd data-field="owns">The button, the <code>cmd-e</code> binding, the label it writes, and the nerd-herd status bar mod with its patches over the chosen status mod.</dd>
           <dt>Delegates</dt> <dd data-field="delegates">Whether the focused session is under Done to Done ledger; storing the dismissal to herdr-core, through <code>hc label &lt;terminal&gt; nerd-herd.handled=&lt;turn&gt;</code>.</dd>
         </dl>
       </spec-module>
@@ -608,6 +577,9 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <dl>
           <dt>Writes</dt> <dd><ul>
             <li data-field="shared-artifact">mods/nerd-herd-agents/*</li>
+            <li data-field="shared-artifact">nerd-herd status bar mod and its patches/ files</li>
+            <li data-field="shared-artifact">scripts/installLayout.ts</li>
+            <li data-field="shared-artifact">keys.json global section</li>
             <li data-field="shared-artifact">copied Herdr layout</li>
           </ul></dd>
           <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
