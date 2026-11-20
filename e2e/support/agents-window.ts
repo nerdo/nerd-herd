@@ -134,6 +134,31 @@ export class AgentsWindow extends HerdrWindow {
       .join(" ");
   }
 
+  /** The Agents section's text with its section headers kept (Done, Idle, ...). */
+  readAgentsWithSections(): string {
+    const lines = this.read();
+    const start = lines.reduce((last, l, i) => (/^Agents\b/.test(l) ? i : last), -1);
+    const end = lines.findIndex((l, i) => i > start && /\bSettings$/.test(l));
+    return lines
+      .slice(start + 1, end === -1 ? undefined : end)
+      .map((l) => l.replace(/^\S /, "").replaceAll("•", "·"))
+      .join(" ");
+  }
+
+  /** Sets labels on a terminal in the private core, as `hc label` does. */
+  label(terminal: TerminalAddress, ...pairs: string[]): void {
+    const r = hc("label", terminal, ...pairs);
+    if (r.status !== 0) throw new Error(`hc label failed: ${r.stdout}${r.stderr}`);
+  }
+
+  /** A terminal's turn count in the private core. */
+  turnOf(terminal: TerminalAddress): number {
+    const got: unknown = JSON.parse(hc("get", terminal, "--json").stdout);
+    const turn = field(got, "turn");
+    if (typeof turn !== "number") throw new Error(`hc get ${terminal} gave no turn`);
+    return turn;
+  }
+
   /** Sends one command to the nerd-herd Agents mod as written, readable or not. */
   sendAgents(command: string): void {
     this.send(`nerd-herd-agents.${command}`);

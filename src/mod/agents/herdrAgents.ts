@@ -1,6 +1,7 @@
 // The Agents mod's adapter to Herdr: reads the agent sessions, renames a session's tab, focuses its
 // pane.
-import { agents, run, setShared, shared, spaces } from "herdr";
+import { agents, run, setShared, shared, spaces, terminals } from "herdr";
+import type { CoreTerminal } from "../../core/sessions/doneLedger";
 import type { SavedGroups } from "../../core/groups/groupModel";
 import type { SortId } from "../../core/sessions/sortChoices";
 import { createSettingsStore } from "../../core/settings/settingsStore";
@@ -72,3 +73,25 @@ export const readFolded = (): string[] => {
 export const saveFolded = (ids: readonly string[]): void => {
   setShared(foldedKey, ids);
 };
+
+const statuses = ["working", "blocked", "done", "idle"] as const;
+const own = (value: unknown, key: string): unknown =>
+  typeof value === "object" && value !== null
+    ? Object.getOwnPropertyDescriptor(value, key)?.value
+    : undefined;
+
+/** Herdr's core terminals, narrowed at this boundary: a status word, a turn count, text labels. */
+export const readTerminals = (): CoreTerminal[] =>
+  terminals().flatMap((t): CoreTerminal[] => {
+    const address = own(t, "address");
+    const turn = own(t, "turn");
+    if (typeof address !== "string" || typeof turn !== "number") return [];
+    const status = statuses.find((s) => s === own(t, "status")) ?? null;
+    const raw = own(t, "labels");
+    const labels = Object.fromEntries(
+      typeof raw === "object" && raw !== null
+        ? Object.entries(raw).filter((e): e is [string, string] => typeof e[1] === "string")
+        : [],
+    );
+    return [{ address, status, turn, labels }];
+  });

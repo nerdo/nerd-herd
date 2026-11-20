@@ -1,6 +1,7 @@
 // The Agents mod's composition root: wires the Herdr adapter to the session list.
 import { type AgentsRow, arrangeSessions } from "../../core/sessions/sessionList";
 import { type SortChoice, sortChoices } from "../../core/sessions/sortChoices";
+import { doneSessions, withLedger } from "../../core/sessions/doneLedger";
 import type { BannerFile } from "../../core/banners/bannerCache";
 import { groupLook } from "../../core/groups/groupLook";
 import type { SavedGroup } from "../../core/groups/groupModel";
@@ -12,6 +13,7 @@ import {
   readGroupWord,
   readSessions,
   readSort,
+  readTerminals,
   renameSession,
   saveFolded,
   saveSort,
@@ -43,7 +45,7 @@ export const agentsApp = {
   rows: (): AgentsRow[] =>
     arrangeSessions({
       sort: readSort(),
-      sessions: readSessions(),
+      sessions: withLedger(readSessions(), doneSessions(readTerminals())),
       groups: readGroups(),
       folded: readFolded(),
     }),

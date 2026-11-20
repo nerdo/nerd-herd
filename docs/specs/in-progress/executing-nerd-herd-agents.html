@@ -945,6 +945,28 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">src/sessions/*</li></ul></dd>
           <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
         </dl>
+              <ol class="tasks">
+          <li><h4>Bulk test: the six Done ledger statements, cited from the spec, failing on one stub</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>A label that is not a turn number counts as no label</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>A session with no label starts from Herdr's seen turn</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>A finished turn above the handled turn is under Done</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>A session Herdr counts as seen stays under Done</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>A working session is not under Done</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>The turn after a reply comes back under Done</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>The Agents list puts the ledger's sessions under Done and Herdr's other done sessions under Idle</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>The Agents list puts the ledger's sessions under Done and Herdr's other done sessions under Idle</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>Re-walk the skeleton with the Done ledger on the thread</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">re-walk</dd></dl></li>
+        </ol>
       </spec-phase>
       <spec-phase depends-on="Done ledger" parallel-safe="no" agent-suitable="no">
         <h3>Dismiss control</h3>
