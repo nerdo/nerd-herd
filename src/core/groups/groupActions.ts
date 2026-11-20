@@ -149,7 +149,17 @@ export const setFolded = (saved: SavedGroups, id: GroupId, folded: boolean): Sav
 export type GroupLook = Partial<
   Pick<
     SavedGroup,
-    "icon" | "clip" | "countMode" | "chevron" | "align" | "backingColor" | "controlsColor"
+    | "icon"
+    | "clip"
+    | "countMode"
+    | "chevron"
+    | "align"
+    | "backingColor"
+    | "controlsColor"
+    | "spacesLook"
+    | "agentsLook"
+    | "secondOpenBanner"
+    | "secondFoldedBanner"
   >
 >;
 export const setLook = (saved: SavedGroups, id: GroupId, look: GroupLook): SavedGroups =>

@@ -77,6 +77,15 @@ test("a group's settings show its icon, banner links, clip side, sorts, and fold
   );
 });
 
+// Spec: docs/specs/finalized/nerd-herd-agents.html#spec-question-group-look-per-panel@jj:14ab73a0
+// "set in the group's settings under Spaces: one Show as choice for Spaces and one for Agents",
+// with a second banner style of its own open and folded images.
+test("a group's settings offer the second banner's links and Show as in Spaces and in Agents", () => {
+  expect(groupSettings.join("\n")).toMatch(
+    /Second banner link[\s\S]*Second folded banner link[\s\S]*Show as in Spaces[\s\S]*Show as in Agents/,
+  );
+});
+
 // The user, 2026-11-17: "make it clear in the settings dialog how images work (that they're
 // embedded, and that if it changes it needs to be reloaded)".
 test("a group's settings say banner images are copied in, and are loaded again after they change", () => {

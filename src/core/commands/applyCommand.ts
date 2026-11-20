@@ -58,6 +58,8 @@ const payloads = {
     group: name,
     open: z.string().nullable().optional(),
     folded: z.string().nullable().optional(),
+    secondOpen: z.string().nullable().optional(),
+    secondFolded: z.string().nullable().optional(),
   }),
   "machine-move": z.object({
     machine: z.string().nullable(),
@@ -91,6 +93,8 @@ const payloads = {
     align: z.enum(["top", "middle", "bottom"]).optional(),
     backingColor: color,
     controlsColor: color,
+    spacesLook: z.enum(["banner", "second", "folder"]).optional(),
+    agentsLook: z.enum(["spaces", "banner", "second", "folder"]).optional(),
   }),
   "settings-ungrouped": z.object({ header: z.boolean().optional(), name: name.optional() }),
   "settings-indent": z.object({ indent: z.boolean() }),
@@ -152,6 +156,12 @@ export const applyCommand = (
       const id = resolve(g, p.group, command);
       let next = p.open === undefined ? g : setBanner(g, id, "open", p.open);
       next = p.folded === undefined ? next : setBanner(next, id, "folded", p.folded);
+      next =
+        p.secondOpen === undefined ? next : setLook(next, id, { secondOpenBanner: p.secondOpen });
+      next =
+        p.secondFolded === undefined
+          ? next
+          : setLook(next, id, { secondFoldedBanner: p.secondFolded });
       return { ...state, groups: next };
     }
     case "machine-move": {

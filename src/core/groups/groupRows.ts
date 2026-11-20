@@ -9,11 +9,14 @@ import type {
   SavedGroups,
   SpacesRow,
 } from "./groupModel";
+import { groupLook } from "./groupLook";
 import { drawnOrder, itemsOf, machineLabel, sortedBy } from "./levelOrder";
 
-/** The banner a group shows: the one for its state, or the only one it has. */
-const bannerFor = (g: SavedGroup): BannerLink | null =>
-  g.folded ? (g.foldedBanner ?? g.openBanner) : (g.openBanner ?? g.foldedBanner);
+/** The banner a group shows in Spaces: its Spaces look's image for its state; null: the folder. */
+const bannerFor = (g: SavedGroup): BannerLink | null => {
+  const look = groupLook(g, "spaces", g.folded);
+  return look.kind === "banner" ? look.link : null;
+};
 /** The kept copy of the banner bannerFor picks, or null before it has loaded. */
 const bannerFileFor = (g: SavedGroup): BannerFile | null => {
   const link = bannerFor(g);

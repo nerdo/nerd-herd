@@ -7,6 +7,7 @@ import type { LevelOrder } from "../../core/groups/levelOrder";
 import { overlayPreview } from "../bannerOverlay";
 import { themeColor } from "../themeColor";
 import { ColorField } from "./colorField";
+import { GroupLooksSection } from "./groupLooksSection";
 import type { SortChoice } from "../../core/sorting/sortOrder";
 import {
   button,
@@ -48,6 +49,7 @@ export class GroupSettingsPanel implements Panel {
   private order: LevelOrder;
   private readonly backing: ColorField;
   private readonly controlsColor: ColorField;
+  private readonly looks: GroupLooksSection;
 
   constructor(
     private readonly group: SavedGroup,
@@ -57,6 +59,7 @@ export class GroupSettingsPanel implements Panel {
     picker: "backing" | "controls" | null = null,
   ) {
     this.order = order;
+    this.looks = new GroupLooksSection(group);
     this.icon = InputState.new({ value: group.icon?.value ?? "" });
     this.openLink = InputState.new({ value: group.openBanner ?? "" });
     this.foldedLink = InputState.new({ value: group.foldedBanner ?? "" });
@@ -132,6 +135,7 @@ export class GroupSettingsPanel implements Panel {
     // Text that names no color is marked under its box; nothing is saved until it is fixed.
     if (backing.kind === "invalid" || controls.kind === "invalid") return;
     const text = (s: InputState) => s.value().trim();
+    const looks = this.looks.saved();
     send("group-set", {
       group: id,
       icon: text(this.icon) || null,
@@ -141,11 +145,13 @@ export class GroupSettingsPanel implements Panel {
       align: this.align,
       backingColor: backing.kind === "color" ? backing.color : null,
       controlsColor: controls.kind === "color" ? controls.color : null,
+      ...looks.look,
     });
     send("group-banner", {
       group: id,
       open: text(this.openLink) || null,
       folded: text(this.foldedLink) || null,
+      ...looks.banner,
     });
     send("sort-set", { group: id, subgroups: this.subgroups, machines: this.machines });
     send("level-order", { group: id, order: this.order });
@@ -174,6 +180,7 @@ export class GroupSettingsPanel implements Panel {
           .pt(8)
           .child(button(t, "banner-reload", "Reload images", false, () => this.reload())),
         ...this.overlay(t),
+        ...this.looks.render(t),
         label(t, "When the banner is wider than the sidebar, keep"),
         choice(
           t,

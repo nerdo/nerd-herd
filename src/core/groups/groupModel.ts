@@ -51,6 +51,14 @@ export interface SavedGroup {
   readonly controlsColor: HexColor | null;
   /** The custom order of what is inside, groups and machines together; absent or null: groups first. */
   readonly items?: readonly LevelItem[] | null;
+  /** The second banner style: its own open image and its folded image (absent: none). */
+  readonly secondOpenBanner?: BannerLink | null;
+  readonly secondFoldedBanner?: BannerLink | null;
+  /** What Spaces draws for it: "banner", "second" (the second banner style) or "folder";
+   *  absent or anything else: its banner when it has one, else the folder. */
+  readonly spacesLook?: string;
+  /** What Agents draws for it, as spacesLook; absent, "spaces" or anything else: as Spaces does. */
+  readonly agentsLook?: string;
 }
 
 /** One member of a level (a group's contents, or the top): a group, or a machine. */

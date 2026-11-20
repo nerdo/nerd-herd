@@ -74,6 +74,12 @@ const SavedGroupsSchema = z.object({
       backingColor: hexColor,
       controlsColor: hexColor,
       items,
+      // Added 2026-11-20 (nerd-herd Agents). A look nerd-herd does not know is kept as written and
+      // drawn as the default (groupLook), so a newer version's choice is not lost or refused.
+      spacesLook: z.string().optional(),
+      agentsLook: z.string().optional(),
+      secondOpenBanner: link.optional(),
+      secondFoldedBanner: link.optional(),
     }),
   ),
   placements: z.array(z.object({ name: z.string().nullable(), group: z.string().nullable() })),
