@@ -10,6 +10,7 @@ import { testWindows } from "./testWindows";
 
 const root = join(import.meta.dir, "..");
 const modName = "nerd-herd-spaces";
+const agentsModName = "nerd-herd-agents";
 const env = { ...process.env, HERDR_APP_HOME: s.herdrHome };
 const herdr = (...args: string[]) =>
   Bun.spawnSync(["herdr-app", ...args], { env, stdout: "pipe", stderr: "pipe" });
@@ -22,8 +23,8 @@ function build(): string {
     stdout: "inherit",
     stderr: "inherit",
   });
-  if (r.exitCode !== 0) throw new Error("The Spaces mod did not build (bun run build)");
-  return join(root, "dist/mods", modName);
+  if (r.exitCode !== 0) throw new Error("nerd-herd's mods did not build (bun run build)");
+  return join(root, "dist/mods");
 }
 
 async function ensureWindow(): Promise<void> {
@@ -41,12 +42,10 @@ async function ensureWindow(): Promise<void> {
       // variables named; Herdr then uses the login shell's PATH, as for any Finder launch.
       const app = s.herdrBinary.replace(/\/Contents\/MacOS\/[^/]+$/, "");
       const opened = Bun.spawnSync(
-        ["open", "-g", "-n", "-a", app, "--env", `HERDR_APP_HOME=${s.herdrHome}`].concat([
-          "--stdout",
-          log,
-          "--stderr",
-          log,
-        ]),
+        ["open", "-g", "-n", "-a", app, "--env", `HERDR_APP_HOME=${s.herdrHome}`]
+          // A walk's private herdr-core session (e2e/support/agents-window.ts) reaches Herdr too.
+          .concat(process.env.HC_SESSION ? ["--env", `HC_SESSION=${process.env.HC_SESSION}`] : [])
+          .concat(["--stdout", log, "--stderr", log]),
       );
       if (opened.exitCode !== 0) throw new Error(`open could not start Herdr: ${opened.stderr}`);
     }
@@ -75,7 +74,12 @@ async function installLayout(): Promise<void> {
   const homeHas = (mod: string) => existsSync(join(s.herdrHome, "mods", mod));
   await writeFile(
     join(s.herdrHome, "layouts/nerd-herd.json"),
-    withJjMods(main.replace('"mod": "spaces"', `"mod": "${modName}"`), homeHas),
+    withJjMods(
+      main
+        .replace('"mod": "spaces"', `"mod": "${modName}"`)
+        .replace('"mod": "agents"', `"mod": "${agentsModName}"`),
+      homeHas,
+    ),
   );
 }
 
@@ -97,8 +101,10 @@ async function installKeys(): Promise<void> {
 
 const built = build();
 await ensureWindow();
-await mkdir(join(s.herdrHome, "mods", modName), { recursive: true });
-await cp(built, join(s.herdrHome, "mods", modName), { recursive: true });
+for (const name of [modName, agentsModName]) {
+  await mkdir(join(s.herdrHome, "mods", name), { recursive: true });
+  await cp(join(built, name), join(s.herdrHome, "mods", name), { recursive: true });
+}
 await installLayout();
 await installKeys();
 const shown = herdr("do", "layout.switch", "--name", "nerd-herd");

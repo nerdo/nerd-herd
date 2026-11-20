@@ -21,4 +21,6 @@ export const e2eSettings = {
    * (2026-11-17: the Mac switched to dark and 16 walks failed to read their labels).
    */
   appearance: "light",
+  /** The herdr-core session a walk's private core runs as (HC_SESSION); never the person's own. */
+  coreSession: process.env.E2E_CORE_SESSION ?? "nerd-herd-e2e",
 } as const;

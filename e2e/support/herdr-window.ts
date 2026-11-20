@@ -1,6 +1,7 @@
 // Drives one Herdr test window, isolated from the person's own window by HERDR_APP_HOME.
-// It shares the person's herdr-core, so these helpers never create, rename, or move spaces,
-// tabs, or terminals: they only send commands to nerd-herd and read what the window draws.
+// By default it shares the person's herdr-core, so these helpers never create, rename, or move
+// spaces, tabs, or terminals: they only send commands to nerd-herd and read what the window draws.
+// A walk that needs sessions of its own gives the window a private core (AgentsWindow).
 
 import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -35,7 +36,10 @@ export class HerdrWindow {
   readonly home = e2eSettings.home;
   private shots = 0;
 
-  private env(): Record<string, string> {
+  /** `core`: extra variables for every command, such as HC_SESSION for a private herdr-core. */
+  constructor(private readonly core: Record<string, string> = {}) {}
+
+  protected env(): Record<string, string> {
     // The fake curl copies the committed banner fixture, so tests need no internet.
     return {
       HERDR_APP_HOME: this.home,
@@ -43,6 +47,7 @@ export class HerdrWindow {
       // The test process owns the window: when it ends, even interrupted, the window is quit.
       NERD_HERD_OWNER_PID: String(process.pid),
       ...(this.direct ? { NERD_HERD_LAUNCH: "direct" } : {}),
+      ...this.core,
     };
   }
 
@@ -92,7 +97,6 @@ export class HerdrWindow {
   /** The sidebar width this walk last set, in points; null until it sets one. */
   private sidebarPx: number | null = null;
 
-
   /** Adds the walks' appearance to the settings Herdr wrote for this home; Herdr applies it live. */
   private setAppearance(): void {
     const file = join(this.home, "settings.json");
@@ -141,7 +145,7 @@ export class HerdrWindow {
     this.send(`nerd-herd-spaces.${action}:${JSON.stringify(payload)}`);
   }
 
-  private send(command: string): void {
+  protected send(command: string): void {
     // Right after the layout switch the mod may not have loaded yet; Herdr says so and the command is retried.
     let r = run(["herdr-app", "do", command], this.env());
     for (

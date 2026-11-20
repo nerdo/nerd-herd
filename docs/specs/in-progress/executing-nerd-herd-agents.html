@@ -167,7 +167,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
   <h1>nerd-herd Agents mod: sessions by status, space and group</h1>
   <p>nerd-herd is a set of Herdr mods, and its full scope is not settled yet. This spec covers one of them: an Agents mod that replaces the sidebar’s Agents section, keeps Herdr’s two ways to sort agents and adds a third that gives each Spaces group its own section with status folders inside, leads each session’s card with its title, wraps long subjects instead of cutting them off, renames sessions with Herdr’s own rename, keeps a finished session under Done until Dannel deals with it, and lets each Spaces group look different in Agents and in Spaces. The Spaces mod has <a href="../completed/executing-nerd-herd-spaces.html">its own spec</a>.</p>
   <dl class="spec-meta">
-    <dt>Stage</dt> <dd data-field="stage">finalized</dd>
+    <dt>Stage</dt> <dd data-field="stage">in-progress</dd>
     <dt>Complexity</dt> <dd data-field="complexity">5 / 10 &mdash; one mod, a session list model with three arrangements, Spaces’ group headers reused, Herdr commands it already offers, and a Done record kept as herdr-core labels</dd>
     <dt>Sequence</dt> <dd data-field="sequence">Built after the <a href="../completed/executing-nerd-herd-spaces.html">Spaces mod</a>, whose groups and group header the Agents mod reuses (<a href="#spec-question-agents-grouping">Agents grouping</a>)</dd>
     <dt>Herdr version</dt> <dd data-field="herdr-version">0.1.16 (app), read from <code>/Applications/Herdr.app/Contents/Info.plist</code></dd>
@@ -534,7 +534,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dl>
             <dt>Given</dt> <dd data-field="given">Two finished sessions with no <code>nerd-herd.handled</code> label: one at turn 28 with <code>herdr.seen</code> 28, one at turn 13 with <code>herdr.seen</code> 11</dd>
             <dt>When</dt> <dd data-field="when">Done ledger runs</dd>
-            <dt>Then</dt> <dd data-field="then">Only the session at turn 13 is under Done (pending the starting-point question)</dd>
+            <dt>Then</dt> <dd data-field="then">Only the session at turn 13 is under Done</dd>
           </dl>
         </test-case>
       </test-group>
@@ -722,7 +722,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           </dl>
         </test-case>
         <test-case traces-to="Renaming a session from its card gives its Herdr tab that name" covers-module="Agents sidebar mod" status="pending" browser-test>
-          <h4>Reading and renaming a session by machine</h4>
+          <h4>Reading and renaming a session from its card</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">An isolated Herdr window with an agent on a machine whose subject is longer than the sidebar is wide</dd>
             <dt>When</dt> <dd data-field="when">Rename that session "NAS drive health" from its card</dd>
@@ -734,7 +734,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <test-case traces-to="A session dismissed in one Herdr window shows as dismissed in every Herdr window connected to its machine" covers-module="Dismiss control" status="pending">
           <h4>Dismissing a Done session after a wrong click</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">A session under Done that Dannel opened and left (pending the testing question)</dd>
+            <dt>Given</dt> <dd data-field="given">A session under Done that Dannel opened and left</dd>
             <dt>When</dt> <dd data-field="when">Dannel focuses it again and dismisses it</dd>
             <dt>Then (experience)</dt> <dd data-field="then" data-aspect="experience">Before the dismissal, the screenshot shows the session under Done and a purple Dismiss in the center of the status bar; after it, the session is under Idle and Dismiss is gone from the status bar</dd>
             <dt>Then (technical)</dt> <dd data-field="then" data-aspect="technical"><code>hc get &lt;terminal&gt; --json</code> on the session's machine shows <code>nerd-herd.handled</code> equal to its <code>turn</code></dd>
@@ -758,6 +758,44 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           </ul></dd>
           <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
         </dl>
+              <ol class="tasks">
+          <li><h4>Take the skeleton sentence from the Narrative</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>Write the outer walk at the test-window seam, its window on a private herdr-core session holding one fake agent, its description carrying the sentence</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>Name the seams on the thread: mod view and command reader, composition root, Herdr agents reader, session list, Herdr tab rename, Herdr pane focus</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>Scaffold one stub per seam, each naming itself and passing the session's title and the new name inward</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>Declare the fallow zones for the Agents code (session list in core; reader, rename, focus, root and view in mod) and prove the check fails on a deliberate violation</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>Write the forecast, run the walk, and compare received against forecast</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>Replace the session list stub (sessionList.arrange) with code of its real types that computes no rule</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">replace</dd></dl></li>
+          <li><h4>Re-walk after the session list goes real: the chain carries one fewer seam name</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">re-walk</dd></dl></li>
+          <li><h4>Replace the Herdr agents reader stub (herdrAgents.read) with code of its real types that computes no rule</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">replace</dd></dl></li>
+          <li><h4>Re-walk after the Herdr agents reader goes real: the chain carries one fewer seam name</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">re-walk</dd></dl></li>
+          <li><h4>Replace the Herdr tab rename stub (herdrAgents.rename) with code of its real types that computes no rule</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">replace</dd></dl></li>
+          <li><h4>Re-walk after the Herdr tab rename goes real: the chain carries one fewer seam name</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">re-walk</dd></dl></li>
+          <li><h4>Replace the Herdr pane focus stub (herdrAgents.focus) with code of its real types that computes no rule</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">replace</dd></dl></li>
+          <li><h4>Re-walk after the Herdr pane focus goes real: the chain carries one fewer seam name</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">re-walk</dd></dl></li>
+          <li><h4>Replace the composition root stub (agents.app) with code of its real types that computes no rule</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">replace</dd></dl></li>
+          <li><h4>Re-walk after the composition root goes real: the chain carries one fewer seam name</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">re-walk</dd></dl></li>
+          <li><h4>Replace the mod view and command reader stub (agents.main) with code of its real types that computes no rule</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">replace</dd></dl></li>
+          <li><h4>Re-walk after the mod view and command reader goes real: the chain carries one fewer seam name</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">re-walk</dd></dl></li>
+        </ol>
       </spec-phase>
       <spec-phase depends-on="Walking skeleton" parallel-safe="no" agent-suitable="no">
         <h3>Session list model</h3>
@@ -765,6 +803,48 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">src/sessions/*</li></ul></dd>
           <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
         </dl>
+              <ol class="tasks">
+          <li><h4>Priority sections hold cards that name space and machine</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>Priority sections hold cards that name space and machine</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>An unknown sort value counts as Priority</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>An unknown sort value counts as Priority</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>A card leads with the icon and the title</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>A card leads with the icon and the title</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>A session card carries the whole subject</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>A session card carries the whole subject</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>Grouped by space cards name only their machine</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>Grouped by space cards name only their machine</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>Grouped by group puts status folders inside each group</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>Grouped by group puts status folders inside each group</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>A nested group gets its own section</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>A nested group gets its own section</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>Ungrouped comes after the groups</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>Ungrouped comes after the groups</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>The new choice uses the group word</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">test</dd></dl></li>
+          <li><h4>The new choice uses the group word</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">impl</dd></dl></li>
+          <li><h4>behavior: when arranging the sessions throws, the Agents section shows an error card with a reference instead of a stack trace (found 2026-11-20: a half-edited build drew the trace and the Spaces walks lost the Agents header)</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">behavior</dd></dl></li>
+          <li><h4>Re-walk the skeleton now that the session list arranges real rows</h4>
+            <dl><dt>Kind</dt> <dd data-field="kind">re-walk</dd></dl></li>
+        </ol>
       </spec-phase>
       <spec-phase depends-on="Session list model" parallel-safe="no" agent-suitable="no">
         <h3>Group looks</h3>
