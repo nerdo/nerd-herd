@@ -165,7 +165,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
 </nav>
 <main id="content">
   <h1>nerd-herd Agents mod: sessions by machine</h1>
-  <p>nerd-herd is a set of Herdr mods, and its full scope is not settled yet. This spec covers one of them: an Agents mod that replaces the sidebar’s Agents section, keeps Herdr’s two ways to sort agents and adds a third that gives each Spaces group its own section with status folders inside, leads each session’s card with its title, wraps long subjects instead of cutting them off, renames sessions with Herdr’s own rename, and keeps a finished session under Done until Dannel deals with it. The Spaces mod has <a href="../in-progress/executing-nerd-herd-spaces.html">its own spec</a>. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
+  <p>nerd-herd is a set of Herdr mods, and its full scope is not settled yet. This spec covers one of them: an Agents mod that replaces the sidebar’s Agents section, keeps Herdr’s two ways to sort agents and adds a third that gives each Spaces group its own section with status folders inside, leads each session’s card with its title, wraps long subjects instead of cutting them off, renames sessions with Herdr’s own rename, keeps a finished session under Done until Dannel deals with it, and lets each Spaces group look different in Agents and in Spaces. The Spaces mod has <a href="../in-progress/executing-nerd-herd-spaces.html">its own spec</a>. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
   <dl class="spec-meta">
     <dt>Stage</dt> <dd data-field="stage">drafts</dd>
     <dt>Complexity</dt> <dd data-field="complexity">5 / 10 &mdash; one mod, a session list model with three arrangements, Spaces’ group headers reused, Herdr commands it already offers, and a Done record kept as herdr-core labels</dd>
@@ -219,6 +219,18 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       <p>The desk-client session finishes its turn on "THRD: Reset leader election" while Dannel is reading in another tab, and it shows under Done. Dannel means to click the NAS session but clicks the desk-client one, sees the wrong session, and clicks away. Today, Herdr would count that click as having dealt with it and move it to Idle, where it gets lost. With nerd-herd it stays under Done, because looking at a session is not dealing with it.</p>
       <p>Later Dannel opens the desk-client session on purpose and reads what the agent did. It needs no reply, so they press the dismiss key, or click the purple Dismiss button in the middle of the status bar at the bottom of the window, and the session moves to Idle. The NAS session is also under Done; Dannel types a follow-up question to that agent instead, and the session moves to Working. When the agent answers, it shows under Done again.</p>
       <p>That evening Dannel opens Herdr on another computer connected to desk-client. The desk-client session is still under Idle there, and anything still waiting under Done on this computer is waiting there too, because the record of what was dismissed is kept on the machine the session runs on.</p>
+      <h3>Showing a group differently in Agents and Spaces</h3>
+      <details open class="claims"><summary>Claims</summary>
+        <ol>
+          <li>A group can show as a banner in Agents and as a folder in Spaces, or the other way round</li>
+          <li>A group's Agents look follows its Spaces look until a different look is picked for Agents</li>
+          <li>A group can have a second banner style, with its own open and folded images, that either panel can show</li>
+          <li>A panel set to a banner style the group has no image for shows the group as a folder</li>
+          <li>In Agents, a banner group shows its folded image while its Agents section is folded</li>
+        </ol>
+      </details>
+      <p>Dannel wants running client work to stand out. In the townsquare group's settings, under Spaces, they set Spaces to show the group as a folder and Agents to show its banner. Spaces now lists townsquare as a folder with its icon, and in Agents' Grouped by folder view townsquare's section carries the full banner above its status folders. Their other groups were never changed, so they show in Agents the same way they show in Spaces.</p>
+      <p>For the frankenstein group they want a quieter banner in Spaces and the big one in Agents. They add a second banner style, with its own open and folded images, and set Spaces to show the second style and Agents the first. When they fold frankenstein's section in Agents, Agents shows that style's folded image, while Spaces keeps its own fold. A group set to the second style before it has any second image shows as a folder until one is added.</p>
     </details>
   </section>
 
@@ -270,6 +282,34 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <dl>
           <dt>Question</dt> <dd data-field="body">Does a group get a color that Agents shows on cards?</dd>
           <dt>Resolution</dt> <dd data-field="resolution">Not in this spec. The color stripe and the Group color field are left out to keep the start simple (the user, 2026-11-20: “get rid of the thin color stripe concept for a start”).</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-20">
+        <h3>Group look per panel</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Can a group look different in Agents and in Spaces, and where is that set?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Yes, set in the group's settings under Spaces: one “Show as” choice for Spaces and one for Agents. Banner links and the icon stay shared; the choice only decides what each panel draws (the user, 2026-11-20: “I might want to have the large banners only show up under agents … while the spaces display using folders/icons … or vice versa”).</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-20">
+        <h3>Look choices</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">What can each panel's Show as choice be?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Banner, Second banner, or Folder. The folded image belongs to a banner style as its folded state, never as a look of its own, so a group can have a second banner style with its own open and folded images (the user, 2026-11-20: “the folded banner is meant for state, not a variation … let's add a second banner style that can be used but has the open/folded states”). A banner choice with no image for that style shows the folder.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-20">
+        <h3>Agents default</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">What does an existing group's Agents look start as?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">“Same as Spaces”, a fourth choice for Agents only and its default, so nothing changes until Dannel picks a look for Agents (the user, 2026-11-20: “recommended for the other questions”).</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-20">
+        <h3>Other settings per panel</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Does anything besides the look differ between the panels?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">No. The fold chevron, the banner's controls and their colors stay shared (the user, 2026-11-20).</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
@@ -385,6 +425,18 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         </dl>
       </spec-module>
       <spec-module>
+        <h3>Group looks</h3>
+        <dl>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Stores each group's second banner style and its Show as choice for Spaces and for Agents, and answers what a panel draws for a group: a banner style's open or folded image, or the folder.</dd>
+          <dt>Owns</dt> <dd data-field="owns">The new saved group fields, their defaults for groups saved before them, and the two Show as fields and second banner links in group settings.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Loading banner images to the existing banner cache; drawing to the Spaces group header (<code>src/mod/groupHeaderView.ts</code>).</dd>
+          <dt>Input <code>SavedGroup</code>, panel, folded</dt>
+          <dd data-field="input">A saved group, which panel is drawing it, and whether it is folded in that panel.</dd>
+          <dt>Output <code>GroupLook</code></dt>
+          <dd data-field="output">A banner image link, or the folder with the group's icon.</dd>
+        </dl>
+      </spec-module>
+      <spec-module>
         <h3>Agents sidebar mod</h3>
         <dl>
           <dt>Responsibility</dt> <dd data-field="responsibility">Draws the Agents rows and turns clicks into Herdr commands.</dd>
@@ -422,6 +474,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <li><strong>A session name typed by the user</strong> goes to Herdr’s <code>tab.rename</code>, which owns its rules; an empty name returns the tab to its automatic name.</li>
         <li><strong>The <code>nerd-herd.handled</code> label</strong> is external data: another Herdr window, another nerd-herd version, or a hand edit with <code>hc label</code> may have written it. Done ledger reads it as a whole turn number; any other value counts as no label.</li>
         <li><strong>The <code>agents.sort</code> value</strong> is shared with Herdr’s own Agents mod and any other mod. A value other than <code>priority</code>, <code>grouped</code> or <code>groups</code> counts as <code>priority</code>, as Herdr’s mod does.</li>
+        <li><strong>Saved groups</strong> written before this spec have no look fields and no second banner. Group looks reads a missing or unknown Spaces look as today’s rule (the banner when the group has one, else the folder), and a missing or unknown Agents look as Same as Spaces.</li>
       </ul>
     </details>
   </section>
@@ -461,6 +514,14 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Given</dt> <dd data-field="given"><code>agents.sort</code> holds “by-machine”, written by some other mod</dd>
             <dt>When</dt> <dd data-field="when">Agents rows are computed</dd>
             <dt>Then</dt> <dd data-field="then">The rows are the Priority sections, as with <code>priority</code></dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A group's Agents look follows its Spaces look until a different look is picked for Agents" covers-module="Group looks" status="pending">
+          <h4>An unknown look counts as the default</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A saved group whose Agents look is “huge” and whose Spaces look is missing, with a banner</dd>
+            <dt>When</dt> <dd data-field="when">Group looks answers for each panel</dd>
+            <dt>Then</dt> <dd data-field="then">Spaces gets the banner, by today's rule, and Agents gets the same as Spaces</dd>
           </dl>
         </test-case>
       </test-group>
@@ -605,6 +666,46 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The session is under Done</dd>
           </dl>
         </test-case>
+        <test-case traces-to="A group can show as a banner in Agents and as a folder in Spaces, or the other way round" covers-module="Group looks" status="pending">
+          <h4>Each panel draws its own look</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A group with a banner, Show as Folder for Spaces and Banner for Agents</dd>
+            <dt>When</dt> <dd data-field="when">Group looks answers for Spaces and for Agents</dd>
+            <dt>Then</dt> <dd data-field="then">Spaces gets the folder with the group's icon, and Agents gets the banner's open image</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A group's Agents look follows its Spaces look until a different look is picked for Agents" covers-module="Group looks" status="pending">
+          <h4>Agents follows Spaces by default</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A group saved before this spec, with a banner</dd>
+            <dt>When</dt> <dd data-field="when">Group looks answers for Agents</dd>
+            <dt>Then</dt> <dd data-field="then">Agents gets the banner's open image, the same as Spaces</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A group can have a second banner style, with its own open and folded images, that either panel can show" covers-module="Group looks" status="pending">
+          <h4>The second banner style has its own images</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A group whose second banner style has an open and a folded image, Show as Second banner for Spaces</dd>
+            <dt>When</dt> <dd data-field="when">Group looks answers for Spaces, open and then folded</dd>
+            <dt>Then</dt> <dd data-field="then">Spaces gets the second style's open image, then its folded image</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A panel set to a banner style the group has no image for shows the group as a folder" covers-module="Group looks" status="pending">
+          <h4>A banner choice without an image shows the folder</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A group with no second banner style, Show as Second banner for Agents</dd>
+            <dt>When</dt> <dd data-field="when">Group looks answers for Agents</dd>
+            <dt>Then</dt> <dd data-field="then">Agents gets the folder with the group's icon</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="In Agents, a banner group shows its folded image while its Agents section is folded" covers-module="Group looks" status="pending">
+          <h4>Agents uses its own fold for the folded image</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A banner group open in Spaces and folded in Agents, its banner style having a folded image</dd>
+            <dt>When</dt> <dd data-field="when">Group looks answers for each panel</dd>
+            <dt>Then</dt> <dd data-field="then">Agents gets the folded image, and Spaces gets the open image</dd>
+          </dl>
+        </test-case>
       </test-group>
       <test-group category="ux-validation">
         <h3>UX validation</h3>
@@ -664,6 +765,18 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         </dl>
       </spec-phase>
       <spec-phase depends-on="Session list model" parallel-safe="no" agent-suitable="no">
+        <h3>Group looks</h3>
+        <dl>
+          <dt>Writes</dt> <dd><ul>
+            <li data-field="shared-artifact">src/core/groups/*</li>
+            <li data-field="shared-artifact">src/core/store/savedGroupStore.ts</li>
+            <li data-field="shared-artifact">src/mod/panels/groupSettingsPanel.ts</li>
+            <li data-field="shared-artifact">src/mod/groupHeaderView.ts</li>
+          </ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Group looks" parallel-safe="no" agent-suitable="no">
         <h3>Agents sidebar mod</h3>
         <dl>
           <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">mods/nerd-herd-agents/*</li><li data-field="shared-artifact">src/mod/groupHeaderView.ts</li></ul></dd>
@@ -708,7 +821,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <li><h4>A security scan runs clean</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
       </ol>
-      <execution-plan>Walking skeleton &rarr; Session list model &rarr; Agents sidebar mod &rarr; Done ledger &rarr; Dismiss control &rarr; Skeleton re-walk</execution-plan>
+      <execution-plan>Walking skeleton &rarr; Session list model &rarr; Group looks &rarr; Agents sidebar mod &rarr; Done ledger &rarr; Dismiss control &rarr; Skeleton re-walk</execution-plan>
     </details>
   </section>
 </main>
