@@ -14,10 +14,11 @@ const tint = (t: Theme, status: SessionStatus, alpha: string): HexColor => {
   return color.length === 7 ? `${color}${alpha}` : color;
 };
 
-/** A status as a pill filled in Herdr's color for that status, its name and how many it holds. */
+/** A section as a pill: filled in Herdr's color for its status (grey for Pinned), with its name and
+ *  how many it holds. */
 export const statusPill = (
   t: Theme,
-  status: SessionStatus,
+  status: SessionStatus | "pinned",
   label: string,
   count: number,
   key: string,
@@ -36,7 +37,7 @@ export const statusPill = (
         .h(22)
         .items_center()
         .rounded_full()
-        .bg(themeColor(t, status))
+        .bg(themeColor(t, status === "pinned" ? "muted" : status))
         .child(
           div().text_size(12).font_semibold().text_color(themeColor(t, "background")).child(label),
         )
@@ -92,6 +93,11 @@ export const cardView = (
   vcs: string | null,
   focus: () => void,
   rename: () => void,
+  pin: {
+    readonly hovered: boolean;
+    readonly hover: (on: boolean) => void;
+    readonly toggle: () => void;
+  },
 ): Element =>
   v_flex()
     .id(`card-${row.terminal}`)
@@ -107,6 +113,10 @@ export const cardView = (
     .hover((s) => s.bg(tint(t, row.status, "33")))
     .on_click(focus)
     .on_mouse_down("right", rename)
+    .on_hover((on, cx) => {
+      pin.hover(on);
+      cx.notify();
+    })
     .child(
       h_flex()
         .gap(6)
@@ -132,6 +142,26 @@ export const cardView = (
                 .h(line)
                 .gap(5)
                 .items_center()
+                // The pin: always on a pinned card, on hover on the others (Herdr's own pin icons).
+                .when(row.pinned === true || pin.hovered, (el) =>
+                  el.child(
+                    div()
+                      .id(`pin-${row.terminal}`)
+                      .flex_none()
+                      .p(2)
+                      .rounded(4)
+                      .cursor_pointer()
+                      .text_color(themeColor(t, row.pinned ? "foreground" : "dim"))
+                      .hover((s) => s.bg(tint(t, row.status, "40")))
+                      .tooltip(row.pinned ? "Unpin" : "Pin to the top")
+                      .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+                      .on_click((_e, cx) => {
+                        cx.stop_propagation();
+                        pin.toggle();
+                      })
+                      .child(svg("mods/workspace-chrome/pin.svg").size(12)),
+                  ),
+                )
                 .child(statusMark(t, row.status))
                 .when(since !== null, (el) =>
                   el.child(

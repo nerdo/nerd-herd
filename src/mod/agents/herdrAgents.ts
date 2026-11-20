@@ -30,6 +30,7 @@ export const readSessions = (): SessionInput[] => {
     icon: a.program.icon ? { path: a.program.icon, tint: a.program.tint } : null,
     tabName: namedTab.get(a.tab) ?? null,
     focused: a.focused,
+    pinned: a.pinned,
   }));
 };
 
@@ -37,6 +38,12 @@ export const renameSession = (terminal: TerminalAddress, name: string): void => 
   // Without an id Herdr renames the tab it has selected, so a terminal it does not list renames none.
   const tab = agents().find((a) => a.address === terminal)?.tab;
   if (tab !== undefined) run("tab.rename", { id: tab, name });
+};
+
+/** Pins or unpins a session with Herdr's own pin; a terminal Herdr does not list changes nothing. */
+export const togglePin = (terminal: TerminalAddress): void => {
+  const agent = agents().find((a) => a.address === terminal);
+  if (agent) run("terminal.pin", { terminal, pinned: !agent.pinned });
 };
 
 export const focusSession = (terminal: TerminalAddress): void => {

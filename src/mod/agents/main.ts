@@ -4,7 +4,7 @@ import { h_flex, v_flex } from "gpui-base";
 import { type AsyncContext, div, svg, View } from "gpui-kit";
 import { nextCommand, props, theme } from "herdr";
 import { AgentsListError, rowsOrError } from "../../core/sessions/rowsOrError";
-import { type AgentsRow, folderKey } from "../../core/sessions/sessionList";
+import { type AgentsRow, folderKey, pinnedKey } from "../../core/sessions/sessionList";
 import { errorCard } from "../errorCard";
 import { themeColor } from "../themeColor";
 import { agentsApp } from "./app";
@@ -32,9 +32,16 @@ const field = (command: string, action: string, key: string): string | null => {
   return typeof value === "string" ? value : null;
 };
 
+/** The card under the pointer, which shows its pin button. */
+let hoveredCard: string | null = null;
+
 const rowView = (t: Theme, row: AgentsRow) => {
   switch (row.kind) {
     case "section":
+      if (row.pinned === true && row.count !== undefined)
+        return statusPill(t, "pinned", row.label, row.count, pinnedKey, () =>
+          agentsApp.foldStatus(pinnedKey),
+        );
       return row.status === undefined || row.count === undefined
         ? div().pt(6).text_color(themeColor(t, "muted")).child(row.label)
         : statusPill(t, row.status, row.label, row.count, row.status, () =>
@@ -58,6 +65,14 @@ const rowView = (t: Theme, row: AgentsRow) => {
         agentsApp.vcs(row.terminal),
         () => agentsApp.focus(row.terminal),
         () => agentsApp.promptRename(row.terminal),
+        {
+          hovered: hoveredCard === row.terminal,
+          hover: (on) => {
+            if (on) hoveredCard = row.terminal;
+            else if (hoveredCard === row.terminal) hoveredCard = null;
+          },
+          toggle: () => agentsApp.pin(row.terminal),
+        },
       );
   }
 };
@@ -108,6 +123,7 @@ export default class AgentsMod extends View {
         const renamed = field(command, "rename", "terminal");
         const name = field(command, "rename", "name");
         const focused = field(command, "focus", "terminal");
+        const pinned = field(command, "pin", "terminal");
         const sort = field(command, "sort", "id");
         const fold = field(command, "fold", "group");
         const foldStatus = field(command, "fold-status", "key");
@@ -118,6 +134,7 @@ export default class AgentsMod extends View {
         if (sort !== null) agentsApp.sort(sort);
         if (renamed !== null && name !== null) agentsApp.rename(renamed, name);
         if (focused !== null) agentsApp.focus(focused);
+        if (pinned !== null) agentsApp.pin(pinned);
         cx.notify();
       }
     });

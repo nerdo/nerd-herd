@@ -28,14 +28,16 @@ const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 
 /** The text reader reads a status pill's rounded right edge as ")" ("Done 1)", 2026-11-20). */
 const pill = (line: string): string =>
-  line.replace(/^((?:Blocked|Done|Working|Idle) \d+)\)$/, "$1");
+  line.replace(/^((?:Pinned|Blocked|Done|Working|Idle) \d+)\)$/, "$1");
 
 /** A card's status mark and time in status, which close its title's first line ("Ship it · <1m"):
  *  the session list's tests state the time, so the walks read the title without it (2026-11-20). */
-const markAndTime = (line: string): string => line.replace(/\s+[·•o]?\s*<?[\dil]*[mhd]$/, "");
+// A pinned card's pin icon, before the mark, reads as "$" (2026-11-20).
+const markAndTime = (line: string): string =>
+  line.replace(/\s+(?:\$\s*)?[·•o]?\s*<?[\dil]*[mhd]$/, "");
 
 /** Section headers Herdr's Agents list draws above its rows, such as "Idle 1". */
-const sectionHeader = /^(Agents|Blocked|Done|Working|Idle)(\s+\d+)?$/;
+const sectionHeader = /^(Agents|Pinned|Blocked|Done|Working|Idle)(\s+\d+)?$/;
 
 /** Where a stand-in agent works unless a walk names a folder: outside any repository, so its card
  *  shows no version control label (inside this repository it read this repository's bookmark). */
@@ -231,10 +233,12 @@ export class AgentsWindow extends HerdrWindow {
     return ["Agents", ...rowsIn(below, edge, 1).map((l) => l.text)];
   }
 
-  /** Reads the Agents section until it shows what `shows` looks for, for up to 30 s. */
-  readUntilAgents(shows: (text: string) => boolean): string {
-    let text = this.readAgents();
-    for (let waited = 0; !shows(text) && waited < 30_000; waited += 3_000) text = this.readAgents();
+  /** Reads the Agents section (with its section pills when asked) until it shows what `shows`
+   *  looks for, for up to 30 s. */
+  readUntilAgents(shows: (text: string) => boolean, o: { sections?: boolean } = {}): string {
+    const read = () => (o.sections ? this.readAgentsWithSections() : this.readAgents());
+    let text = read();
+    for (let waited = 0; !shows(text) && waited < 30_000; waited += 3_000) text = read();
     return text;
   }
 

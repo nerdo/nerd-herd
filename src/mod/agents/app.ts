@@ -19,6 +19,7 @@ import {
   readSort,
   readTerminals,
   readVcsTargets,
+  togglePin,
   jjIn,
   focusedTerminal,
   runHc,
@@ -157,5 +158,6 @@ export const agentsApp = {
   },
   rename: (terminal: TerminalAddress, name: string): void => renameSession(terminal, name),
   focus: (terminal: TerminalAddress): void => focusSession(terminal),
+  pin: (terminal: TerminalAddress): void => togglePin(terminal),
   promptRename: (terminal: TerminalAddress): void => promptRename(terminal),
 };

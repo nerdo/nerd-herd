@@ -13,6 +13,7 @@ export const session = (
   icon: o.icon ?? null,
   tabName: o.tabName ?? null,
   focused: o.focused ?? false,
+  pinned: o.pinned ?? false,
 });
 
 /** Saved groups holding `group` with machines placed in it; other machines are ungrouped. */

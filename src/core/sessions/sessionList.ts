@@ -26,6 +26,8 @@ export interface SessionInput {
   readonly tabName: string | null;
   /** Its terminal is in the focused pane. */
   readonly focused: boolean;
+  /** Pinned with Herdr's own pin (terminal.pin). */
+  readonly pinned: boolean;
 }
 
 /** A section header in the Agents list: a status (Priority) with its count, or a space. */
@@ -37,6 +39,8 @@ export interface AgentsSection {
   readonly count?: number;
   /** Folded in Agents (only ever true): the section shows its pill alone. */
   readonly folded?: true;
+  /** The Pinned section (only ever true), at the top in every sort. */
+  readonly pinned?: true;
 }
 
 /** One card in the Agents list: the session's title, then where it runs. */
@@ -52,6 +56,8 @@ export interface AgentsCard {
   readonly status: SessionStatus;
   /** In the focused pane (only ever true): the card is highlighted. */
   readonly focused?: true;
+  /** Pinned (only ever true): the card shows a filled pin. */
+  readonly pinned?: true;
 }
 
 /** A Spaces group's section in Grouped by group; `inside`: the group it sits in, if any. */
@@ -123,6 +129,7 @@ const cardOf = (s: SessionInput, place: string): AgentsCard => ({
   machine: machineName(s),
   status: s.status,
   ...(s.focused ? { focused: true as const } : {}),
+  ...(s.pinned ? { pinned: true as const } : {}),
 });
 
 const section = (label: string): AgentsSection => ({ kind: "section", label });
@@ -247,6 +254,27 @@ const arrangements: Record<string, (input: ArrangeInput) => AgentsRow[]> = {
     byGroup(i.sessions, i.groups ?? emptyGroups, i.folded ?? [], i.foldedStatuses ?? []),
 };
 
-export const arrangeSessions = (input: ArrangeInput): AgentsRow[] =>
-  (typeof input.sort === "string" ? arrangements[input.sort] : undefined)?.(input) ??
-  byPriority(input.sessions, input.foldedStatuses ?? []);
+/** The Pinned section's fold key in foldedStatuses. */
+export const pinnedKey = "pinned";
+
+/** Pinned sessions in Priority's order, under the Pinned section; none: no section. */
+const pinnedRows = (
+  sessions: readonly SessionInput[],
+  foldedStatuses: readonly string[],
+): AgentsRow[] => {
+  const pinned = byStatus(sessions.filter((m) => m.pinned)).flatMap((f) => f.members);
+  if (pinned.length === 0) return [];
+  const header = { kind: "section", label: "Pinned", count: pinned.length, pinned: true } as const;
+  return foldedStatuses.includes(pinnedKey)
+    ? [{ ...header, folded: true } as const]
+    : [header, ...pinned.map((m) => cardOf(m, m.space))];
+};
+
+/** The rows for a sort: pinned sessions first under Pinned, then the rest as the sort arranges. */
+export const arrangeSessions = (input: ArrangeInput): AgentsRow[] => {
+  const rest = { ...input, sessions: input.sessions.filter((m) => !m.pinned) };
+  const arranged =
+    (typeof input.sort === "string" ? arrangements[input.sort] : undefined)?.(rest) ??
+    byPriority(rest.sessions, input.foldedStatuses ?? []);
+  return [...pinnedRows(input.sessions, input.foldedStatuses ?? []), ...arranged];
+};
