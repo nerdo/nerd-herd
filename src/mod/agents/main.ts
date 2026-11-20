@@ -4,7 +4,7 @@ import { h_flex, v_flex } from "gpui-base";
 import { type AsyncContext, div, image, svg, View } from "gpui-kit";
 import { nextCommand, props, theme } from "herdr";
 import { AgentsListError, rowsOrError } from "../../core/sessions/rowsOrError";
-import type { AgentIcon, AgentsRow } from "../../core/sessions/sessionList";
+import type { AgentIcon, AgentsRow, SessionStatus } from "../../core/sessions/sessionList";
 import { errorCard } from "../errorCard";
 import { themeColor } from "../themeColor";
 import { agentsApp } from "./app";
@@ -34,7 +34,9 @@ const field = (command: string, action: string, key: string): string | null => {
 const rowView = (t: Theme, row: AgentsRow) => {
   switch (row.kind) {
     case "section":
-      return div().pt(6).text_color(themeColor(t, "muted")).child(row.label);
+      return row.status === undefined || row.count === undefined
+        ? div().pt(6).text_color(themeColor(t, "muted")).child(row.label)
+        : statusPill(t, row.status, row.label, row.count);
     case "group":
       return agentsGroupHeader(t, row, agentsApp.groupHeader(row.id, row.folded === true), () =>
         agentsApp.fold(row.id),
@@ -42,7 +44,7 @@ const rowView = (t: Theme, row: AgentsRow) => {
     case "ungrouped":
       return div().pt(8).font_semibold().text_color(themeColor(t, "foreground")).child(row.label);
     case "folder":
-      return div().pt(4).pl(8).text_color(themeColor(t, "muted")).child(row.label);
+      return statusPill(t, row.status, row.label, row.count);
     case "card":
       return card(t, row);
   }
@@ -56,9 +58,31 @@ const iconView = (t: Theme, icon: AgentIcon | null) =>
       ? svg(icon.path).size(14).flex_none().text_color(themeColor(t, "muted"))
       : image(icon.path).w(14).h(14).flex_none();
 
+/** A status as a pill: outlined in Herdr's color for that status, its name and how many it holds. */
+const statusPill = (t: Theme, status: SessionStatus, label: string, count: number) =>
+  h_flex()
+    .pt(8)
+    .pb(4)
+    .child(
+      h_flex()
+        .gap(6)
+        .px(8)
+        .h(22)
+        .items_center()
+        .rounded_full()
+        .border_1()
+        .border_color(themeColor(t, status))
+        .child(div().size(7).rounded_full().bg(themeColor(t, status)))
+        .child(div().text_size(12).text_color(themeColor(t, "foreground")).child(label))
+        .child(div().text_size(12).text_color(themeColor(t, "muted")).child(String(count))),
+    );
+
 const card = (t: Theme, row: Extract<AgentsRow, { kind: "card" }>) => {
   const icon = iconView(t, row.icon);
   return v_flex()
+    .mb(6)
+    .px(8)
+    .bg(themeColor(t, "surface"))
     .id(`card-${row.terminal}`)
     .py(4)
     .rounded(6)
@@ -81,7 +105,7 @@ const card = (t: Theme, row: Extract<AgentsRow, { kind: "card" }>) => {
             .child(row.title),
         ),
     )
-    .child(div().text_color(themeColor(t, "muted")).child(row.location));
+    .child(div().min_w_0().truncate().text_color(themeColor(t, "muted")).child(row.location));
 };
 
 /** One of this copy's props (from the layout, or the overlay that opened it). */

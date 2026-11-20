@@ -23,12 +23,18 @@ test.beforeAll(() => {
 test.afterAll(() => window.stop());
 
 // Spec: docs/specs/finalized/nerd-herd-agents.html#test-case-a-finished-turn-above-the-handled-turn-is-under-done@jj:14ab73a0
+// and the card structure decision (question "Card structure", 2026-11-20): a status pill shows its
+// count, so the reading is "Done 1".
 test("a session that finished a turn nobody has dealt with shows under Done", () => {
-  expect(before, "Done, then the card").toBe(`Done ${subject} sandbox · This computer`);
+  expect(before, "Done with its count, then the card").toBe(
+    `Done 1 ${subject} sandbox · This computer`,
+  );
 });
 
 // Spec: docs/specs/finalized/nerd-herd-agents.html#test-case-dismissing-records-the-session-s-turn-on-its-machine@jj:14ab73a0
 // "...and Done ledger then puts the session under Idle."
 test("once its finished turn is recorded as handled, the session shows under Idle", () => {
-  expect(after, "Idle, then the card").toBe(`Idle ${subject} sandbox · This computer`);
+  expect(after, "Idle with its count, then the card").toBe(
+    `Idle 1 ${subject} sandbox · This computer`,
+  );
 });

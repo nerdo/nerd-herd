@@ -26,10 +26,13 @@ export interface SessionInput {
   readonly tabName: string | null;
 }
 
-/** A section header in the Agents list, such as Idle. */
+/** A section header in the Agents list: a status (Priority) with its count, or a space. */
 export interface AgentsSection {
   readonly kind: "section";
   readonly label: string;
+  /** A status section's status and how many sessions it holds; absent on a space's section. */
+  readonly status?: SessionStatus;
+  readonly count?: number;
 }
 
 /** One card in the Agents list: the session's title, then where it runs. */
@@ -62,6 +65,8 @@ export interface AgentsFolder {
   readonly kind: "folder";
   readonly group: GroupId | null;
   readonly label: string;
+  readonly status: SessionStatus;
+  readonly count: number;
 }
 
 export type AgentsRow = AgentsSection | AgentsGroup | AgentsUngrouped | AgentsFolder | AgentsCard;
@@ -104,7 +109,10 @@ const byPriority = (sessions: readonly SessionInput[]): AgentsRow[] =>
     const members = sessions.filter((m) => m.status === s.status);
     return members.length === 0
       ? []
-      : [section(s.label), ...members.map((m) => cardOf(m, `${m.space} · ${machineName(m)}`))];
+      : [
+          { kind: "section", label: s.label, status: s.status, count: members.length } as const,
+          ...members.map((m) => cardOf(m, `${m.space} · ${machineName(m)}`)),
+        ];
   });
 
 /** Grouped by space: a section per space (a space is its name on its machine); cards name the machine. */
@@ -123,7 +131,11 @@ const bySpace = (sessions: readonly SessionInput[]): AgentsRow[] => {
 /** Each status that has sessions, in Priority's order, with those sessions. */
 const byStatus = (sessions: readonly SessionInput[]) =>
   prioritySections
-    .map((p) => ({ label: p.label, members: sessions.filter((m) => m.status === p.status) }))
+    .map((p) => ({
+      label: p.label,
+      status: p.status,
+      members: sessions.filter((m) => m.status === p.status),
+    }))
     .filter((p) => p.members.length > 0);
 
 /** Groups depth first, each group's subgroups in their saved order right after it. */
@@ -135,7 +147,7 @@ const groupsInOrder = (saved: SavedGroups, parent: GroupId | null = null): Saved
 /** Folders for each status that has sessions, each holding its sessions' cards. */
 const folders = (group: GroupId | null, members: readonly SessionInput[]): AgentsRow[] =>
   byStatus(members).flatMap((f) => [
-    { kind: "folder", group, label: f.label } as const,
+    { kind: "folder", group, label: f.label, status: f.status, count: f.members.length } as const,
     ...f.members.map((m) => cardOf(m, `${m.space} · ${machineName(m)}`)),
   ]);
 

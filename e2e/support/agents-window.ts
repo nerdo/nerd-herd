@@ -25,6 +25,10 @@ const field = (value: unknown, key: string): unknown =>
     : undefined;
 const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 
+/** The text reader reads a status pill's rounded right edge as ")" ("Done 1)", 2026-11-20). */
+const pill = (line: string): string =>
+  line.replace(/^((?:Blocked|Done|Working|Idle) \d+)\)$/, "$1");
+
 /** Section headers Herdr's Agents list draws above its rows, such as "Idle 1". */
 const sectionHeader = /^(Agents|Blocked|Done|Working|Idle)(\s+\d+)?$/;
 
@@ -129,8 +133,8 @@ export class AgentsWindow extends HerdrWindow {
     const end = lines.findIndex((l, i) => i > start && /\bSettings$/.test(l));
     return lines
       .slice(start + 1, end === -1 ? undefined : end)
+      .map((l) => pill(l.replace(/^\S /, "").replaceAll("•", "·")))
       .filter((l) => !sectionHeader.test(l))
-      .map((l) => l.replace(/^\S /, "").replaceAll("•", "·"))
       .join(" ");
   }
 
@@ -141,7 +145,7 @@ export class AgentsWindow extends HerdrWindow {
     const end = lines.findIndex((l, i) => i > start && /\bSettings$/.test(l));
     return lines
       .slice(start + 1, end === -1 ? undefined : end)
-      .map((l) => l.replace(/^\S /, "").replaceAll("•", "·"))
+      .map((l) => pill(l.replace(/^\S /, "").replaceAll("•", "·")))
       .join(" ");
   }
 

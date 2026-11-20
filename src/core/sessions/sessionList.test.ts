@@ -29,7 +29,7 @@ test("sorted by Priority, two Idle sessions sit in the Idle section, each card n
     ],
   });
   expect(rows, "one Idle section holding both cards, located by space and machine").toEqual([
-    { kind: "section", label: "Idle" },
+    { kind: "section", label: "Idle", status: "idle", count: 2 },
     {
       kind: "card",
       terminal: "t1",
@@ -170,7 +170,7 @@ test("grouped by group, a group's section holds a Done folder and an Idle folder
   });
   expect(rows, "townsquare, then Done with the first card, then Idle with the second").toEqual([
     { kind: "group", id: "g1", name: "townsquare", inside: null },
-    { kind: "folder", group: "g1", label: "Done" },
+    { kind: "folder", group: "g1", label: "Done", status: "done", count: 1 },
     {
       kind: "card",
       terminal: "ai-sandbox/t1",
@@ -178,7 +178,7 @@ test("grouped by group, a group's section holds a Done folder and an Idle folder
       title: "Release notes",
       location: "sandbox · ai-sandbox",
     },
-    { kind: "folder", group: "g1", label: "Idle" },
+    { kind: "folder", group: "g1", label: "Idle", status: "idle", count: 1 },
     {
       kind: "card",
       terminal: "ai-sandbox/t2",
@@ -229,7 +229,7 @@ test("grouped by group, a session on a machine in no group sits in an Ungrouped 
   expect(rows, "Work's section first, then Ungrouped holding the session on this computer").toEqual(
     [
       { kind: "group", id: "work", name: "Work", inside: null },
-      { kind: "folder", group: "work", label: "Idle" },
+      { kind: "folder", group: "work", label: "Idle", status: "idle", count: 1 },
       {
         kind: "card",
         terminal: "desk-work/t1",
@@ -238,7 +238,7 @@ test("grouped by group, a session on a machine in no group sits in an Ungrouped 
         location: "sandbox · desk-work",
       },
       { kind: "ungrouped", label: "Ungrouped" },
-      { kind: "folder", group: null, label: "Idle" },
+      { kind: "folder", group: null, label: "Idle", status: "idle", count: 1 },
       {
         kind: "card",
         terminal: "t9",
@@ -280,5 +280,26 @@ test("grouped by group, a group folded in Agents shows its section header, folde
   });
   expect(rows, "only Work's header, marked folded").toEqual([
     { kind: "group", id: "work", name: "Work", inside: null, folded: true },
+  ]);
+});
+
+// Spec: docs/specs/in-progress/executing-nerd-herd-agents.html#test-case-a-status-folder-carries-its-status-and-count@jj:PENDING
+// "Two Idle sessions and one Done session, sorted by Priority: the Done section is marked done with
+//  a count of 1, and the Idle section is marked idle with a count of 2."
+test("sorted by Priority, each section names its status and how many sessions it holds", () => {
+  const rows = arrangeSessions({
+    sort: "priority",
+    sessions: [
+      session({ terminal: "t1" }),
+      session({ terminal: "t2" }),
+      session({ terminal: "t3", status: "done" }),
+    ],
+  });
+  expect(
+    rows.flatMap((r) => (r.kind === "section" ? [r] : [])),
+    "Done with 1, Idle with 2",
+  ).toEqual([
+    { kind: "section", label: "Done", status: "done", count: 1 },
+    { kind: "section", label: "Idle", status: "idle", count: 2 },
   ]);
 });

@@ -195,6 +195,13 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <li>Spaces outside every group show under Ungrouped, after the groups</li>
           <li>Folding a section or folder in Agents leaves Spaces as it was</li>
           <li>A card shows the agent's icon, then the session's title in bold before anything else</li>
+          <li>Each status section or folder shows as a pill in its status color with how many sessions it holds</li>
+          <li>Each card sits on its own rounded background, its location on one line</li>
+          <li>A card shows how long its session has been in its status, as Herdr's Agents list does</li>
+          <li>A card shows its status mark: Herdr's spinner while working, a dot when done, a ring when idle, Needs you when blocked</li>
+          <li>A status pill is filled with its status color, and each card's background is a pale version of that color</li>
+          <li>A card's machine name sits right-aligned, smaller and dimmer than its space name</li>
+          <li>Group headers in Agents sit at the same margins as in Spaces, and folded banners sit flush against each other</li>
           <li>A session card shows the session's subject wrapped onto more lines when it is longer than one line</li>
           <li>Renaming a session from its card gives its Herdr tab that name</li>
           <li>Renaming a session to an empty name returns it to its automatic name</li>
@@ -255,6 +262,20 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <dl>
           <dt>Question</dt> <dd data-field="body">How is the Agents list organized?</dd>
           <dt>Resolution</dt> <dd data-field="resolution">Herdr’s sort menu keeps its two choices and their stored values in the shared value <code>agents.sort</code>: Priority (<code>priority</code>) and Grouped by space (<code>grouped</code>). nerd-herd adds a third, Grouped by group (<code>groups</code>), named with the word the Spaces settings use for a group. It gives each Spaces group a section drawn as Spaces draws it (folder or banner, at the banner’s own size), with Blocked, Done, Working and Idle folders inside. There is no machine and space tree in Agents (the user, 2026-11-20: “in grouped mode, the status becomes like a folder”; “I kind of want to preserve the same values and just add our concepts to it”). Herdr’s own Agents mod reads an unknown value as Priority, so switching back to it is safe.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-20">
+        <h3>Card structure</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">How do the Agents list's statuses and cards get enough structure to read at a glance?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Status sections and folders become pills in Herdr's status colors (the theme's working, blocked, done and idle) with how many sessions each holds, and each card sits on its own rounded background with its location cut to one line; the title still wraps (the user, 2026-11-20, after installing: "the cards need more visual structure. it looks messy, the priorities aren't easliy glanceable", then "go with C for the cards").</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-20">
+        <h3>Card details</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">What do the cards and headers still lack after the first card structure pass?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Filled pills; pale status-colored card backgrounds; Herdr's working spinner and status marks and the time in the current status, as Herdr's own Agents list shows them; the agent icon centered on the title's first line; the machine name smaller, dimmer and right-aligned, the space name staying the main location; group headers drawn at Spaces' margins, folded banners flush (the user, 2026-11-20: "I actually want the pills to have a background, like a solid background", "they're not flush up against each other", "missing ... the little in-progress animation", "make the background of the cards a very subtle or pale color, same as the tag that it is under", "the machine name ... should be slightly diminished ... maybe it should be right aligned ... a smaller font").</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-20">
@@ -708,9 +729,75 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">Agents gets the folded image, and Spaces gets the open image</dd>
           </dl>
         </test-case>
+        <test-case traces-to="Each status section or folder shows as a pill in its status color with how many sessions it holds" covers-module="Session list model" status="pending">
+          <h4>A status folder carries its status and count</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Two Idle sessions and one Done session, sorted by Priority</dd>
+            <dt>When</dt> <dd data-field="when">Agents cards are computed</dd>
+            <dt>Then</dt> <dd data-field="then">The Done section is marked done with a count of 1, and the Idle section is marked idle with a count of 2</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Each card sits on its own rounded background, its location on one line" covers-module="Agents sidebar mod" status="pending">
+          <h4>Cards read as cards under colored status pills</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A finished session with a long title in a running Herdr window</dd>
+            <dt>When</dt> <dd data-field="when">The Agents section is read</dd>
+            <dt>Then</dt> <dd data-field="then">It reads "Done 1", then the whole title, then the location on one line</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A card shows how long its session has been in its status, as Herdr's Agents list does" covers-module="Session list model" status="pending">
+          <h4>Time in a status reads as Herdr writes it</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Sessions in their status for 30 seconds, 5 minutes, 3 hours and 2 days</dd>
+            <dt>When</dt> <dd data-field="when">Their times are written</dd>
+            <dt>Then</dt> <dd data-field="then">They read &lt;1m, 5m, 3h and 2d</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A card shows how long its session has been in its status, as Herdr's Agents list does" covers-module="Session list model" status="pending">
+          <h4>The time restarts when the status changes</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session idle since 10:00 that starts working at 10:05</dd>
+            <dt>When</dt> <dd data-field="when">Its time is computed at 10:07</dd>
+            <dt>Then</dt> <dd data-field="then">It reads 2m, counted from 10:05; done and idle count as one status</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A card shows its status mark: Herdr's spinner while working, a dot when done, a ring when idle, Needs you when blocked" covers-module="Agents sidebar mod" status="pending">
+          <h4>A working card spins</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A working session in a running Herdr window</dd>
+            <dt>When</dt> <dd data-field="when">The Agents section is shown</dd>
+            <dt>Then</dt> <dd data-field="then">Its card shows Herdr's spinner beside its title</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A card's machine name sits right-aligned, smaller and dimmer than its space name" covers-module="Session list model" status="pending">
+          <h4>A card names its space and its machine apart</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session in ground-truth on ai-sandbox, sorted by Priority</dd>
+            <dt>When</dt> <dd data-field="when">Its card is computed</dd>
+            <dt>Then</dt> <dd data-field="then">The card's place is ground-truth and its machine is ai-sandbox</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Group headers in Agents sit at the same margins as in Spaces, and folded banners sit flush against each other" covers-module="Agents sidebar mod" status="pending">
+          <h4>Folded banners sit flush in Agents</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Two banner groups folded in Agents, one after the other</dd>
+            <dt>When</dt> <dd data-field="when">The Agents section is shown</dd>
+            <dt>Then</dt> <dd data-field="then">No gap shows between the two banners, and each starts at the same left edge as in Spaces</dd>
+          </dl>
+        </test-case>
       </test-group>
       <test-group category="ux-validation">
         <h3>UX validation</h3>
+        <test-case traces-to="A status pill is filled with its status color, and each card's background is a pale version of that color" covers-module="Agents sidebar mod" status="pending">
+          <h4>Status colors set the pills and the cards apart</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A Done session and an Idle session in a running Herdr window</dd>
+            <dt>When</dt> <dd data-field="when">The Agents section is shown</dd>
+            <dt>Then (experience)</dt> <dd data-field="then" data-aspect="experience">The screenshot shows the Done pill filled in the done color with the Done card on a pale tint of it, and the Idle pill and card in the idle color, each set apart from the sidebar's own background</dd>
+            <dt>Then (technical)</dt> <dd data-field="then" data-aspect="technical">The pill's pixels match the theme's done color</dd>
+            <dt>Incremental</dt> <dd data-field="incremental">Testable once the pills and cards draw their status colors</dd>
+          </dl>
+        </test-case>
         <test-case traces-to="Grouped by group shows one section per Spaces group, drawn the way Spaces draws that group, with Blocked, Done, Working and Idle folders inside" covers-module="Agents sidebar mod" status="pending">
           <h4>Grouped by group in the running Herdr window</h4>
           <dl>
