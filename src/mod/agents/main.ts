@@ -18,10 +18,24 @@ const field = (command: string, action: string, key: string): string | null => {
   return typeof value === "string" ? value : null;
 };
 
-const rowView = (t: Theme, row: AgentsRow) =>
-  row.kind === "section"
-    ? div().pt(6).text_color(themeColor(t, "muted")).child(row.label)
-    : card(t, row);
+const rowView = (t: Theme, row: AgentsRow) => {
+  switch (row.kind) {
+    case "section":
+      return div().pt(6).text_color(themeColor(t, "muted")).child(row.label);
+    case "group":
+      return div()
+        .pt(8)
+        .font_semibold()
+        .text_color(themeColor(t, "foreground"))
+        .child(row.inside === null ? row.name : `${row.name} · in ${row.inside}`);
+    case "ungrouped":
+      return div().pt(8).font_semibold().text_color(themeColor(t, "foreground")).child(row.label);
+    case "folder":
+      return div().pt(4).pl(8).text_color(themeColor(t, "muted")).child(row.label);
+    case "card":
+      return card(t, row);
+  }
+};
 
 /** Draws an agent's icon the way Herdr's own Agents list does: a tinted glyph, or a picture. */
 const iconView = (t: Theme, icon: AgentIcon | null) =>
@@ -40,7 +54,15 @@ const card = (t: Theme, row: Extract<AgentsRow, { kind: "card" }>) => {
         .gap(6)
         .items_start()
         .when(icon !== null, (el) => (icon ? el.child(icon) : el))
-        .child(div().font_semibold().text_color(themeColor(t, "foreground")).child(row.title)),
+        .child(
+          div()
+            .flex_1()
+            .min_w_0()
+            .whitespace_normal()
+            .font_semibold()
+            .text_color(themeColor(t, "foreground"))
+            .child(row.title),
+        ),
     )
     .child(div().text_color(themeColor(t, "muted")).child(row.location));
 };

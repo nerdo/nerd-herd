@@ -7,7 +7,7 @@
 //
 // The window runs on a private herdr-core session (HC_SESSION), never the person's own core, so the
 // walk may make the space, the tabs and the stand-in agent it needs (AGENTS.md, rule 4).
-// The journey is walked once; the skeleton's assertion and the build's current step read it.
+// The journey is walked once, before the assertion reads it.
 
 import { expect, test } from "@playwright/test";
 import { AgentsWindow, type TerminalAddress } from "./support/agents-window";
@@ -19,7 +19,6 @@ const newName = "NAS drive health";
 
 let walked: {
   agent: TerminalAddress;
-  other: TerminalAddress;
   before: string;
   after: string;
   tab: string | undefined;
@@ -29,20 +28,19 @@ let walked: {
 test.beforeAll(() => {
   window.start();
   const agent = window.startFakeAgent({ space: "sandbox", title: subject });
-  const other = window.startShellTab();
+  window.startShellTab();
   const before = window.readAgents();
   window.actAgents("rename", { terminal: agent, name: newName });
   const after = window.readAgents();
   const tab = window.tabNameOf(agent);
   window.actAgents("focus", { terminal: agent });
   const focused = window.focusedTerminal();
-  walked = { agent, other, before, after, tab, focused };
+  walked = { agent, before, after, tab, focused };
 });
 
 test.afterAll(() => window.stop());
 
-// Expected to fail until the whole build is done: the skeleton's red is the build's progress meter.
-test.fail(
+test(
   "Dannel sees each session's title first with its space and machine after it, the full subject " +
     "wrapped, renames one from its card and sees the name on the card and in the tab bar, and " +
     "clicks a card to focus that session's pane",
@@ -60,18 +58,3 @@ test.fail(
     });
   },
 );
-
-// The build's current step: which seams on the thread are still stubs (rewritten before each walk).
-test("step 6 of 6: every seam on the thread is real, and the session list arranges nothing", () => {
-  const { before, after, tab, focused, agent } = walked;
-  const read = "";
-  expect(
-    { before, after, tab, focused },
-    "no stub left: the list is empty, the tab is renamed, the agent's pane is focused",
-  ).toEqual({
-    before: read,
-    after: read,
-    tab: newName,
-    focused: agent,
-  });
-});

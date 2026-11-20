@@ -8,6 +8,11 @@ export type { TerminalAddress };
 /** Herdr's agent sessions, each with the machine its space lives on (null: this computer). */
 export const readSessions = (): SessionInput[] => {
   const machineOf = new Map(spaces().map((space) => [space.id, space.machine]));
+  const namedTab = new Map(
+    spaces().flatMap((space) =>
+      space.tabs.filter((t) => t.named).map((t) => [t.id, t.name] as const),
+    ),
+  );
   return agents().map((a) => ({
     terminal: a.address,
     title: a.title,
@@ -15,6 +20,7 @@ export const readSessions = (): SessionInput[] => {
     machine: machineOf.get(a.space) ?? null,
     status: a.status,
     icon: a.program.icon ? { path: a.program.icon, tint: a.program.tint } : null,
+    tabName: namedTab.get(a.tab) ?? null,
   }));
 };
 

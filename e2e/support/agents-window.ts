@@ -77,7 +77,9 @@ export class AgentsWindow extends HerdrWindow {
 
   /**
    * The Agents section's text: below its header and above the sidebar's footer (Settings), section
-   * headers left out, lines joined by spaces.
+   * headers left out, lines joined by spaces. The text reader reads an agent's icon as one letter
+   * before the title ("E THRD: ...") and the middle dot as "•" (2026-11-20), so both are undone;
+   * a title starting with a one-letter word would lose that word here.
    */
   readAgents(): string {
     const lines = this.read();
@@ -86,6 +88,7 @@ export class AgentsWindow extends HerdrWindow {
     return lines
       .slice(start + 1, end === -1 ? undefined : end)
       .filter((l) => !sectionHeader.test(l))
+      .map((l) => l.replace(/^\S /, "").replaceAll("•", "·"))
       .join(" ");
   }
 
