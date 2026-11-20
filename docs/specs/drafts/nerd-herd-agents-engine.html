@@ -1,0 +1,920 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spec: nerd-herd Agents engine</title>
+<style>
+:root { color-scheme: light dark;
+        --ink:#1a1a1a; --bg:#fff; --muted:#595959; --rule:#d4d4d4; --ok:#2e7d32; --warn:#b34700;
+        --bg-soft:#f4f4f4; --link:#0b5fa5; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+        --ink:#e8e8e8; --bg:#16181c; --muted:#a8a8a8; --rule:#3a3d44; --ok:#7bc47f; --warn:#ffa04d;
+        --bg-soft:#22252b; --link:#7ab8f5; } }
+:root[data-theme="dark"] {
+        --ink:#e8e8e8; --bg:#16181c; --muted:#a8a8a8; --rule:#3a3d44; --ok:#7bc47f; --warn:#ffa04d;
+        --bg-soft:#22252b; --link:#7ab8f5; }
+* { box-sizing: border-box; }
+body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.55; color: var(--ink);
+       background: var(--bg); margin: 0; display: grid; grid-template-columns: 17rem minmax(0,46rem);
+       gap: 2.5rem; justify-content: center; padding: 2rem 1.25rem; }
+@media (max-width: 62rem) { body { grid-template-columns: minmax(0,1fr); gap: 1rem; } }
+a { color: var(--link); }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-radius: 2px; }
+.skip { position: absolute; left: -9999px; }
+.skip:focus { position: static; display: inline-block; margin-bottom: 1rem; }
+/* Prose holds to 60-75 characters per line; tables, figures and code use the full column. */
+main p, main li, dd { max-width: 68ch; }
+
+/* Contents panel and toolbar */
+#toc { position: sticky; top: 2rem; align-self: start; max-height: calc(100vh - 4rem); overflow-y: auto;
+       font-size: .9rem; border-right: 1px solid var(--rule); padding-right: 1rem; }
+@media (max-width: 62rem) { #toc { position: static; max-height: none; border-right: 0;
+       border-bottom: 1px solid var(--rule); padding: 0 0 1rem 0; } }
+#toc > h2 { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+            margin: 0 0 .5rem; border: 0; padding: 0; }
+#toc ol { list-style: none; margin: 0; padding: 0; }
+#toc a { color: var(--muted); text-decoration: none; display: block; padding: .15rem .4rem;
+         border-left: 2px solid transparent; border-radius: 0 3px 3px 0; }
+#toc a:hover { background: var(--bg-soft); color: var(--ink); }
+#toc a[aria-current] { color: var(--ink); font-weight: 600; border-left-color: var(--ink); background: var(--bg-soft); }
+#toc .count { color: var(--muted); font-weight: 400; font-size: .85em; }
+#toc li.for-you > a { border-left-color: var(--ok); color: var(--ink); }
+#toc li.not-yours > a { opacity: .5; }
+#toolbar { display: flex; flex-wrap: wrap; gap: .3rem; margin: 0 0 .75rem; }
+#toolbar fieldset { border: 0; margin: 0; padding: 0; display: contents; }
+#toolbar legend { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+                  color: var(--muted); width: 100%; padding: 0; }
+#toolbar button, #toolbar label { font: inherit; font-size: .8rem; cursor: pointer; color: var(--muted);
+       background: transparent; border: 1px solid var(--rule); border-radius: 999px; padding: .1rem .6rem; }
+#toolbar [aria-pressed="true"], #toolbar input:checked + span {
+       color: var(--ink); border-color: var(--ink); background: var(--bg-soft); font-weight: 600; }
+#toolbar input { position: absolute; opacity: 0; width: 0; height: 0; }
+#toolbar input:focus-visible + span { outline: 2px solid var(--link); outline-offset: 2px; }
+#toolbar label span { display: inline-block; border-radius: 999px; padding: .1rem .6rem;
+       border: 1px solid var(--rule); }
+#toolbar label { border: 0; padding: 0; }
+
+/* Prose */
+h1 { border-bottom: 2px solid var(--ink); padding-bottom: .4rem; margin-top: 0; }
+h2, h3, h4 { scroll-margin-top: 1rem; }
+h2 { margin-top: 2.25rem; border-bottom: 1px solid var(--rule); padding-bottom: .25rem; }
+h3 { margin: 1.75rem 0 .5rem; font-size: 1.15rem; }
+h4 { margin: 0 0 .4rem; font-size: 1rem; }
+code { background: var(--bg-soft); padding: .1rem .3rem; border-radius: 3px; font-size: .92em; }
+pre { background: var(--bg-soft); padding: .75rem; border-radius: 4px; overflow-x: auto; }
+pre.mermaid { background: transparent; text-align: center; }
+figcaption { color: var(--muted); font-size: .9em; text-align: center; }
+table { border-collapse: collapse; width: 100%; margin: .75rem 0; }
+th, td { border: 1px solid var(--rule); padding: .4rem .6rem; text-align: left; vertical-align: top; }
+th { background: var(--bg-soft); }
+.anchor { color: var(--muted); text-decoration: none; opacity: 0; padding-left: .4rem; font-weight: 400; }
+:hover > .anchor, .anchor:focus-visible { opacity: 1; }
+details.backlinks { font-size: .85em; color: var(--muted); margin: .25rem 0 .5rem; }
+details.backlinks > summary { cursor: pointer; width: fit-content; }
+details.backlinks > ul { margin: .25rem 0 0; padding-left: 1.25rem; }
+details.claims { margin: .25rem 0 .75rem; }
+details.claims > summary { cursor: pointer; width: fit-content; color: var(--muted); font-weight: 600; }
+details.claims > ol { margin: .35rem 0 0; padding-left: 1.6rem; }
+details.claims li { margin: .2rem 0; scroll-margin-top: 1rem; }
+dl.checked-by { font-size: .85em; gap: 0 .5rem; margin: .1rem 0 .35rem; }
+dl.checked-by > :is(dt, dd) { margin: 0; }
+dl.checked-by > dd { grid-column: -2; }   /* every case beside the one label */
+.badge { font-size: .7em; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+         border: 1px solid currentColor; border-radius: 3px; padding: 0 .35em; margin-left: .5em;
+         vertical-align: middle; white-space: nowrap; }
+.badge.is-ok { color: var(--ok); }
+.badge.is-warn { color: var(--warn); }
+.unresolved-ref { color: var(--warn); font-weight: 600; }
+details.source { margin-top: .5rem; font-size: .9em; }
+details.source > summary { cursor: pointer; color: var(--muted); width: fit-content; }
+details.source > pre { margin-top: .4rem; }
+spec-roles { display: none; }
+
+/* Labeled fields: one rule set styles every block's fields identically. */
+dl { display: grid; grid-template-columns: max-content 1fr; gap: .25rem .75rem; margin: .5rem 0 0; }
+dt { font-weight: 600; color: var(--muted); }
+dd { margin: 0; }
+dd > ul { margin: 0; padding-left: 1.1rem; }
+@media (max-width: 46rem) { dl { grid-template-columns: 1fr; gap: 0; }
+  dt { margin-top: .5rem; } dd { margin-bottom: .25rem; } }
+
+/* Domain blocks: the container is named, the structure inside it is HTML. */
+spec-question, test-case, spec-phase, spec-module {
+  display: block; border: 1px solid var(--rule); border-radius: 4px; margin: .75rem 0;
+  padding: .6rem .85rem; scroll-margin-top: 1rem; }
+ol.tasks { margin: .6rem 0 0; padding-left: 1.6rem; }
+ol.tasks > li { margin: .5rem 0; }
+ol.tasks h4 { margin: 0 0 .2rem; font-size: 1rem; }
+spec-question[status="open"] { border-left: 4px solid var(--warn); }
+spec-question[status="resolved"]   { border-left: 4px solid var(--ok); }
+spec-phase[parallel-safe="yes"] { border-left: 4px solid var(--ok); }
+spec-phase[parallel-safe="no"]  { border-left: 4px solid var(--warn); }
+test-group { display: block; margin: 1.25rem 0; }
+
+/* Section disclosure: the title stays visible whatever the body is doing. */
+section > details > summary { list-style: none; cursor: pointer; }
+section > details > summary::-webkit-details-marker { display: none; }
+section > details > summary > h2 { display: inline-block; width: calc(100% - 1.5rem); }
+section > details > summary::after { content: "\25BE"; color: var(--muted); margin-left: .35rem; }
+section > details:not([open]) > summary::after { content: "\25B8"; }
+section > details:not([open]) > summary > h2 { color: var(--muted); border-bottom-style: dashed; }
+
+/* Reader modes fold what is not yours; the "for you" marker is written into the
+   document by the behavior script, never generated here. */
+[data-roles].not-yours > details:not(.backlinks) > summary { opacity: .6; }
+
+/* Facet filters dim non-matching items in place. */
+.facets { display: flex; flex-direction: column; gap: .35rem; margin: .5rem 0 1.25rem; }
+.facets .facet { display: flex; flex-wrap: wrap; gap: .3rem; align-items: baseline; }
+.facets .facet-name { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--muted); min-width: 7rem; }
+.facets button { font: inherit; font-size: .78rem; cursor: pointer; color: var(--muted);
+  background: transparent; border: 1px solid var(--rule); border-radius: 999px; padding: .05rem .55rem; }
+.facets button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink);
+  background: var(--bg-soft); font-weight: 600; }
+.facets .facet-count { opacity: .7; font-variant-numeric: tabular-nums; }
+.filtered-out > :is(h3, h4) { opacity: .5; }
+
+/* A folded block keeps its heading and hides only its body. `hidden="until-found"`
+   leaves that body reachable by the browser's find, and nothing moves in the DOM. */
+.folded > :is(h3, h4)::after { content: "\2026"; color: var(--muted); margin-left: .4rem; }
+
+/* Print renders the document complete: everything expanded, undimmed, no chrome. */
+@media print {
+  body { display: block; padding: 0; color: #000; background: #fff; }
+  #toc { position: static; max-height: none; border: 0; padding: 0; margin-bottom: 1.5rem; }
+  #toolbar, .skip, .anchor { display: none; }
+  [data-roles].not-yours > details:not(.backlinks) > summary, .filtered-out > :is(h3, h4) { opacity: 1; }
+  [hidden] { display: revert !important; }   /* a printed spec is complete */
+  .facets { display: none; }
+  section > details > summary::after { content: none; }
+  .folded > :is(h3, h4)::after { content: none; }
+  a { color: #000; }
+  spec-question, test-case, spec-phase, spec-module, ol.tasks > li, figure, details.source { break-inside: avoid; }
+  h2, h3, h4 { break-after: avoid; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<nav id="toc" aria-labelledby="toc-heading">
+  <h2 id="toc-heading">Contents</h2>
+  <div id="toolbar"></div>
+  <ol></ol>
+</nav>
+<main id="content">
+<main id="content">
+  <h1>nerd-herd Agents engine: one state core, many hosts</h1>
+  <p>Today the Agents mod keeps part of its state in the Herdr mod layer (<code>src/mod/agents/</code>): which statuses are folded, when each session entered its status, which sessions got their starting point, the version control labels, and what each click does. Only end-to-end walks in a running window reach that code, and a full walk run takes about 11 minutes. This spec moves that state into one engine that takes plain inputs and returns the view, the next state, and the effects to carry out. Herdr becomes one host that feeds the engine and carries out its effects. A text host, and later a command-line or mobile host, can feed it the same inputs. State behavior is then tested in unit tests that run in about a second, and walks check only what the person sees.</p>
+  <dl class="spec-meta">
+    <dt>Stage</dt> <dd data-field="stage">drafts</dd>
+    <dt>Complexity</dt> <dd data-field="complexity">5 / 10 &mdash; a restructure of one mod's state with behavior kept the same; most arranging logic already lives in <code>src/core</code></dd>
+    <dt>Sequence</dt> <dd data-field="sequence">Starts after <a href="../in-progress/executing-nerd-herd-agents.html">the Agents mod spec</a> is completed, so a failing hand check there is never confused with this move (the user, 2026-11-20).</dd>
+    <dt>Toolchain</dt> <dd data-field="toolchain">TypeScript on Bun, as the Agents mod; <code>fallow</code> for the boundary check (<code>bun run check:boundaries</code>).</dd>
+    <dt>Standing rule</dt> <dd data-field="standing-rule">Make the state bulletproof first with fast tests, then use end-to-end walks to check the output (the user, 2026-11-20).</dd>
+  </dl>
+  <spec-roles>
+    <spec-role id="design">Design reviewer</spec-role>
+    <spec-role id="build">Implementation lead</spec-role>
+    <spec-role id="qa">Test reviewer</spec-role>
+  </spec-roles>
+
+  <section class="narrative">
+    <h2>Narrative</h2>
+    <p class="skeleton-journey">Dannel opens Herdr and sees the same Agents list as before, now computed by the engine from Herdr's data, and folding the Done pill reaches the engine as a command whose save Herdr carries out.</p>
+    <h3>The same Agents, through one engine</h3>
+    <details open class="claims"><summary>Claims</summary>
+      <ol>
+        <li>The engine computes the same Agents sections and cards from Herdr's data as the mod showed before</li>
+        <li>A click in Agents reaches the engine as a command and Herdr carries out what the engine asks for</li>
+        <li>Folds and the sort and time in status read back after a restart as before</li>
+      </ol>
+    </details>
+    <p>Dannel opens Herdr after the move. The Agents section shows Done, Blocked, Working and Idle pills with the same cards, times and version control labels as the day before, because the Herdr host hands the engine the same agents, spaces, terminals and groups, and draws the view it gets back. Dannel clicks the Idle pill to fold it. The click becomes a fold command, the engine returns a view with Idle folded and asks for the folded statuses to be saved, and the Herdr host saves them. Dannel quits Herdr and opens it again, and Idle is still folded.</p>
+    <h3>Working out a feature without a window</h3>
+    <details open class="claims"><summary>Claims</summary>
+      <ol>
+        <li>A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window</li>
+        <li>The engine imports nothing from Herdr or from any host</li>
+      </ol>
+    </details>
+    <p>Dannel asks for a new rule: a Blocked session should stay at the top of its group even when the group is folded. The rule is stated as engine inputs (Herdr's data with a blocked session in a folded group) and the view expected back, and its test fails in under a second. Once the engine passes it, one walk checks that the window draws the mark. Nothing in the engine can reach Herdr by accident, because the boundary check fails the build when the engine imports from a host.</p>
+    <h3>A second host</h3>
+    <details open class="claims"><summary>Claims</summary>
+      <ol>
+        <li>A text host prints the same Agents list from the same inputs</li>
+      </ol>
+    </details>
+    <p>To show the engine depends on no host, a small text host reads a saved snapshot of Herdr's data and prints the Agents list as text: each section, then its cards with title, place, machine, time and version control. It prints the same list the Herdr host draws from the same snapshot. A command-line or mobile host later maps its own inputs the same way.</p>
+  </section>
+
+  <section class="questions" data-roles="design build">
+    <details open><summary><h2>Questions</h2></summary>
+      <spec-question status="resolved" resolved-on="2026-11-20">
+        <h3>Whether to extract the engine</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Should the Agents state move into a host-independent engine, so features are worked out with fast tests and walks only check the output?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Yes, as its own spec after the Agents mod spec closes (the user, 2026-11-20: "extract the state engine as an agnostic piece of this ... map those inputs to where they need to go and interpret those outputs in the specific domain"; "draft the engine spec while we wait for this one to close").</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open" data-roles="design build">
+        <h3>Engine shape</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Is the engine one pure step function, or an object that holds its state?</dd>
+          <dt>Context</dt> <dd data-field="context">A host calls the engine on every Herdr change, clock tick, command and version control reading.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>Pure step: <code>step(state, input) → { state, view, effects }</code>. Every test is one call with no setup; the host keeps the state between calls.</li>
+            <li>Object: <code>engine.send(input)</code> with the state inside. Hosts are simpler; tests need an engine per case and read state through methods.</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Pure step, with a five-line helper that holds the state for hosts that want an object.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open" data-roles="design">
+        <h3>Spaces in scope</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Does this spec move Spaces' state into an engine too, or Agents only?</dd>
+          <dt>Context</dt> <dd data-field="context">Spaces' group model and its commands are already in <code>src/core</code> (<code>applyCommand</code>, the saved group store). The rest of Spaces is Herdr's own mod, vendored and patched (<code>src/mod/vendor/herdrSpaces.js</code>), and its state is Herdr's.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>Agents only: one mod moves; Spaces keeps working as today.</li>
+            <li>Agents and Spaces: one engine for both; this means rewriting Herdr's Spaces code rather than patching it.</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Agents only.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open" data-roles="design build">
+        <h3>Second host in this spec</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Does this spec build the text host, or leave every second host for later?</dd>
+          <dt>Context</dt> <dd data-field="context">Unit tests already call the engine without Herdr. A host that prints text from a snapshot is a second real caller, so a Herdr-only assumption in the engine shows up now rather than when a mobile host starts.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>Text host from a snapshot file: small, runnable from the terminal, no live data.</li>
+            <li>Command-line host on live herdr-core data (<code>hc</code>): more useful day to day; adds reading herdr-core outside Herdr, which no spec has looked at yet.</li>
+            <li>No second host: the unit tests stand in for one.</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Text host from a snapshot file. A live command-line host gets its own spec.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open" data-roles="design build">
+        <h3>Engine location</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Does the engine live in this repository's <code>src/core</code>, or in a package of its own?</dd>
+          <dt>Context</dt> <dd data-field="context">A mobile app or another repository would import a package; nothing imports it from outside yet.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>A folder in <code>src/core/agents/</code> with its own boundary zone: no packaging work now; moving it later is a folder move.</li>
+            <li>A package now (<code>packages/agents-engine</code>): ready for outside hosts; adds a workspace and a build for one consumer.</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">A folder with its own zone, and a package when a host outside this repository starts.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="open" data-roles="design">
+        <h3>What the view holds</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Does the engine's view name looks (purple outline, tint colors, sizes), or only meanings (focused, folded, status, attention counts) that each host draws in its own way?</dd>
+          <dt>Context</dt> <dd data-field="context">A text host has no colors, and a mobile host has its own theme. The more the view decides, the more a unit test covers; the more it names looks, the less it fits other hosts.</dd>
+          <dt>Options</dt>
+          <dd data-field="options"><ul>
+            <li>Meanings only: each host maps a meaning to its look (Herdr: focused → purple outline).</li>
+            <li>Meanings and looks: the view carries colors; other hosts ignore them.</li>
+          </ul></dd>
+          <dt>Recommendation</dt> <dd data-field="recommendation">Meanings only, with every decision about what shows (folded, outlined, which marks, which label) made in the engine. A host decides only how each meaning looks.</dd>
+        </dl>
+      </spec-question>
+    </details>
+  </section>
+
+  <section class="process-flow">
+    <details open><summary><h2>Process Flow</h2></summary>
+      <figure>
+        <pre class="mermaid">flowchart LR
+  herdr["Herdr: agents, spaces, terminals, groups"] --> hostIn["Herdr host reads inputs"]
+  clicks["Clicks and keys"] --> hostIn
+  clock["Clock"] --> hostIn
+  hostIn --> engine["Agents engine: step(state, input)"]
+  engine --> view["View: sections, folders, cards"]
+  engine --> effects["Effects: save, label, rename, focus, read version control"]
+  view --> draw["Herdr host draws"]
+  effects --> carry["Herdr host carries out"]
+  carry --> herdr
+  snapshot["Snapshot file"] --> text["Text host"]
+  text --> engine</pre>
+        <figcaption>Every host feeds the same engine and only draws its view and carries out its effects, so state rules are written and tested once.</figcaption>
+      </figure>
+    </details>
+  </section>
+
+  <section class="module-definitions" data-roles="build">
+    <details open><summary><h2>Module Definitions</h2></summary>
+      <spec-module>
+        <h3>Agents engine</h3>
+        <dl>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Turns the current state and one input into the next state, the view, and the effects a host must carry out.</dd>
+          <dt>Owns</dt> <dd data-field="owns">The sort, folded groups and statuses, when each session entered its status, which sessions have their starting point, the version control labels, and what each command changes. Today these live in <code>src/mod/agents/app.ts</code>, <code>main.ts</code> and <code>herdrAgents.ts</code>.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Arranging rows to the session list model (<code>src/core/sessions/sessionList.ts</code>); the Done rule to the Done ledger; time text to <code>statusTime.ts</code>; label text to <code>src/core/jj/vcsLabel.ts</code>; group looks to <code>src/core/groups/groupLook.ts</code>.</dd>
+          <dt>Input <code>AgentsInput</code></dt> <dd data-field="input" data-type="AgentsInput">One of: Herdr's data (sessions, groups, focus), a clock tick, a typed command, a version control reading, or saved values at start.</dd>
+          <dt>Output <code>AgentsStep</code></dt> <dd data-field="output" data-type="AgentsStep">The next state, the view (rows with meanings), and a list of effects.</dd>
+        </dl>
+      </spec-module>
+      <spec-module>
+        <h3>Herdr host</h3>
+        <dl>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Feeds Herdr's data, clicks and the clock to the engine, draws its view in Herdr, and carries out its effects with Herdr's APIs and <code>hc</code>.</dd>
+          <dt>Owns</dt> <dd data-field="owns">Reading Herdr (<code>agents()</code>, <code>spaces()</code>, <code>terminals()</code>, <code>panes()</code>), the command text format (<code>fold-status:{json}</code> and the rest), drawing with gpui-kit, and storage in localStorage and shared state.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Every decision about state and what shows to the engine.</dd>
+          <dt>Input <code>Herdr APIs</code></dt> <dd data-field="input" data-type="Herdr APIs">Herdr's data, commands, the timer.</dd>
+          <dt>Output <code>Elements and Herdr calls</code></dt> <dd data-field="output" data-type="Elements and Herdr calls">The drawn Agents section, and Herdr commands for each effect.</dd>
+        </dl>
+      </spec-module>
+      <spec-module>
+        <h3>Text host</h3>
+        <dl>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Prints the Agents list as text from a snapshot of Herdr's data (depends on the open question "Second host in this spec").</dd>
+          <dt>Owns</dt> <dd data-field="owns">Reading the snapshot file and the text layout.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Everything else to the engine.</dd>
+          <dt>Input <code>Snapshot file</code></dt> <dd data-field="input" data-type="Snapshot file">JSON holding the same data the Herdr host gives the engine.</dd>
+          <dt>Output <code>Text</code></dt> <dd data-field="output" data-type="Text">The sections and cards, one line per row.</dd>
+        </dl>
+      </spec-module>
+    </details>
+  </section>
+
+  <section class="validation-boundaries" data-roles="build">
+    <details open><summary><h2>Validation Boundaries</h2></summary>
+      <ul>
+        <li><strong>Host to engine:</strong> every input is typed. A host parses its own wire format (Herdr's command text, a snapshot file) and passes only typed inputs. Text that cannot be read never reaches the engine; the host reports it, and the next command still applies.</li>
+        <li><strong>Saved values handed in at start</strong> are external data: another version or a hand edit may have written them. The engine reads them through its own schema and counts an unreadable value as never saved.</li>
+        <li><strong>Labels and titles from Herdr</strong> keep the rules of the Agents mod spec: <code>nerd-herd.handled</code> is a whole turn number or no label, and a title is shown as text.</li>
+        <li><strong>Engine to host:</strong> effects are data. The engine never calls a host, so a host may batch, retry or drop an effect without the engine knowing how.</li>
+      </ul>
+    </details>
+  </section>
+
+  <section class="ambiguity-resolution">
+    <details open><summary><h2>Ambiguity Resolution</h2></summary>
+      <p>"Engine" means the code that holds Agents' state and decides what shows. "Host" means the code around it that reads a platform's data and draws or prints the view. Herdr is the first host.</p>
+      <p>"Same as before" in the first journey is measured by the Agents walks: they run against the engine with their expected values unchanged. Changing an expected value during this spec is a behavior change, and it needs the user's decision first.</p>
+      <p>The view carries meanings or looks according to the open question "What the view holds". The test cases below are written for meanings.</p>
+    </details>
+  </section>
+
+  <section class="test-cases" data-roles="qa">
+    <details open><summary><h2>Test Cases</h2></summary>
+      <test-group category="happy-path">
+        <h3>Engine behavior</h3>
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+          <h4>Folding a status records it and asks the host to save it</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">An Idle session and a Done session, sorted by Priority, nothing folded</dd>
+            <dt>When</dt> <dd data-field="when">The engine takes the command to fold Idle</dd>
+            <dt>Then</dt> <dd data-field="then">The view shows the Idle pill alone, marked folded, and the effects hold one save of the folded statuses with the value [&quot;idle&quot;]</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+          <h4>Renaming a session asks the host to rename its tab</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session in terminal t1</dd>
+            <dt>When</dt> <dd data-field="when">The engine takes the command to rename t1 to &quot;NAS drive health&quot;</dd>
+            <dt>Then</dt> <dd data-field="then">The effects hold one tab rename for t1 with the name &quot;NAS drive health&quot;</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+          <h4>Clicking a card asks the host to focus its pane</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session in terminal t1, another pane focused</dd>
+            <dt>When</dt> <dd data-field="when">The engine takes the command to focus t1</dd>
+            <dt>Then</dt> <dd data-field="then">The effects hold one focus of t1</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+          <h4>Dismissing the focused Done session asks for its handled label</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The focused session t1 is under Done at turn 4</dd>
+            <dt>When</dt> <dd data-field="when">The engine takes the dismiss command</dd>
+            <dt>Then</dt> <dd data-field="then">The effects hold one label write on t1: nerd-herd.handled = 4</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+          <h4>A dismissed session moves to Idle once its label comes back</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Session t1 dismissed at turn 4</dd>
+            <dt>When</dt> <dd data-field="when">The engine takes Herdr's next data, in which t1 carries nerd-herd.handled = 4</dd>
+            <dt>Then</dt> <dd data-field="then">The view shows t1 under Idle</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+          <h4>A session seen for the first time gets its starting point once</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session t1 with no nerd-herd.handled label, whose Herdr seen turn is 3</dd>
+            <dt>When</dt> <dd data-field="when">The engine takes Herdr's data twice with no change between</dd>
+            <dt>Then</dt> <dd data-field="then">The first result's effects hold one label write on t1: nerd-herd.handled = 3, and the second result holds none</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+          <h4>Time in status follows the clock input</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session that became Done at 10:00</dd>
+            <dt>When</dt> <dd data-field="when">The engine takes a clock tick at 10:05</dd>
+            <dt>Then</dt> <dd data-field="then">The card's time in status reads 5m</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+          <h4>The engine asks the host to read each session's version control</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session t1 working in /repo on this computer</dd>
+            <dt>When</dt> <dd data-field="when">The engine takes Herdr's data</dd>
+            <dt>Then</dt> <dd data-field="then">The effects hold one version control read for t1 in /repo on this computer</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+          <h4>A version control reading lands under the card's time</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session t1</dd>
+            <dt>When</dt> <dd data-field="when">The engine takes the reading for t1: bookmark main, 2 changes ahead</dd>
+            <dt>Then</dt> <dd data-field="then">The card for t1 reads main ↑2</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Folds and the sort and time in status read back after a restart as before" covers-module="Agents engine" status="pending">
+          <h4>Saved state handed in at start shapes the first view</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Saved values: sort groups, Work folded, Done folded</dd>
+            <dt>When</dt> <dd data-field="when">The engine starts with them and takes Herdr's data</dd>
+            <dt>Then</dt> <dd data-field="then">The view is grouped by group, Work is folded, and no save effect is returned</dd>
+          </dl>
+        </test-case>
+      </test-group>
+      <test-group category="error-scenarios">
+        <h3>Error scenarios</h3>
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+          <h4>A rename for a terminal Agents does not list asks for nothing</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Sessions t1 and t2</dd>
+            <dt>When</dt> <dd data-field="when">The engine takes the command to rename t99</dd>
+            <dt>Then</dt> <dd data-field="then">The effects are empty and the view is unchanged</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Folds and the sort and time in status read back after a restart as before" covers-module="Agents engine" status="pending">
+          <h4>A saved value that cannot be read counts as never saved</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A saved folded-statuses value of &quot;idle&quot; (text, not a list)</dd>
+            <dt>When</dt> <dd data-field="when">The engine starts with it</dd>
+            <dt>Then</dt> <dd data-field="then">Nothing is folded, and the result names the unreadable value</dd>
+          </dl>
+        </test-case>
+      </test-group>
+      <test-group category="architecture">
+        <h3>Architecture</h3>
+        <test-case traces-to="The engine imports nothing from Herdr or from any host" covers-module="Agents engine" status="pending">
+          <h4>The engine zone imports only the core</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The boundary configuration with an engine zone allowed to import the core only</dd>
+            <dt>When</dt> <dd data-field="when">bun run check:boundaries runs</dd>
+            <dt>Then</dt> <dd data-field="then">It exits 0 with no violations; a test import of herdr from the engine makes it exit non-zero</dd>
+          </dl>
+        </test-case>
+      </test-group>
+      <test-group category="ux-validation">
+        <h3>UX validation</h3>
+        <test-case traces-to="The engine computes the same Agents sections and cards from Herdr's data as the mod showed before" covers-module="Herdr host" status="pending">
+          <h4>The Agents walks pass unchanged on the engine</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Every Agents walk in e2e/ as it is before this spec, with the expected values unchanged</dd>
+            <dt>When</dt> <dd data-field="when">bun run test:e2e runs against the Herdr host on the engine</dd>
+            <dt>Then</dt> <dd data-field="then">Every Agents walk passes</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A click in Agents reaches the engine as a command and Herdr carries out what the engine asks for" covers-module="Herdr host" status="pending">
+          <h4>A card click and a pill click still act through the engine</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A running test window with one Done session</dd>
+            <dt>When</dt> <dd data-field="when">The walk sends the fold-status and focus commands the clicks send</dd>
+            <dt>Then</dt> <dd data-field="then">The Done pill shows folded, and Herdr reports the session's pane focused</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Folds and the sort and time in status read back after a restart as before" covers-module="Herdr host" status="pending">
+          <h4>Folds and the sort survive a restart</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A test window with Work folded and the sort set to groups</dd>
+            <dt>When</dt> <dd data-field="when">The window quits and starts again on the same test home</dd>
+            <dt>Then</dt> <dd data-field="then">Agents shows Work folded under Grouped by group</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A text host prints the same Agents list from the same inputs" covers-module="Text host" status="pending">
+          <h4>The text host prints the list the Herdr host draws</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A saved snapshot of Herdr's data with one Done and one Idle session</dd>
+            <dt>When</dt> <dd data-field="when">The text host runs on it</dd>
+            <dt>Then</dt> <dd data-field="then">It prints the Done section with its card, then the Idle section with its card, with the same titles, places and machines the engine's view holds</dd>
+          </dl>
+        </test-case>
+      </test-group>
+    </details>
+  </section>
+
+  <section class="phase-dependencies" data-roles="build">
+    <details open><summary><h2>Phase Dependencies</h2></summary>
+      <spec-phase parallel-safe="no" agent-suitable="no">
+        <h3>Walking skeleton</h3>
+        <dl>
+          <dt>Writes</dt>
+          <dd><ul>
+            <li data-field="shared-artifact">src/core/agents/engine.ts (stubbed step)</li>
+            <li data-field="shared-artifact">src/mod/agents/main.ts and app.ts (Herdr data through the engine)</li>
+            <li data-field="shared-artifact">.fallowrc.json (engine zone, at error, before the first walk)</li>
+          </ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Walking skeleton" parallel-safe="no" agent-suitable="yes">
+        <h3>Commands through the engine</h3>
+        <dl>
+          <dt>Writes</dt>
+          <dd><ul><li data-field="shared-artifact">src/core/agents/*</li><li data-field="shared-artifact">src/mod/agents/main.ts</li></ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">yes</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Commands through the engine" parallel-safe="no" agent-suitable="yes">
+        <h3>Clock and saved state</h3>
+        <dl>
+          <dt>Writes</dt>
+          <dd><ul><li data-field="shared-artifact">src/core/agents/*</li><li data-field="shared-artifact">src/mod/agents/app.ts and herdrAgents.ts</li></ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">yes</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Clock and saved state" parallel-safe="no" agent-suitable="yes">
+        <h3>Version control reads as effects</h3>
+        <dl>
+          <dt>Writes</dt>
+          <dd><ul><li data-field="shared-artifact">src/core/agents/*</li><li data-field="shared-artifact">src/mod/agents/app.ts and herdrAgents.ts</li></ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">yes</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Version control reads as effects" parallel-safe="no" agent-suitable="no">
+        <h3>Re-walk on the engine</h3>
+        <dl>
+          <dt>Writes</dt>
+          <dd><ul><li data-field="shared-artifact">spec file</li></ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Re-walk on the engine" parallel-safe="no" agent-suitable="yes">
+        <h3>Text host</h3>
+        <dl>
+          <dt>Writes</dt>
+          <dd><ul><li data-field="shared-artifact">scripts/agents-text.ts</li><li data-field="shared-artifact">package.json (one script)</li></ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">yes</dd>
+        </dl>
+      </spec-phase>
+      <h3>Definition of Done</h3>
+      <ol class="tasks">
+        <li><h4>bun run check:all passes, boundary check included</h4><dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+        <li><h4>Every Agents walk passes with its expected values unchanged</h4><dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+        <li><h4>No Agents state is kept in src/mod/agents outside the engine's state</h4><dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+        <li><h4>The security scans run clean</h4><dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+        <li><h4>Dannel uses the reinstalled mods for a day and sees no change</h4><dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+      </ol>
+      <execution-plan>Walking skeleton &rarr; Commands through the engine &rarr; Clock and saved state &rarr; Version control reads as effects &rarr; Re-walk on the engine &rarr; Text host</execution-plan>
+    </details>
+  </section>
+</main>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true });
+</script>
+<script>
+(() => {
+  const slug = s => s.trim().toLowerCase().replace(/[^\w]+/g, '-').replace(/^-|-$/g, '');
+  const el = (tag, props = {}, ...kids) => {
+    const node = document.createElement(tag);
+    Object.assign(node, props);
+    node.append(...kids);
+    return node;
+  };
+  const BLOCKS = 'spec-question, test-case, spec-module, spec-phase';
+  const byLabel = new Map();
+
+  // 1a. Section and narrative headings: stable id, copyable anchor, section labelling.
+  //     Headings inside a block belong to that block and are handled in 1b.
+  //     A task heading names a behavior, not an addressable thing: two halves of a pair
+  //     share it on purpose, so it gets no id and resolves nothing.
+  document.querySelectorAll('main :is(h2, h3, h4)').forEach(h => {
+    if (h.closest(BLOCKS) || h.closest('ol.tasks')) return;
+    const label = h.textContent.trim();
+    h.id ||= slug('sec-' + label);
+    byLabel.set(label.toLowerCase(), h);
+    const a = el('a', { className: 'anchor', href: '#' + h.id, textContent: '#' });
+    a.setAttribute('aria-label', 'Link to this section');
+    h.append(a);
+    const section = h.closest('section');
+    if (h.tagName === 'H2' && section) section.setAttribute('aria-labelledby', h.id);
+  });
+
+  // 1b. Domain blocks: named by their own heading, announced as one unit.
+  document.querySelectorAll(BLOCKS).forEach(node => {
+    const heading = node.querySelector(':scope > :is(h3, h4)');
+    const label = (heading?.textContent || node.textContent).trim().slice(0, 80);
+    node.id ||= slug(node.tagName.toLowerCase() + '-' + label);
+    node.dataset.label = label;        // captured before badges are appended, so it stays clean
+    byLabel.set(label.toLowerCase(), node);
+    node.setAttribute('role', 'group');
+    if (heading) {
+      heading.id ||= node.id + '-h';
+      node.setAttribute('aria-labelledby', heading.id);
+    } else {
+      node.setAttribute('aria-label', label);
+    }
+  });
+
+  // 1c. Claims: the one target `traces-to` resolves against, so they keep an index of
+  //     their own. A journey heading is not in it, and a case traced to one is unresolved.
+  const claims = new Map();
+  document.querySelectorAll('section.narrative details.claims').forEach(list => {
+    const items = list.querySelectorAll(':scope > ol > li');
+    list.querySelector(':scope > summary').textContent = 'Claims (' + items.length + ')';
+    items.forEach(li => {
+      const label = li.textContent.trim();
+      li.id ||= slug('claim-' + label);
+      li.dataset.label = label;
+      claims.set(label.toLowerCase(), li);
+      const a = el('a', { className: 'anchor', href: '#' + li.id, textContent: '#' });
+      a.setAttribute('aria-label', 'Link to this claim');
+      li.append(a);
+    });
+  });
+
+  // 2. Status attributes become document text, not just a border colour.
+  const badge = (node, text, tone) => {
+    const target = node.querySelector(':scope > :is(h3, h4)') || node;
+    target.append(el('span', { className: 'badge is-' + tone, textContent: text }));
+  };
+  document.querySelectorAll('spec-question[status]').forEach(q =>
+    badge(q, q.getAttribute('status'), q.getAttribute('status') === 'resolved' ? 'ok' : 'warn'));
+  document.querySelectorAll('test-case[status]').forEach(t =>
+    badge(t, t.getAttribute('status'), t.getAttribute('status') === 'done' ? 'ok' : 'warn'));
+  document.querySelectorAll('spec-phase[parallel-safe]').forEach(p => {
+    const yes = p.getAttribute('parallel-safe') === 'yes';
+    badge(p, yes ? 'parallel-safe' : 'sequential', yes ? 'ok' : 'warn');
+  });
+  // Written by execution at nomination, never by the author: the artifacts were
+  // read off tasks that exist and checked against the siblings nominated with it.
+  document.querySelectorAll('spec-phase[artifacts-verified="yes"]').forEach(p =>
+    badge(p, 'artifacts verified', 'ok'));
+
+  // 3. Cross-reference attributes become linked rows in the block's own field list.
+  //    Backlinks are a navigation aid, so they arrive folded. A claim is the exception:
+  //    it usually has one case, so its cases stay open beneath it as "Checked by".
+  //    A heading cannot hold a <details>, so a heading target gets its list after it.
+  const addBacklink = (target, node) => {
+    if (target.matches('details.claims li')) {
+      let checked = target.querySelector(':scope > dl.checked-by');
+      if (!checked) target.append(checked = el('dl', { className: 'checked-by' },
+        el('dt', { textContent: 'Checked by' })));
+      return checked.append(el('dd', {}, node));
+    }
+    const isHeading = /^H[2-4]$/.test(target.tagName);
+    let box = isHeading
+      ? (target.nextElementSibling?.matches('details.backlinks') ? target.nextElementSibling : null)
+      : target.querySelector(':scope > details.backlinks');
+    if (!box) {
+      box = el('details', { className: 'backlinks' }, el('summary'), el('ul'));
+      isHeading ? target.after(box) : target.append(box);
+    }
+    box.querySelector(':scope > ul').append(el('li', {}, node));
+    box.querySelector(':scope > summary').textContent =
+      'Referenced by (' + box.querySelectorAll(':scope > ul > li').length + ')';
+  };
+  const resolve = (node, attr, label, index = byLabel) => {
+    const raw = node.getAttribute(attr);
+    if (!raw) return;
+    const dd = el('dd');
+    raw.split(',').map(s => s.trim()).filter(Boolean).forEach((ref, i) => {
+      if (i) dd.append(document.createTextNode(', '));
+      const target = index.get(ref.toLowerCase());
+      if (!target) return dd.append(el('span', {
+        className: 'unresolved-ref', textContent: ref + ' (unresolved)' }));
+      dd.append(el('a', { href: '#' + target.id, textContent: ref }));
+      addBacklink(target, el('a', { href: '#' + node.id, textContent: node.dataset.label }));
+    });
+    let list = node.querySelector(':scope > dl');
+    if (!list) node.append(list = el('dl'));
+    list.prepend(el('dt', { textContent: label }), dd);
+  };
+  document.querySelectorAll('test-case').forEach(t => {
+    resolve(t, 'traces-to', 'Traces to', claims);
+    resolve(t, 'covers-module', 'Covers module');
+  });
+  document.querySelectorAll('spec-phase').forEach(p => resolve(p, 'depends-on', 'Depends on'));
+
+  // 4. Show first, tell on demand: each diagram keeps its source one toggle away.
+  //    Runs before the deferred module script, so it captures the source pre-render.
+  document.querySelectorAll('pre.mermaid').forEach(pre => {
+    const details = el('details', { className: 'source' },
+      el('summary', { textContent: 'Diagram source' }),
+      el('pre', { textContent: pre.textContent.trim() }));
+    (pre.closest('figure') || pre).append(details);
+  });
+  let reopened = [];   // a printed spec must be complete, so nothing stays collapsed on paper
+  addEventListener('beforeprint', () => {
+    reopened = [...document.querySelectorAll('details:not([open])')];
+    reopened.forEach(d => d.open = true);
+  });
+  addEventListener('afterprint', () => reopened.forEach(d => d.open = false));
+
+  // 5. Toolbar: theme switch, then reader modes when roles are declared.
+  const toolbar = document.getElementById('toolbar');
+  const store = {
+    get: k => { try { return localStorage.getItem(k); } catch { return null; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+  };
+  const themeBtn = el('button', { type: 'button' });
+  const paintTheme = () => {
+    const dark = document.documentElement.dataset.theme === 'dark';
+    themeBtn.textContent = dark ? 'Light' : 'Dark';
+    themeBtn.setAttribute('aria-label', `Switch to ${dark ? 'light' : 'dark'} theme`);
+  };
+  const saved = store.get('spec-theme');
+  if (saved) document.documentElement.dataset.theme = saved;
+  else document.documentElement.dataset.theme =
+    matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  themeBtn.addEventListener('click', () => {
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    store.set('spec-theme', next);
+    paintTheme();
+  });
+  paintTheme();
+  toolbar.append(themeBtn);
+
+  const roles = [...document.querySelectorAll('spec-role')].map(r => ({
+    id: r.id || slug(r.textContent), label: r.textContent.trim() }));
+  if (roles.length) {
+    const fs = el('fieldset', {}, el('legend', { textContent: 'Reading as' }));
+    const apply = mode => {
+      document.querySelectorAll('.for-you-marker').forEach(m => m.remove());
+      document.querySelectorAll('[data-roles]').forEach(node => {
+        const mine = !mode || node.dataset.roles.split(/\s+/).includes(mode);
+        node.classList.toggle('for-you', !!mode && mine);
+        node.classList.toggle('not-yours', !!mode && !mine);
+        // Fold what is not yours down to its title; never hide it.
+        const panel = node.querySelector(':scope > details:not(.backlinks)');
+        if (panel) panel.open = !mode || mine;
+        // The marker is document text, so it reaches assistive technology too.
+        if (mode && mine) node.querySelector(':scope :is(h2, h3, h4)')
+          ?.append(el('span', { className: 'badge is-ok for-you-marker', textContent: 'for you' }));
+      });
+      document.querySelectorAll('#toc li').forEach(li => {
+        const target = document.getElementById(li.querySelector('a').hash.slice(1));
+        const owner = target?.closest('[data-roles]') || target?.querySelector('[data-roles]');
+        li.classList.toggle('for-you', !!mode && !!owner?.classList.contains('for-you'));
+        li.classList.toggle('not-yours', !!mode && !!owner?.classList.contains('not-yours'));
+      });
+      store.set('spec-reader-mode', mode || '');
+    };
+    [{ id: '', label: 'Everything' }, ...roles].forEach(({ id, label }) => {
+      const input = el('input', { type: 'radio', name: 'reader-mode', value: id });
+      input.addEventListener('change', () => apply(id));
+      fs.append(el('label', {}, input, el('span', { textContent: label })));
+    });
+    toolbar.append(fs);
+    const initial = store.get('spec-reader-mode') || '';
+    const chosen = [...fs.querySelectorAll('input')].find(i => i.value === initial);
+    if (chosen) { chosen.checked = true; queueMicrotask(() => apply(initial)); }
+  }
+
+  // 6. Facet filters, discovered rather than configured: any attribute repeating a small
+  //    set of values across a section's blocks becomes a filter over that section.
+  const NOT_A_FACET = new Set(['id', 'class', 'style', 'role', 'slot', 'title', 'name',
+    'data-label', 'data-roles', 'traces-to', 'depends-on', 'covers-module', 'resolved-on']);
+
+  // Folding hides a block's body and leaves its heading in place. `until-found`
+  // keeps the hidden body reachable by find-in-page, and nothing is moved, so a
+  // selector written against the source still matches the live DOM.
+  const foldBody = (node, folded) => {
+    node.querySelectorAll(':scope > :not(h1):not(h2):not(h3):not(h4)').forEach(part => {
+      if (folded) part.setAttribute('hidden', 'until-found');
+      else part.removeAttribute('hidden');
+    });
+    node.classList.toggle('folded', folded);
+  };
+
+  document.querySelectorAll('main section').forEach(section => {
+    const items = [...section.querySelectorAll(BLOCKS)];
+    if (items.length < 3) return;
+    const names = new Set();
+    section.querySelectorAll(BLOCKS + ', test-group').forEach(node => {
+      for (const { name, value } of node.attributes) {
+        if (NOT_A_FACET.has(name) || name.startsWith('aria-')) continue;
+        if (!value.trim() || /\s/.test(value.trim())) continue;   // multi-word reads as prose
+        names.add(name);
+      }
+    });
+    const valueOf = (item, name) => item.closest(`[${name}]`)?.getAttribute(name);
+    const facets = [...names].map(name => {
+      const valued = items.filter(i => valueOf(i, name));
+      const values = [...new Set(valued.map(i => valueOf(i, name)))];
+      return { name, values, count: v => valued.filter(i => valueOf(i, name) === v).length };
+    }).filter(f => f.values.length >= 2 && f.values.length <= 8);
+    if (!facets.length) return;
+
+    const active = new Map(facets.map(f => [f.name, new Set()]));
+    const paint = () => {
+      items.forEach(item => {
+        const out = facets.some(f => {
+          const on = active.get(f.name);
+          return on.size && !on.has(valueOf(item, f.name));
+        });
+        item.classList.toggle('filtered-out', out);
+        foldBody(item, out);                              // fold to the title, never remove
+      });
+      // A container whose every item is filtered out folds as a unit.
+      section.querySelectorAll('test-group').forEach(group => {
+        const own = [...group.querySelectorAll(BLOCKS)];
+        const allOut = own.length && own.every(i => i.classList.contains('filtered-out'));
+        group.classList.toggle('filtered-out', !!allOut);
+        group.querySelectorAll(':scope > :is(test-case, spec-question, spec-module, spec-phase)')
+             .forEach(child => { if (allOut) child.setAttribute('hidden', 'until-found');
+                                 else child.removeAttribute('hidden'); });
+        group.classList.toggle('folded', !!allOut);
+      });
+    };
+
+    const bar = el('div', { className: 'facets' });
+    facets.forEach(f => {
+      const group = el('div', { className: 'facet' },
+        el('span', { className: 'facet-name', textContent: f.name.replace(/-/g, ' ') }));
+      const buttons = [];
+      const sync = () => {
+        const on = active.get(f.name);
+        allBtn.setAttribute('aria-pressed', String(on.size === 0));
+        buttons.forEach(([b, v]) => b.setAttribute('aria-pressed', String(on.has(v))));
+        paint();
+      };
+      const allBtn = el('button', { type: 'button' },
+        document.createTextNode('All'),
+        el('span', { className: 'facet-count', textContent: ` ${items.length}` }));
+      allBtn.addEventListener('click', () => { active.get(f.name).clear(); sync(); });
+      group.append(allBtn);
+      f.values.forEach(v => {
+        const b = el('button', { type: 'button' },
+          document.createTextNode(v.replace(/-/g, ' ')),
+          el('span', { className: 'facet-count', textContent: ` ${f.count(v)}` }));
+        b.addEventListener('click', () => {
+          const on = active.get(f.name);
+          on.has(v) ? on.delete(v) : on.add(v);
+          sync();
+        });
+        buttons.push([b, v]);
+        group.append(b);
+      });
+      sync();
+      bar.append(group);
+    });
+    const panel = section.querySelector(':scope > details');
+    (panel || section).insertBefore(bar, panel ? panel.querySelector('summary').nextSibling
+                                               : section.querySelector('h2').nextSibling);
+  });
+
+  // 7. Contents panel, with the section currently in view marked as the location.
+  const heads = [...document.querySelectorAll('main h2')];
+  const list = document.querySelector('#toc ol');
+  const links = new Map();
+  heads.forEach(h => {
+    const n = h.closest('section')?.querySelectorAll(BLOCKS).length ?? 0;
+    const a = el('a', { href: '#' + h.id, textContent: h.textContent.replace(/#$/, '') });
+    if (n) a.append(el('span', { className: 'count', textContent: ` (${n})` }));
+    list.append(el('li', {}, a));
+    links.set(h, a);
+  });
+  const visible = new Set();
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => e.isIntersecting ? visible.add(e.target) : visible.delete(e.target));
+    const current = heads.find(h => visible.has(h))
+      || [...heads].reverse().find(h => h.getBoundingClientRect().top < 100);
+    links.forEach(a => a.removeAttribute('aria-current'));
+    if (current) links.get(current)?.setAttribute('aria-current', 'location');
+  }, { rootMargin: '0px 0px -70% 0px' });
+  heads.forEach(h => io.observe(h));
+
+  // 8. A deep link lands on visible content: whatever encloses the target opens,
+  //    whether it was folded by a reader mode, a facet, or the reader themselves.
+  //    Runs last so nothing set up above re-folds the target.
+  const revealHash = () => {
+    const id = location.hash.slice(1);
+    const node = id && document.getElementById(decodeURIComponent(id));
+    if (!node) return;
+    for (let n = node; n && n !== document.body; n = n.parentElement) {
+      if (n.tagName === 'DETAILS') n.open = true;
+      n.classList.remove('folded', 'filtered-out');
+      n.hidden = false;
+    }
+    node.scrollIntoView();
+  };
+  addEventListener('hashchange', revealHash);
+  revealHash();
+})();
+</script>
+</body>
+</html>
