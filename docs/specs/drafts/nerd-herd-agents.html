@@ -165,10 +165,10 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
 </nav>
 <main id="content">
   <h1>nerd-herd Agents mod: sessions by machine</h1>
-  <p>nerd-herd is a set of Herdr mods, and its full scope is not settled yet. This spec covers one of them: an Agents mod that replaces the sidebar’s Agents section, lists each session under the machine it runs on, wraps long subjects instead of cutting them off, renames sessions with Herdr’s own rename, and keeps a finished session under Done until Dannel deals with it. The Spaces mod has <a href="../in-progress/executing-nerd-herd-spaces.html">its own spec</a>. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
+  <p>nerd-herd is a set of Herdr mods, and its full scope is not settled yet. This spec covers one of them: an Agents mod that replaces the sidebar’s Agents section, keeps Herdr’s two ways to sort agents and adds a third that gives each Spaces group its own section with status folders inside, leads each session’s card with its title, wraps long subjects instead of cutting them off, renames sessions with Herdr’s own rename, and keeps a finished session under Done until Dannel deals with it. The Spaces mod has <a href="../in-progress/executing-nerd-herd-spaces.html">its own spec</a>. This draft needs answers to the open questions in <a href="#sec-questions">Questions</a> before it can be finalized.</p>
   <dl class="spec-meta">
     <dt>Stage</dt> <dd data-field="stage">drafts</dd>
-    <dt>Complexity</dt> <dd data-field="complexity">4 / 10 &mdash; one mod, a session list model, Herdr commands it already offers, and a Done record kept as herdr-core labels</dd>
+    <dt>Complexity</dt> <dd data-field="complexity">5 / 10 &mdash; one mod, a session list model with three arrangements, Spaces’ group headers reused, Herdr commands it already offers, and a Done record kept as herdr-core labels</dd>
     <dt>Sequence</dt> <dd data-field="sequence">Built after the <a href="../in-progress/executing-nerd-herd-spaces.html">Spaces mod</a>, whose groups the Agents list may reuse (<a href="#spec-question-agents-grouping">Agents grouping</a>)</dd>
     <dt>Herdr version</dt> <dd data-field="herdr-version">0.1.16 (app), read from <code>/Applications/Herdr.app/Contents/Info.plist</code></dd>
     <dt>Toolchain</dt> <dd data-field="toolchain">TypeScript on Bun, compiled by <code>bun build</code> into the mod’s <code>main.js</code>, the same as the Spaces mod.</dd>
@@ -184,10 +184,17 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
     <details open><summary><h2>Narrative</h2></summary>
       <p class="skeleton-journey">Dannel opens the Herdr sidebar and sees each running agent session under the machine it runs on, with its full subject wrapped onto more lines, renames one session from its row and sees the new name in the row and in Herdr’s tab bar, and clicks a row to focus that session’s pane.</p>
 
-      <h3>Reading and renaming sessions by machine</h3>
+      <h3>Reading and renaming sessions</h3>
       <details open class="claims"><summary>Claims</summary>
         <ol>
-          <li>Agents lists each session under the machine it runs on</li>
+          <li>Sorting by Priority shows Blocked, Done, Working and Idle sections, and each card names its space and machine</li>
+          <li>Grouped by space shows one section per space, and each card names its machine</li>
+          <li>Grouped by group shows one section per Spaces group, drawn the way Spaces draws that group, with Blocked, Done, Working and Idle folders inside</li>
+          <li>The new sort choice is named with the word Spaces uses for a group</li>
+          <li>A group nested inside another group gets its own section, whose header names the group it sits inside</li>
+          <li>Spaces outside every group show under Ungrouped, after the groups</li>
+          <li>Folding a section or folder in Agents leaves Spaces as it was</li>
+          <li>A card shows the agent's icon, then the session's title in bold before anything else</li>
           <li>A session row shows the session's subject wrapped onto more lines when it is longer than one line</li>
           <li>Renaming a session from its row gives its Herdr tab that name</li>
           <li>Renaming a session to an empty name returns it to its automatic name</li>
@@ -195,7 +202,8 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         </ol>
       </details>
       <p>Dannel has three agent sessions running: one on desk-client working on "THRD: Reset leader election", one on this computer fixing a Python virtual environment, and one on desk-home about NAS hardware. Today the Agents section shows them in one list, cut off at the right edge, with the machine's name in tiny text.</p>
-      <p>With nerd-herd, Agents shows a header for each machine and the sessions running there beneath it. The desk-client session's full subject, "π 🧵 THRD: Reset leader election", wraps onto a second line instead of ending in "…". The two sessions both called "sandbox" are easy to tell apart because each sits under its own machine.</p>
+      <p>With nerd-herd, every card starts with the agent’s icon and the session’s title in bold, so the thing that tells two sessions apart comes first. The menu behind the clock icon still offers Herdr’s two choices. Under Priority, Agents shows Blocked, Done, Working and Idle sections, and each card names its space and machine after the title, so the two sessions called "sandbox" are told apart by machine. Under Grouped by space, each space has its own section, and a card names only its machine, since the section already names the space.</p>
+      <p>Dannel wants to look at one client’s work only, so they pick the new choice, which reads “Grouped by folder” because folder is what their Spaces settings call a group. Each Spaces group now has its own section, drawn as Spaces draws it: the townsquare banner, the orange banner, or a plain folder. Inside each section are Blocked, Done, Working and Idle folders holding that group’s sessions, and each card names its space and machine. The Clients group, which sits inside Work in Spaces, gets its own section whose header says it is inside Work. Spaces in no group show under Ungrouped, last. Dannel folds the Work section to quiet it, and Spaces still shows Work open.</p>
       <p>One session still has a vague automatic subject, so they rename it "NAS drive health" from its row, and the row and the Herdr tab bar both show the new name. Later they clear the name, and the session goes back to its automatic name. They click a row, and Herdr focuses that session's pane.</p>
 
       <h3>Keeping finished sessions until they are dealt with</h3>
@@ -229,18 +237,40 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Resolution</dt> <dd data-field="resolution">Herdr's own tab rename (the <code>tab.rename</code> command), so the name shows everywhere Herdr shows that tab.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open">
+      <spec-question status="resolved" resolved-on="2026-11-20">
         <h3>Agents grouping</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">How is the Agents list organized?</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>One header per machine; groups ignored</li>
-            <li>Group, then machine, then sessions, matching Spaces</li>
-            <li>Herdr's two existing views, plus this as a third choice in its sort menu</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Group, then machine, then sessions.</dd>
-                  </dl>
+          <dt>Resolution</dt> <dd data-field="resolution">Herdr’s sort menu keeps its two choices and their stored values in the shared value <code>agents.sort</code>: Priority (<code>priority</code>) and Grouped by space (<code>grouped</code>). nerd-herd adds a third, Grouped by group (<code>groups</code>), named with the word the Spaces settings use for a group. It gives each Spaces group a section drawn as Spaces draws it (folder or banner, at the banner’s own size), with Blocked, Done, Working and Idle folders inside. There is no machine and space tree in Agents (the user, 2026-11-20: “in grouped mode, the status becomes like a folder”; “I kind of want to preserve the same values and just add our concepts to it”). Herdr’s own Agents mod reads an unknown value as Priority, so switching back to it is safe.</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-20">
+        <h3>Card contents</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">What does a session’s card show?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">The agent’s icon, then the title in bold, then the location that the sections above it do not already give: space and machine under Priority and Grouped by group, the machine only under Grouped by space. This extends the rule in Herdr’s Agents mod, where a row names its space only when no header above it does (the user, 2026-11-20: “keep the agent icon”).</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-20">
+        <h3>Nested groups</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">In Grouped by group, where do sessions of a group nested inside another group go?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Into the nested group’s own section, whose header names the group it sits inside (the user, 2026-11-20: “go with the rest of the recommendations”).</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-20">
+        <h3>Fold sharing</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Does folding a section in Agents fold that group in Spaces?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">No. Agents keeps its own folded or open state for each group section and each status folder (the user, 2026-11-20).</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-20">
+        <h3>Group color</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">Does a group get a color that Agents shows on cards?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Not in this spec. The color stripe and the Group color field are left out to keep the start simple (the user, 2026-11-20: “get rid of the thin color stripe concept for a start”).</dd>
+        </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-16">
         <h3>Header size</h3>
@@ -326,8 +356,8 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
     <details open><summary><h2>Process Flow</h2></summary>
       <figure>
         <pre class="mermaid">flowchart TD
-  data["Herdr agents and spaces"] --> model["Session list model groups sessions by machine"]
-  model --> rows["Agents shows machines and their sessions"]
+  data["Herdr agents and spaces"] --> model["Session list model arranges sessions for the chosen sort"]
+  model --> rows["Agents shows sections, folders and cards"]
   rename["Dannel renames a session"] --> herdr["Herdr tab.rename"]
   click["Dannel clicks a session row"] --> focus["Herdr pane.focus"]
   herdr --> data
@@ -345,11 +375,11 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       <spec-module>
         <h3>Session list model</h3>
         <dl>
-          <dt>Responsibility</dt> <dd data-field="responsibility">Groups Herdr's agents under the machine they run on and picks each row's subject text.</dd>
-          <dt>Owns</dt> <dd data-field="owns">Grouping and row text.</dd>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Arranges Herdr's agents for the chosen sort (Priority, Grouped by space, or Grouped by group) into sections, status folders and cards, and picks each card's text.</dd>
+          <dt>Owns</dt> <dd data-field="owns">Sections, folders, card order and card text.</dd>
           <dt>Delegates</dt> <dd data-field="delegates">Nothing. Data in, data out.</dd>
-          <dt>Input <code>Agent[]</code>, <code>Space[]</code></dt>
-          <dd data-field="input">Herdr's agents and spaces.</dd>
+          <dt>Input <code>Agent[]</code>, <code>Space[]</code>, groups, sort</dt>
+          <dd data-field="input">Herdr's agents and spaces, nerd-herd's saved Spaces groups and group word, the sessions under Done from Done ledger, and the value of <code>agents.sort</code>.</dd>
           <dt>Output <code>AgentsRow[]</code></dt>
           <dd data-field="output">The rows to draw.</dd>
         </dl>
@@ -358,8 +388,8 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <h3>Agents sidebar mod</h3>
         <dl>
           <dt>Responsibility</dt> <dd data-field="responsibility">Draws the Agents rows and turns clicks into Herdr commands.</dd>
-          <dt>Owns</dt> <dd data-field="owns">Layout, wrapping, the rename control.</dd>
-          <dt>Delegates</dt> <dd data-field="delegates">Grouping to Session list model; renaming to Herdr <code>tab.rename</code>; focusing to Herdr <code>pane.focus</code>; which sessions are under Done to Done ledger.</dd>
+          <dt>Owns</dt> <dd data-field="owns">Layout, wrapping, the rename control, the sort menu, and the folded state of each section and folder.</dd>
+          <dt>Delegates</dt> <dd data-field="delegates">Arranging to Session list model; drawing a group's header to the Spaces group header (<code>src/mod/groupHeaderView.ts</code>); renaming to Herdr <code>tab.rename</code>; focusing to Herdr <code>pane.focus</code>; which sessions are under Done to Done ledger.</dd>
         </dl>
       </spec-module>
       <spec-module>
@@ -391,6 +421,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <li><strong>Herdr’s agents, spaces, and terminals</strong> come typed from <code>herdr.d.ts</code>. An agent’s title is text the agent chose, so the row shows it as text and never interprets it.</li>
         <li><strong>A session name typed by the user</strong> goes to Herdr’s <code>tab.rename</code>, which owns its rules; an empty name returns the tab to its automatic name.</li>
         <li><strong>The <code>nerd-herd.handled</code> label</strong> is external data: another Herdr window, another nerd-herd version, or a hand edit with <code>hc label</code> may have written it. Done ledger reads it as a whole turn number; any other value counts as no label.</li>
+        <li><strong>The <code>agents.sort</code> value</strong> is shared with Herdr’s own Agents mod and any other mod. A value other than <code>priority</code>, <code>grouped</code> or <code>groups</code> counts as <code>priority</code>, as Herdr’s mod does.</li>
       </ul>
     </details>
   </section>
@@ -424,6 +455,14 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The session is under Done, as a session with no label would be</dd>
           </dl>
         </test-case>
+        <test-case traces-to="Sorting by Priority shows Blocked, Done, Working and Idle sections, and each card names its space and machine" covers-module="Session list model" status="pending">
+          <h4>An unknown sort value counts as Priority</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given"><code>agents.sort</code> holds “by-machine”, written by some other mod</dd>
+            <dt>When</dt> <dd data-field="when">Agents rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">The rows are the Priority sections, as with <code>priority</code></dd>
+          </dl>
+        </test-case>
       </test-group>
       <test-group category="edge-cases">
         <h3>Edge cases</h3>
@@ -438,12 +477,68 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       </test-group>
       <test-group category="happy-paths">
         <h3>Happy paths</h3>
-        <test-case traces-to="Agents lists each session under the machine it runs on" covers-module="Session list model" status="pending">
-          <h4>Sessions group under their machine</h4>
+        <test-case traces-to="Sorting by Priority shows Blocked, Done, Working and Idle sections, and each card names its space and machine" covers-module="Session list model" status="pending">
+          <h4>Priority sections hold cards that name space and machine</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">Agents on desk-client, this computer, and desk-home</dd>
-            <dt>When</dt> <dd data-field="when">Agents rows are computed</dd>
-            <dt>Then</dt> <dd data-field="then">Each agent's row follows the header of the machine it runs on</dd>
+            <dt>Given</dt> <dd data-field="given">Two sessions in spaces called sandbox, one on this computer and one on frankenstein-nerdo, both Idle</dd>
+            <dt>When</dt> <dd data-field="when">Agents rows are computed with <code>agents.sort</code> = <code>priority</code></dd>
+            <dt>Then</dt> <dd data-field="then">Both cards sit in the Idle section, one reading “sandbox · This computer” and the other “sandbox · frankenstein-nerdo” after its title</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Grouped by space shows one section per space, and each card names its machine" covers-module="Session list model" status="pending">
+          <h4>Grouped by space cards name only their machine</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session in ground-truth on ai-sandbox</dd>
+            <dt>When</dt> <dd data-field="when">Agents rows are computed with <code>agents.sort</code> = <code>grouped</code></dd>
+            <dt>Then</dt> <dd data-field="then">The card follows the ground-truth section header, and its location text is “ai-sandbox”</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Grouped by group shows one section per Spaces group, drawn the way Spaces draws that group, with Blocked, Done, Working and Idle folders inside" covers-module="Session list model" status="pending">
+          <h4>Grouped by group puts status folders inside each group</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A Done session and an Idle session in spaces of the townsquare group</dd>
+            <dt>When</dt> <dd data-field="when">Agents rows are computed with <code>agents.sort</code> = <code>groups</code></dd>
+            <dt>Then</dt> <dd data-field="then">The townsquare section holds a Done folder with the first card and an Idle folder with the second, and the section has no Blocked or Working folder</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="The new sort choice is named with the word Spaces uses for a group" covers-module="Session list model" status="pending">
+          <h4>The new choice uses the group word</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Spaces settings that call a group a folder</dd>
+            <dt>When</dt> <dd data-field="when">The sort menu's choices are computed</dd>
+            <dt>Then</dt> <dd data-field="then">The choices read Priority, Grouped by space, Grouped by folder</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A group nested inside another group gets its own section, whose header names the group it sits inside" covers-module="Session list model" status="pending">
+          <h4>A nested group gets its own section</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The Clients group inside the Work group, with one session in each</dd>
+            <dt>When</dt> <dd data-field="when">Agents rows are computed with <code>agents.sort</code> = <code>groups</code></dd>
+            <dt>Then</dt> <dd data-field="then">There is a Work section and a Clients section, and the Clients header names Work as the group it sits inside</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Spaces outside every group show under Ungrouped, after the groups" covers-module="Session list model" status="pending">
+          <h4>Ungrouped comes after the groups</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session in a space that is in no group</dd>
+            <dt>When</dt> <dd data-field="when">Agents rows are computed with <code>agents.sort</code> = <code>groups</code></dd>
+            <dt>Then</dt> <dd data-field="then">Its card is in an Ungrouped section, after every group section</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Folding a section or folder in Agents leaves Spaces as it was" covers-module="Agents sidebar mod" status="pending">
+          <h4>Folding in Agents does not fold Spaces</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The Work group open in Spaces</dd>
+            <dt>When</dt> <dd data-field="when">Dannel folds the Work section in Agents</dd>
+            <dt>Then</dt> <dd data-field="then">The Work section in Agents is folded, and Spaces still shows Work open</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A card shows the agent's icon, then the session's title in bold before anything else" covers-module="Session list model" status="pending">
+          <h4>A card leads with the icon and the title</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A Claude session titled “Phone number collection” in ground-truth</dd>
+            <dt>When</dt> <dd data-field="when">Agents rows are computed under any sort</dd>
+            <dt>Then</dt> <dd data-field="then">The card's parts in order are the Claude icon, “Phone number collection” in bold, then the location text</dd>
           </dl>
         </test-case>
         <test-case traces-to="A session row shows the session's subject wrapped onto more lines when it is longer than one line" covers-module="Session list model" status="pending">
@@ -513,6 +608,16 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       </test-group>
       <test-group category="ux-validation">
         <h3>UX validation</h3>
+        <test-case traces-to="Grouped by group shows one section per Spaces group, drawn the way Spaces draws that group, with Blocked, Done, Working and Idle folders inside" covers-module="Agents sidebar mod" status="pending">
+          <h4>Grouped by group in the running Herdr window</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A test home with a banner group, a folder group and an ungrouped space, each with agent sessions</dd>
+            <dt>When</dt> <dd data-field="when">Grouped by group is picked from the clock menu</dd>
+            <dt>Then (experience)</dt> <dd data-field="then" data-aspect="experience">The screenshot shows the banner group with its banner and the folder group as a folder, as in Spaces, each with status folders, Ungrouped last, and every card's title readable before its location</dd>
+            <dt>Then (technical)</dt> <dd data-field="then" data-aspect="technical"><code>agents.sort</code> is <code>groups</code></dd>
+            <dt>Incremental</dt> <dd data-field="incremental">Testable once Session list model and Agents sidebar mod are in the copied layout</dd>
+          </dl>
+        </test-case>
         <test-case traces-to="Renaming a session from its row gives its Herdr tab that name" covers-module="Agents sidebar mod" status="pending" browser-test>
           <h4>Reading and renaming a session by machine</h4>
           <dl>
@@ -561,7 +666,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       <spec-phase depends-on="Session list model" parallel-safe="no" agent-suitable="no">
         <h3>Agents sidebar mod</h3>
         <dl>
-          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">mods/nerd-herd-agents/*</li></ul></dd>
+          <dt>Writes</dt> <dd><ul><li data-field="shared-artifact">mods/nerd-herd-agents/*</li><li data-field="shared-artifact">src/mod/groupHeaderView.ts</li></ul></dd>
           <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
         </dl>
       </spec-phase>
