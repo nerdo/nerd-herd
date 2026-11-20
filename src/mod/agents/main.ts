@@ -2,12 +2,14 @@
 // arranges. Commands sent to the mod (`rename:{...}`, `focus:{...}`) reach Herdr through the app.
 import { h_flex, v_flex } from "gpui-base";
 import { type AsyncContext, div, image, svg, View } from "gpui-kit";
-import { nextCommand, theme } from "herdr";
+import { nextCommand, props, theme } from "herdr";
 import { AgentsListError, rowsOrError } from "../../core/sessions/rowsOrError";
 import type { AgentIcon, AgentsRow } from "../../core/sessions/sessionList";
 import { errorCard } from "../errorCard";
 import { themeColor } from "../themeColor";
 import { agentsApp } from "./app";
+import { agentsGroupHeader } from "./groupHeader";
+import { openSortMenu, sortMenu } from "./sortMenu";
 
 type Theme = Record<string, string>;
 
@@ -34,11 +36,9 @@ const rowView = (t: Theme, row: AgentsRow) => {
     case "section":
       return div().pt(6).text_color(themeColor(t, "muted")).child(row.label);
     case "group":
-      return div()
-        .pt(8)
-        .font_semibold()
-        .text_color(themeColor(t, "foreground"))
-        .child(row.inside === null ? row.name : `${row.name} · in ${row.inside}`);
+      return agentsGroupHeader(t, row, agentsApp.groupHeader(row.id, row.folded === true), () =>
+        agentsApp.fold(row.id),
+      );
     case "ungrouped":
       return div().pt(8).font_semibold().text_color(themeColor(t, "foreground")).child(row.label);
     case "folder":
@@ -84,6 +84,15 @@ const card = (t: Theme, row: Extract<AgentsRow, { kind: "card" }>) => {
     .child(div().text_color(themeColor(t, "muted")).child(row.location));
 };
 
+/** One of this copy's props (from the layout, or the overlay that opened it). */
+const prop = (key: string): unknown => {
+  const given: unknown = props();
+  return typeof given === "object" && given !== null
+    ? Object.getOwnPropertyDescriptor(given, key)?.value
+    : undefined;
+};
+const isSortMenu = (): boolean => prop("sortMenu") === true;
+
 /** The rows, or in their place a card with the error's reference. */
 const rowsView = (t: Theme, rows: AgentsRow[] | AgentsListError) =>
   rows instanceof AgentsListError
@@ -92,12 +101,19 @@ const rowsView = (t: Theme, rows: AgentsRow[] | AgentsListError) =>
 
 export default class AgentsMod extends View {
   init(_props: unknown, cx: AsyncContext): void {
+    // The sort menu is a second copy of this mod in a popup; only the sidebar's copy takes commands.
+    if (isSortMenu()) return;
     cx.spawn(async (cx) => {
       for (;;) {
         const command = await nextCommand();
         const renamed = field(command, "rename", "terminal");
         const name = field(command, "rename", "name");
         const focused = field(command, "focus", "terminal");
+        const sort = field(command, "sort", "id");
+        const fold = field(command, "fold", "group");
+        if (fold !== null) agentsApp.fold(fold);
+        if (command === "open-sort") openSortMenu();
+        if (sort !== null) agentsApp.sort(sort);
         if (renamed !== null && name !== null) agentsApp.rename(renamed, name);
         if (focused !== null) agentsApp.focus(focused);
         cx.notify();
@@ -107,11 +123,39 @@ export default class AgentsMod extends View {
 
   render() {
     const t = theme();
+    const given = props();
+    if (
+      typeof given === "object" &&
+      given !== null &&
+      Object.getOwnPropertyDescriptor(given, "sortMenu")?.value === true
+    ) {
+      const overlay: unknown = Object.getOwnPropertyDescriptor(given, "overlay")?.value;
+      return sortMenu(
+        t,
+        agentsApp.sortChoices(),
+        agentsApp.currentSort(),
+        agentsApp.sort,
+        typeof overlay === "string" ? overlay : null,
+      );
+    }
     return v_flex()
       .size_full()
       .px(12)
       .gap(2)
-      .child(div().text_color(themeColor(t, "foreground")).child("Agents"))
+      .child(
+        h_flex()
+          .justify_between()
+          .items_center()
+          .child(div().text_color(themeColor(t, "foreground")).child("Agents"))
+          .child(
+            div()
+              .id("agents-sort")
+              .cursor_pointer()
+              .text_color(themeColor(t, "muted"))
+              .on_click(() => openSortMenu())
+              .child(svg("mods/workspace-chrome/clock.svg").size(14)),
+          ),
+      )
       .children(rowsView(t, rowsOrError(agentsApp.rows)));
   }
 }

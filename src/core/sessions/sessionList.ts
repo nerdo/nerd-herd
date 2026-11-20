@@ -47,6 +47,8 @@ export interface AgentsGroup {
   readonly id: GroupId;
   readonly name: GroupName;
   readonly inside: GroupName | null;
+  /** Folded in Agents (only ever true): the section shows its header alone. */
+  readonly folded?: true;
 }
 
 /** The section of sessions on machines in no group, after every group's section. */
@@ -70,6 +72,8 @@ export interface ArrangeInput {
   readonly sessions: readonly SessionInput[];
   /** nerd-herd's saved Spaces groups, for Grouped by group; none: no groups. */
   readonly groups?: SavedGroups;
+  /** The groups folded in Agents, which keeps its own folds apart from Spaces'. */
+  readonly folded?: readonly GroupId[];
 }
 
 /** Priority's sections, most urgent first. */
@@ -139,16 +143,20 @@ const ungroupedLabel = "Ungrouped";
 
 /** Grouped by group: a section per Spaces group, with a folder per status inside it; sessions on
  *  machines in no group come last, under Ungrouped. */
-const byGroup = (sessions: readonly SessionInput[], saved: SavedGroups): AgentsRow[] => {
+const byGroup = (
+  sessions: readonly SessionInput[],
+  saved: SavedGroups,
+  folded: readonly GroupId[],
+): AgentsRow[] => {
   const grouped = groupsInOrder(saved).flatMap((g) => {
     const placed = new Set(saved.placements.filter((p) => p.group === g.id).map((p) => p.name));
     const members = sessions.filter((m) => placed.has(m.machine));
     if (members.length === 0) return [];
     const parent = saved.groups.find((p) => p.id === g.parent)?.name ?? null;
-    return [
-      { kind: "group", id: g.id, name: g.name, inside: parent } as const,
-      ...folders(g.id, members),
-    ];
+    const header = { kind: "group", id: g.id, name: g.name, inside: parent } as const;
+    return folded.includes(g.id)
+      ? [{ ...header, folded: true } as const]
+      : [header, ...folders(g.id, members)];
   });
   const inGroup = new Set(saved.placements.filter((p) => p.group !== null).map((p) => p.name));
   const ungrouped = sessions.filter((m) => !inGroup.has(m.machine));
@@ -161,7 +169,7 @@ const byGroup = (sessions: readonly SessionInput[], saved: SavedGroups): AgentsR
 const arrangements: Record<string, (input: ArrangeInput) => AgentsRow[]> = {
   priority: (i) => byPriority(i.sessions),
   grouped: (i) => bySpace(i.sessions),
-  groups: (i) => byGroup(i.sessions, i.groups ?? emptyGroups),
+  groups: (i) => byGroup(i.sessions, i.groups ?? emptyGroups, i.folded ?? []),
 };
 
 export const arrangeSessions = (input: ArrangeInput): AgentsRow[] =>

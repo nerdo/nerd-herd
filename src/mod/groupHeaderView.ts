@@ -19,7 +19,7 @@ type GroupRow = Extract<SpacesRow, { kind: "group" }>;
 type Theme = Record<string, string>;
 
 /** The sidebar's width in points, from the layout, less the list's side padding. */
-const bannerSpace = (): number => {
+export const bannerSpace = (): number => {
   const find = (node: unknown): number => {
     if (typeof node !== "object" || node === null) return 0;
     if ("id" in node && node.id === "sidebar" && "size" in node) {

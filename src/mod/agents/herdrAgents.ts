@@ -1,6 +1,11 @@
 // The Agents mod's adapter to Herdr: reads the agent sessions, renames a session's tab, focuses its
 // pane.
-import { agents, run, spaces } from "herdr";
+import { agents, run, setShared, shared, spaces } from "herdr";
+import type { SavedGroups } from "../../core/groups/groupModel";
+import type { SortId } from "../../core/sessions/sortChoices";
+import { createSettingsStore } from "../../core/settings/settingsStore";
+import type { GroupWord } from "../../core/settings/sidebarSettings";
+import { createGroupStore, type SharedState } from "../../core/store/savedGroupStore";
 import type { SessionInput, TerminalAddress } from "../../core/sessions/sessionList";
 
 export type { TerminalAddress };
@@ -38,4 +43,32 @@ export const focusSession = (terminal: TerminalAddress): void => {
 export const promptRename = (terminal: TerminalAddress): void => {
   const tab = agents().find((a) => a.address === terminal)?.tab;
   if (tab !== undefined) run("tab.rename", { id: tab });
+};
+
+/** Herdr's shared state, read only: Spaces owns nerd-herd's saved groups and settings, and alone
+ *  backs up or rewrites them; Agents only reads them. */
+const readOnly: SharedState = { read: (key) => shared(key), write: () => {} };
+
+/** nerd-herd's saved Spaces groups, as Spaces reads them (damaged data reads as no groups). */
+export const readGroups = (): SavedGroups => createGroupStore(readOnly).load().groups;
+
+/** The word Spaces uses for a group. */
+export const readGroupWord = (): GroupWord =>
+  createSettingsStore(readOnly).load().settings.groupWord;
+
+/** The sort Herdr's Agents list and this one share. */
+export const readSort = (): unknown => shared("agents.sort");
+export const saveSort = (id: SortId): void => {
+  setShared("agents.sort", id);
+};
+
+const foldedKey = "nerd-herd-agents.folded";
+
+/** The groups folded in Agents (kept apart from Spaces' folds). */
+export const readFolded = (): string[] => {
+  const saved: unknown = shared(foldedKey);
+  return Array.isArray(saved) ? saved.filter((id): id is string => typeof id === "string") : [];
+};
+export const saveFolded = (ids: readonly string[]): void => {
+  setShared(foldedKey, ids);
 };

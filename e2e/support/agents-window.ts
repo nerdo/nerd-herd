@@ -3,7 +3,7 @@
 // (AGENTS.md, rule 4). The session's state folder is deleted before each start and after the stop.
 
 import { spawnSync } from "node:child_process";
-import { rmSync } from "node:fs";
+import { readFileSync, rmSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -28,7 +28,13 @@ const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 /** Section headers Herdr's Agents list draws above its rows, such as "Idle 1". */
 const sectionHeader = /^(Agents|Blocked|Done|Working|Idle)(\s+\d+)?$/;
 
+/** A stand-in machine is another private herdr-core session on this computer, reached by `sh -c`.
+ *  Sessions are numbered, not named: herdr-core's socket path has a length limit (2026-11-20). */
+const machineSession = (n: number) => `${session}-${n}`;
+
 export class AgentsWindow extends HerdrWindow {
+  private readonly machines: string[] = [];
+
   constructor() {
     super({ HC_SESSION: session });
   }
@@ -47,17 +53,53 @@ export class AgentsWindow extends HerdrWindow {
   }
 
   private stopCore(): void {
+    this.machines.splice(0).forEach((_name, i) => {
+      spawnSync("hc", ["server", "stop"], {
+        env: { ...process.env, HC_SESSION: machineSession(i + 1) },
+      });
+      rmSync(`${coreState}-${i + 1}`, { recursive: true, force: true });
+    });
     hc("server", "stop");
     rmSync(coreState, { recursive: true, force: true });
   }
 
-  /** Makes a space running the stand-in agent with this title; returns the agent's terminal. */
-  startFakeAgent(o: { space: string; title: string }): TerminalAddress {
-    this.herdr("space.new", {
+  /** Adds a stand-in machine to the private core: another private session on this computer. Not
+   *  --temp: Herdr leaves temporary machines out of its lists (2026-11-20). */
+  addMachine(name: string): void {
+    const r = hc(
+      "machine",
+      "add",
+      "--via",
+      "sh -c",
+      "--name",
+      name,
+      "--session",
+      machineSession(this.machines.length + 1),
+    );
+    if (r.status !== 0) throw new Error(`hc machine add ${name} failed: ${r.stdout}${r.stderr}`);
+    this.machines.push(name);
+  }
+
+  /** Makes a space running the stand-in agent with this title (on `machine`, else this computer);
+   *  returns the agent's terminal. */
+  startFakeAgent(o: { space: string; title: string; machine?: string }): TerminalAddress {
+    const space = {
       name: o.space,
       folder: root,
       argv: [join(root, "e2e/support/fake-agent.sh"), o.title],
-    });
+      ...(o.machine ? { machine: o.machine } : {}),
+    };
+    // Herdr learns of a machine the core just added a moment later; until then it says it has none.
+    for (let waited = 0; ; waited += 500) {
+      const r = spawnSync("herdr-app", ["do", "space.new", JSON.stringify(space)], {
+        env: { ...process.env, ...this.env() },
+        encoding: "utf8",
+      });
+      if (r.status === 0) break;
+      if (!r.stdout.includes("has no machine") || waited >= 15_000)
+        throw new Error(`herdr-app do space.new failed: ${r.stdout}${r.stderr}`);
+      sleep(500);
+    }
     for (let waited = 0; waited < 10_000; waited += 500) {
       const agent = this.terminals().find((t) => t.space === o.space);
       if (agent) return agent.terminal;
@@ -95,6 +137,12 @@ export class AgentsWindow extends HerdrWindow {
   /** Sends one command to the nerd-herd Agents mod as written, readable or not. */
   sendAgents(command: string): void {
     this.send(`nerd-herd-agents.${command}`);
+  }
+
+  /** A value Herdr keeps in its shared state, as saved in the test home. */
+  sharedValue(key: string): unknown {
+    const saved: unknown = JSON.parse(readFileSync(join(this.home, "shared.json"), "utf8"));
+    return field(saved, key);
   }
 
   /** Sends one action to the nerd-herd Agents mod. */

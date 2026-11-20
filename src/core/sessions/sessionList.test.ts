@@ -267,3 +267,18 @@ test("a session whose tab someone named shows the tab's name as its card title",
   });
   expect(card, "the card's title is the tab's name").toMatchObject({ title: "NAS drive health" });
 });
+
+// Spec: docs/specs/finalized/nerd-herd-agents.html#test-case-folding-in-agents-does-not-fold-spaces@jj:14ab73a0
+// "The Work group open in Spaces: when Dannel folds the Work section in Agents, the Work section in
+//  Agents is folded." Agents' own fold state is an input of its own, apart from Spaces' fold.
+test("grouped by group, a group folded in Agents shows its section header, folded, without its folders", () => {
+  const rows = arrangeSessions({
+    sort: "groups",
+    groups: groups([{ id: "work", name: "Work", machines: ["desk-work"] }]),
+    sessions: [session({ terminal: "desk-work/t1", machine: "desk-work" })],
+    folded: ["work"],
+  });
+  expect(rows, "only Work's header, marked folded").toEqual([
+    { kind: "group", id: "work", name: "Work", inside: null, folded: true },
+  ]);
+});

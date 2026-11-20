@@ -4,6 +4,10 @@
 //  space and machine after it, its full subject wrapped onto more lines, renames one session from
 //  its card and sees the new name in the card and in Herdr's tab bar, and clicks a card to focus
 //  that session's pane."
+// It is also the UX validation case
+// docs/specs/finalized/nerd-herd-agents.html#test-case-reading-and-renaming-a-session-by-machine@jj:14ab73a0
+// (renamed "Reading and renaming a session from its card" since): the card shows the new name, and
+// Herdr lists the tab under that name.
 //
 // The window runs on a private herdr-core session (HC_SESSION), never the person's own core, so the
 // walk may make the space, the tabs and the stand-in agent it needs (AGENTS.md, rule 4).
