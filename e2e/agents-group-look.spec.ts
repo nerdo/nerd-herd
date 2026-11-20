@@ -24,7 +24,7 @@ test.beforeAll(() => {
   window.act("group-banner", { group: "Work", open: e2eSettings.bannerFixture });
   window.readUntil((lines) => lines.some((l) => l.includes("WORK BANNER")));
   window.sendAgents("open-sort");
-  window.herdr("overlay.close", {});
+  window.closeOverlay();
   window.actAgents("sort", { id: "groups" });
   agentsText = window.readAgents();
   sort = window.sharedValue("agents.sort");
@@ -43,9 +43,9 @@ test("grouped by group, Work shows its banner, Personal its folder, Ungrouped co
     "Work's banner and card, Personal and its card, then Ungrouped and the local card",
   ).toEqual({
     agentsText:
-      "WORK BANNER Ship the release client · desk-client " +
-      "Personal NAS drive health home · desk-home " +
-      "Ungrouped Local notes sandbox · This computer",
+      "WORK BANNER Ship the release client desk-client " +
+      "Personal NAS drive health home desk-home " +
+      "Ungrouped Local notes sandbox This computer",
     sort: "groups",
   });
 });

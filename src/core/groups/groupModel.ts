@@ -54,6 +54,9 @@ export interface SavedGroup {
   /** The second banner style: its own open image and its folded image (absent: none). */
   readonly secondOpenBanner?: BannerLink | null;
   readonly secondFoldedBanner?: BannerLink | null;
+  /** The loaded copies of the second style's images (absent or null: not yet). */
+  readonly secondOpenBannerFile?: BannerFile | null;
+  readonly secondFoldedBannerFile?: BannerFile | null;
   /** What Spaces draws for it: "banner", "second" (the second banner style) or "folder";
    *  absent or anything else: its banner when it has one, else the folder. */
   readonly spacesLook?: string;

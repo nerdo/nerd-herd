@@ -27,6 +27,7 @@ export const readSessions = (): SessionInput[] => {
     status: a.status,
     icon: a.program.icon ? { path: a.program.icon, tint: a.program.tint } : null,
     tabName: namedTab.get(a.tab) ?? null,
+    focused: a.focused,
   }));
 };
 

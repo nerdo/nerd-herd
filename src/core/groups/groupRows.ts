@@ -21,7 +21,13 @@ const bannerFor = (g: SavedGroup): BannerLink | null => {
 const bannerFileFor = (g: SavedGroup): BannerFile | null => {
   const link = bannerFor(g);
   if (link === null) return null;
-  return (link === g.openBanner ? g.openBannerFile : g.foldedBannerFile) ?? null;
+  const kept: [BannerLink | null | undefined, BannerFile | null | undefined][] = [
+    [g.openBanner, g.openBannerFile],
+    [g.foldedBanner, g.foldedBannerFile],
+    [g.secondOpenBanner, g.secondOpenBannerFile],
+    [g.secondFoldedBanner, g.secondFoldedBannerFile],
+  ];
+  return kept.find(([l]) => l === link)?.[1] ?? null;
 };
 
 /** The rows the Spaces section draws, level by level (groups first, or a custom order); folded groups hide their contents. */

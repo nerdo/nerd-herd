@@ -16,7 +16,7 @@ test.beforeAll(() => {
   window.readAgents();
   window.sendAgents("open-sort");
   menu = window.readWindow();
-  window.herdr("overlay.close", {});
+  window.closeOverlay();
   window.actAgents("sort", { id: "groups" });
   grouped = window.readAgents();
 });
@@ -36,6 +36,6 @@ test("the sort menu lists Priority, Grouped by space and Grouped by group", () =
 // Picking Grouped by group arranges the list by group; this computer is in no group here.
 test("picking Grouped by group lists a session on a machine in no group under Ungrouped", () => {
   expect(grouped, "the Ungrouped section holding the card").toBe(
-    `Ungrouped ${subject} sandbox · This computer`,
+    `Ungrouped ${subject} sandbox This computer`,
   );
 });

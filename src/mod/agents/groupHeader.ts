@@ -19,9 +19,9 @@ export const agentsGroupHeader = (
   const named = row.inside === null ? row.name : `${row.name} · in ${row.inside}`;
   if (header?.kind === "banner") {
     const { file, group } = header;
+    // Full width and no margin, as Spaces draws a banner: folded banners stack flush.
     return div()
       .id(`agents-group-${row.id}`)
-      .mt(8)
       .flex_none()
       .h(file.height)
       .overflow_x_hidden()
@@ -39,6 +39,8 @@ export const agentsGroupHeader = (
   return h_flex()
     .id(`agents-group-${row.id}`)
     .mt(8)
+    .mx(10)
+    .px(8)
     .h(26)
     .gap(7)
     .items_center()

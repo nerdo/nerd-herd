@@ -57,7 +57,7 @@ test("renaming a session from its card names its Herdr tab", () => {
 test("clearing a session's name returns its tab to its number and its card to the automatic name", () => {
   expect({ clearedTab, clearedCard }, "tab 1, and the card titled by the agent").toEqual({
     clearedTab: "1",
-    clearedCard: `${subject} sandbox · This computer`,
+    clearedCard: `${subject} sandbox This computer`,
   });
 });
 

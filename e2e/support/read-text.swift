@@ -13,6 +13,9 @@ import Vision
 
 let path = CommandLine.arguments[1]
 let column = CommandLine.arguments.count > 2 ? Double(CommandLine.arguments[2]) ?? 1 : 1
+// "fast": Vision's fast recognition, which misreads more letters but kept a few short sidebar lines the
+// right way up where accurate recognition read them upside down (2026-11-20).
+let fast = CommandLine.arguments.count > 3 && CommandLine.arguments[3] == "fast"
 guard let img = NSImage(contentsOfFile: path),
       let full = img.cgImage(forProposedRect: nil, context: nil, hints: nil),
       let part = full.cropping(to: CGRect(x: 0, y: 0, width: Int(Double(full.width) * column), height: full.height)) else {
@@ -41,7 +44,7 @@ func recognize(_ part: CGImage, offsetX: Int, scale: Int) -> [(Double, Double, D
     exit(1)
   }
   let req = VNRecognizeTextRequest()
-  req.recognitionLevel = .accurate
+  req.recognitionLevel = fast ? .fast : .accurate
   req.usesLanguageCorrection = false
   try? VNImageRequestHandler(cgImage: cg).perform([req])
   let w = Double(full.width), pw = Double(part.width), ox = Double(offsetX)

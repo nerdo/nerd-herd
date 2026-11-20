@@ -24,6 +24,8 @@ export interface SessionInput {
   readonly icon: AgentIcon | null;
   /** The name someone gave the session's tab; null while nobody has named it. */
   readonly tabName: string | null;
+  /** Its terminal is in the focused pane. */
+  readonly focused: boolean;
 }
 
 /** A section header in the Agents list: a status (Priority) with its count, or a space. */
@@ -41,7 +43,13 @@ export interface AgentsCard {
   readonly terminal: TerminalAddress;
   readonly icon: AgentIcon | null;
   readonly title: string;
-  readonly location: string;
+  /** Where it runs that the headers above do not already say: its space ("" under its space). */
+  readonly place: string;
+  /** The machine it runs on: its name, or This computer. */
+  readonly machine: string;
+  readonly status: SessionStatus;
+  /** In the focused pane (only ever true): the card is highlighted. */
+  readonly focused?: true;
 }
 
 /** A Spaces group's section in Grouped by group; `inside`: the group it sits in, if any. */
@@ -93,12 +101,15 @@ const thisComputer = "This computer";
 
 const machineName = (s: SessionInput): string => s.machine ?? thisComputer;
 
-const cardOf = (s: SessionInput, location: string): AgentsCard => ({
+const cardOf = (s: SessionInput, place: string): AgentsCard => ({
   kind: "card",
   terminal: s.terminal,
   icon: s.icon,
   title: s.tabName ?? s.title,
-  location,
+  place,
+  machine: machineName(s),
+  status: s.status,
+  ...(s.focused ? { focused: true as const } : {}),
 });
 
 const section = (label: string): AgentsSection => ({ kind: "section", label });
@@ -111,7 +122,7 @@ const byPriority = (sessions: readonly SessionInput[]): AgentsRow[] =>
       ? []
       : [
           { kind: "section", label: s.label, status: s.status, count: members.length } as const,
-          ...members.map((m) => cardOf(m, `${m.space} · ${machineName(m)}`)),
+          ...members.map((m) => cardOf(m, m.space)),
         ];
   });
 
@@ -124,7 +135,7 @@ const bySpace = (sessions: readonly SessionInput[]): AgentsRow[] => {
   }
   return [...spaces.values()].flatMap((members) => [
     section(members[0]?.space ?? ""),
-    ...members.map((m) => cardOf(m, machineName(m))),
+    ...members.map((m) => cardOf(m, "")),
   ]);
 };
 
@@ -148,7 +159,7 @@ const groupsInOrder = (saved: SavedGroups, parent: GroupId | null = null): Saved
 const folders = (group: GroupId | null, members: readonly SessionInput[]): AgentsRow[] =>
   byStatus(members).flatMap((f) => [
     { kind: "folder", group, label: f.label, status: f.status, count: f.members.length } as const,
-    ...f.members.map((m) => cardOf(m, `${m.space} · ${machineName(m)}`)),
+    ...f.members.map((m) => cardOf(m, m.space)),
   ]);
 
 const ungroupedLabel = "Ungrouped";

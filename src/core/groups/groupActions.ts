@@ -160,6 +160,8 @@ export type GroupLook = Partial<
     | "agentsLook"
     | "secondOpenBanner"
     | "secondFoldedBanner"
+    | "secondOpenBannerFile"
+    | "secondFoldedBannerFile"
   >
 >;
 export const setLook = (saved: SavedGroups, id: GroupId, look: GroupLook): SavedGroups =>
@@ -198,6 +200,8 @@ export const keepBannerFile = (
     ...g,
     ...(g.openBanner === link ? { openBannerFile: file } : {}),
     ...(g.foldedBanner === link ? { foldedBannerFile: file } : {}),
+    ...(g.secondOpenBanner === link ? { secondOpenBannerFile: file } : {}),
+    ...(g.secondFoldedBanner === link ? { secondFoldedBannerFile: file } : {}),
   })),
 });
 
@@ -207,6 +211,8 @@ export const bannersToLoad = (saved: SavedGroups): BannerLink[] => [
     saved.groups.flatMap((g) => [
       ...(g.openBanner && !g.openBannerFile ? [g.openBanner] : []),
       ...(g.foldedBanner && !g.foldedBannerFile ? [g.foldedBanner] : []),
+      ...(g.secondOpenBanner && !g.secondOpenBannerFile ? [g.secondOpenBanner] : []),
+      ...(g.secondFoldedBanner && !g.secondFoldedBannerFile ? [g.secondFoldedBanner] : []),
     ]),
   ),
 ];

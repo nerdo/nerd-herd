@@ -80,6 +80,8 @@ const SavedGroupsSchema = z.object({
       agentsLook: z.string().optional(),
       secondOpenBanner: link.optional(),
       secondFoldedBanner: link.optional(),
+      secondOpenBannerFile: bannerFile.optional(),
+      secondFoldedBannerFile: bannerFile.optional(),
     }),
   ),
   placements: z.array(z.object({ name: z.string().nullable(), group: z.string().nullable() })),

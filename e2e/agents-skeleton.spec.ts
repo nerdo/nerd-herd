@@ -55,8 +55,8 @@ test(
       "the card shows the whole subject, then space and machine; after the rename the card and " +
         "the tab carry the new name; clicking the card focuses the agent's pane",
     ).toEqual({
-      before: `${subject} sandbox · This computer`,
-      after: `${newName} sandbox · This computer`,
+      before: `${subject} sandbox This computer`,
+      after: `${newName} sandbox This computer`,
       tab: newName,
       focused: agent,
     });

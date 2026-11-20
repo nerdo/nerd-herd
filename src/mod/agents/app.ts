@@ -3,6 +3,7 @@ import { type AgentsRow, arrangeSessions } from "../../core/sessions/sessionList
 import { type SortChoice, sortChoices } from "../../core/sessions/sortChoices";
 import { doneSessions, startingLabels, withLedger } from "../../core/sessions/doneLedger";
 import { dismissal } from "../../core/sessions/dismiss";
+import { duration, type SinceRecord, statusSince } from "../../core/sessions/statusTime";
 import type { BannerFile } from "../../core/banners/bannerCache";
 import { groupLook } from "../../core/groups/groupLook";
 import type { SavedGroup } from "../../core/groups/groupModel";
@@ -34,7 +35,34 @@ const keptFile = (g: SavedGroup, link: string): BannerFile | null =>
     ? (g.openBannerFile ?? null)
     : link === g.foldedBanner
       ? (g.foldedBannerFile ?? null)
-      : null;
+      : link === g.secondOpenBanner
+        ? (g.secondOpenBannerFile ?? null)
+        : link === g.secondFoldedBanner
+          ? (g.secondFoldedBannerFile ?? null)
+          : null;
+
+const sinceKey = "nerd-herd-agents.since";
+
+/** When each session entered its status, kept in this mod's local storage as Herdr's list keeps it. */
+let since: SinceRecord = (() => {
+  try {
+    const saved: unknown = JSON.parse(localStorage.getItem(sinceKey) ?? "{}");
+    return typeof saved === "object" && saved !== null && !Array.isArray(saved)
+      ? Object.fromEntries(
+          Object.entries(saved).flatMap(([k, v]): [string, { s: string; at: number }][] =>
+            typeof v === "object" &&
+            v !== null &&
+            typeof v.s === "string" &&
+            typeof v.at === "number"
+              ? [[k, { s: v.s, at: v.at }]]
+              : [],
+          ),
+        )
+      : {};
+  } catch {
+    return {};
+  }
+})();
 
 /** Starting points already sent, so a session is labeled once while the label is on its way. */
 const sent = new Set<string>();
@@ -63,13 +91,27 @@ export const agentsApp = {
     const file = look.kind === "banner" ? keptFile(group, look.link) : null;
     return file ? { kind: "banner", file, group } : { kind: "folder", group };
   },
-  rows: (): AgentsRow[] =>
-    arrangeSessions({
+  rows: (): AgentsRow[] => {
+    const sessions = withLedger(readSessions(), doneSessions(readTerminals()));
+    const next = statusSince(since, sessions, Date.now());
+    if (next !== since && Object.keys(next).some((k) => next[k] !== since[k])) {
+      since = next;
+      try {
+        localStorage.setItem(sinceKey, JSON.stringify(since));
+      } catch {}
+    }
+    return arrangeSessions({
       sort: readSort(),
-      sessions: withLedger(readSessions(), doneSessions(readTerminals())),
+      sessions,
       groups: readGroups(),
       folded: readFolded(),
-    }),
+    });
+  },
+  /** How long a session has been in its status, as Herdr writes it; null before it was seen. */
+  since: (terminal: string): string | null => {
+    const at = since[terminal]?.at;
+    return at === undefined ? null : duration(Date.now() - at);
+  },
   sortChoices: (): SortChoice[] => sortChoices(readGroupWord()),
   currentSort: (): unknown => readSort(),
   /** Folds or unfolds a group in Agents, named by its id or its name; Spaces' fold is untouched. */

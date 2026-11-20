@@ -202,6 +202,11 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <li>A status pill is filled with its status color, and each card's background is a pale version of that color</li>
           <li>A card's machine name sits right-aligned, smaller and dimmer than its space name</li>
           <li>Group headers in Agents sit at the same margins as in Spaces, and folded banners sit flush against each other</li>
+          <li>A status section or folder folds and unfolds on its own, in Agents only, and stays as left</li>
+          <li>A folded group's header shows a mark for each status inside it that needs attention, and Herdr's spinner while something inside is working</li>
+          <li>A group's banner in Agents has its own overlay settings (where the strip sits, its backing color, its controls color), following Spaces' until set</li>
+          <li>The focused session's card is highlighted in Agents</li>
+          <li>A card shows its session's version control state under its time: the jj bookmark and changes ahead of it, or the git branch</li>
           <li>A session card shows the session's subject wrapped onto more lines when it is longer than one line</li>
           <li>Renaming a session from its card gives its Herdr tab that name</li>
           <li>Renaming a session to an empty name returns it to its automatic name</li>
@@ -269,6 +274,20 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <dl>
           <dt>Question</dt> <dd data-field="body">How do the Agents list's statuses and cards get enough structure to read at a glance?</dd>
           <dt>Resolution</dt> <dd data-field="resolution">Status sections and folders become pills in Herdr's status colors (the theme's working, blocked, done and idle) with how many sessions each holds, and each card sits on its own rounded background with its location cut to one line; the title still wraps (the user, 2026-11-20, after installing: "the cards need more visual structure. it looks messy, the priorities aren't easliy glanceable", then "go with C for the cards").</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-20">
+        <h3>Card version control and polish</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">What else goes on a card, and how do the open groups and the focused card look?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">The card's right column holds the status mark and time, then the session's version control label (the jj bookmark with the changes ahead of it, as the Spaces jj label shows it, or the git branch), with the space and machine on the line below; the focused card is outlined in purple, the color of Dismiss; an open group ends with room below its last card while folded headers stay flush; the icon centers on the title's first line (the user, 2026-11-20: "show in the agent cards the version control status ... on the right, underneath the time put the version control label there and then below that would be the existing project and computer"; "maybe we use purple"; "a little bit more vertical margin at the bottom of an open group"; "the icon is a bit high").</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-20">
+        <h3>Folding, attention and focus</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">What else does Agents need after installing, for folding, attention on folded groups, and knowing where you are?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Status sections and folders fold like groups, so one status can be open while the rest are folded; a folded group's header shows what inside it needs attention, and Herdr's spinner while something inside works; a group's banner in Agents has its own overlay settings (strip place, backing, controls color) following Spaces' until set; the focused session's card is highlighted (the user, 2026-11-20: "the priority sections cannot be collapsed, and I should be able to collapse them"; "if the group has collapsed, nothing appears there ... I need some sort of indicator there ... I think the agents section needs its own settings for that ... The overlay and everything"; "I probably want that working icon too"; "there's no indication of which session I'm focused on ... I'd want it to be highlighted on the left").</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-20">
@@ -783,6 +802,54 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Given</dt> <dd data-field="given">Two banner groups folded in Agents, one after the other</dd>
             <dt>When</dt> <dd data-field="when">The Agents section is shown</dd>
             <dt>Then</dt> <dd data-field="then">No gap shows between the two banners, and each starts at the same left edge as in Spaces</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A status section or folder folds and unfolds on its own, in Agents only, and stays as left" covers-module="Session list model" status="pending">
+          <h4>A folded status section shows its pill alone</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">An Idle session and a Done session sorted by Priority, with Idle folded</dd>
+            <dt>When</dt> <dd data-field="when">Agents cards are computed</dd>
+            <dt>Then</dt> <dd data-field="then">The Idle section is its pill alone, marked folded, and the Done section holds its card</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A status section or folder folds and unfolds on its own, in Agents only, and stays as left" covers-module="Session list model" status="pending">
+          <h4>A folded status folder inside a group shows its pill alone</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work holding a Done session, its Done folder folded</dd>
+            <dt>When</dt> <dd data-field="when">Agents cards are computed with agents.sort = groups</dd>
+            <dt>Then</dt> <dd data-field="then">Work's Done folder is its pill alone, marked folded</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A folded group's header shows a mark for each status inside it that needs attention, and Herdr's spinner while something inside is working" covers-module="Session list model" status="pending">
+          <h4>A folded group carries what needs attention inside it</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Work, folded in Agents, holding a working session and two Done sessions</dd>
+            <dt>When</dt> <dd data-field="when">Agents cards are computed with agents.sort = groups</dd>
+            <dt>Then</dt> <dd data-field="then">Work's header is marked folded, with 1 working and 2 done</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A group's banner in Agents has its own overlay settings (where the strip sits, its backing color, its controls color), following Spaces' until set" covers-module="Group looks" status="pending">
+          <h4>The Agents overlay follows Spaces until set</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A group with Spaces' strip at the bottom and a red backing, and no Agents overlay settings</dd>
+            <dt>When</dt> <dd data-field="when">Its Agents overlay is read</dd>
+            <dt>Then</dt> <dd data-field="then">It is at the bottom with the red backing; once the Agents strip is set to top, Agents reads top while Spaces stays bottom</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="The focused session's card is highlighted in Agents" covers-module="Session list model" status="pending">
+          <h4>The focused session's card is marked focused</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Two sessions, the second in the focused pane</dd>
+            <dt>When</dt> <dd data-field="when">Agents cards are computed</dd>
+            <dt>Then</dt> <dd data-field="then">The second card is marked focused and the first is not</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A card shows its session's version control state under its time: the jj bookmark and changes ahead of it, or the git branch" covers-module="Agents sidebar mod" status="pending">
+          <h4>A card shows its jj bookmark and the changes ahead of it</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session in a jj repository whose working copy is two non-empty changes ahead of the main bookmark</dd>
+            <dt>When</dt> <dd data-field="when">The Agents section is read</dd>
+            <dt>Then</dt> <dd data-field="then">The card reads main ↑2 under its time</dd>
           </dl>
         </test-case>
       </test-group>

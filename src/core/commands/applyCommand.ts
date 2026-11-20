@@ -156,12 +156,15 @@ export const applyCommand = (
       const id = resolve(g, p.group, command);
       let next = p.open === undefined ? g : setBanner(g, id, "open", p.open);
       next = p.folded === undefined ? next : setBanner(next, id, "folded", p.folded);
-      next =
-        p.secondOpen === undefined ? next : setLook(next, id, { secondOpenBanner: p.secondOpen });
-      next =
-        p.secondFolded === undefined
-          ? next
-          : setLook(next, id, { secondFoldedBanner: p.secondFolded });
+      // A new second-style link drops its kept copy, so the new link is loaded, as for the first style.
+      const kept = next.groups.find((x) => x.id === id);
+      if (p.secondOpen !== undefined && p.secondOpen !== kept?.secondOpenBanner)
+        next = setLook(next, id, { secondOpenBanner: p.secondOpen, secondOpenBannerFile: null });
+      if (p.secondFolded !== undefined && p.secondFolded !== kept?.secondFoldedBanner)
+        next = setLook(next, id, {
+          secondFoldedBanner: p.secondFolded,
+          secondFoldedBannerFile: null,
+        });
       return { ...state, groups: next };
     }
     case "machine-move": {

@@ -27,7 +27,7 @@ test.afterAll(() => window.stop());
 // count, so the reading is "Done 1".
 test("a session that finished a turn nobody has dealt with shows under Done", () => {
   expect(before, "Done with its count, then the card").toBe(
-    `Done 1 ${subject} sandbox · This computer`,
+    `Done 1 ${subject} sandbox This computer`,
   );
 });
 
@@ -35,6 +35,6 @@ test("a session that finished a turn nobody has dealt with shows under Done", ()
 // "...and Done ledger then puts the session under Idle."
 test("once its finished turn is recorded as handled, the session shows under Idle", () => {
   expect(after, "Idle with its count, then the card").toBe(
-    `Idle 1 ${subject} sandbox · This computer`,
+    `Idle 1 ${subject} sandbox This computer`,
   );
 });

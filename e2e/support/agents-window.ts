@@ -9,6 +9,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { e2eSettings } from "./e2e-settings";
 import { HerdrWindow } from "./herdr-window";
+import { rowsIn } from "./text-rows";
 
 export type TerminalAddress = string;
 
@@ -28,6 +29,10 @@ const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 /** The text reader reads a status pill's rounded right edge as ")" ("Done 1)", 2026-11-20). */
 const pill = (line: string): string =>
   line.replace(/^((?:Blocked|Done|Working|Idle) \d+)\)$/, "$1");
+
+/** A card's status mark and time in status, which close its title's first line ("Ship it · <1m"):
+ *  the session list's tests state the time, so the walks read the title without it (2026-11-20). */
+const markAndTime = (line: string): string => line.replace(/\s+[·•o]?\s*<?[\dil]*[mhd]$/, "");
 
 /** Section headers Herdr's Agents list draws above its rows, such as "Idle 1". */
 const sectionHeader = /^(Agents|Blocked|Done|Working|Idle)(\s+\d+)?$/;
@@ -128,24 +133,24 @@ export class AgentsWindow extends HerdrWindow {
    * a title starting with a one-letter word would lose that word here.
    */
   readAgents(): string {
-    const lines = this.read();
+    const lines = this.withAgentsHeader(this.read());
     const start = lines.reduce((last, l, i) => (/^Agents\b/.test(l) ? i : last), -1);
     const end = lines.findIndex((l, i) => i > start && /\bSettings$/.test(l));
     return lines
       .slice(start + 1, end === -1 ? undefined : end)
-      .map((l) => pill(l.replace(/^\S /, "").replaceAll("•", "·")))
+      .map((l) => pill(markAndTime(l.replace(/^\S /, "").replaceAll("•", "·"))))
       .filter((l) => !sectionHeader.test(l))
       .join(" ");
   }
 
   /** The Agents section's text with its section headers kept (Done, Idle, ...). */
   readAgentsWithSections(): string {
-    const lines = this.read();
+    const lines = this.withAgentsHeader(this.read());
     const start = lines.reduce((last, l, i) => (/^Agents\b/.test(l) ? i : last), -1);
     const end = lines.findIndex((l, i) => i > start && /\bSettings$/.test(l));
     return lines
       .slice(start + 1, end === -1 ? undefined : end)
-      .map((l) => pill(l.replace(/^\S /, "").replaceAll("•", "·")))
+      .map((l) => pill(markAndTime(l.replace(/^\S /, "").replaceAll("•", "·"))))
       .join(" ");
   }
 
@@ -173,6 +178,44 @@ export class AgentsWindow extends HerdrWindow {
     const turn = field(got, "turn");
     if (typeof turn !== "number") throw new Error(`hc get ${terminal} gave no turn`);
     return turn;
+  }
+
+  /** Closes the open overlay and waits until Herdr reports none, so a popup is gone before a reading. */
+  closeOverlay(): void {
+    this.herdr("overlay.close", {});
+    for (let waited = 0; waited < 5_000; waited += 250) {
+      const overlays = field(this.ask("status"), "overlays");
+      if (!Array.isArray(overlays) || overlays.length === 0) return;
+      sleep(250);
+    }
+  }
+
+  /**
+   * The sidebar's lines with the Agents header in them. Accurate recognition sometimes reads a few
+   * short lines at the top of the sidebar upside down, the Agents header among them ("suaty",
+   * 2026-11-20); when the header is missing, fast recognition finds where it is on a fresh
+   * screenshot, and the lines below it come from accurate recognition of that same screenshot.
+   */
+  private withAgentsHeader(lines: readonly string[]): readonly string[] {
+    if (lines.some((l) => /^Agents\b/.test(l))) return lines;
+    const { shot, edge } = this.screenshot();
+    const text = (mode?: string) =>
+      spawnSync(e2eSettings.readText, [shot, String(edge), ...(mode ? [mode] : [])], {
+        encoding: "utf8",
+      }).stdout;
+    const blocks = (out: string) =>
+      out.split("\n").flatMap((line) => {
+        const [pos, words] = line.split("\t");
+        const top = Number((pos ?? "").split(" ")[1]);
+        return words && !Number.isNaN(top) ? [{ line, top, words: words.trim() }] : [];
+      });
+    const header = blocks(text("fast")).find((b) => /^Agents\b/.test(b.words));
+    if (!header) return lines;
+    const below = blocks(text())
+      .filter((b) => b.top > header.top + 0.005)
+      .map((b) => b.line)
+      .join("\n");
+    return ["Agents", ...rowsIn(below, edge, 1).map((l) => l.text)];
   }
 
   /** Sends one command to the nerd-herd Agents mod as written, readable or not. */

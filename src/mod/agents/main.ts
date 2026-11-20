@@ -1,13 +1,14 @@
 // The nerd-herd Agents mod: Herdr's sidebar Agents section, drawn from the rows the session list
 // arranges. Commands sent to the mod (`rename:{...}`, `focus:{...}`) reach Herdr through the app.
 import { h_flex, v_flex } from "gpui-base";
-import { type AsyncContext, div, image, svg, View } from "gpui-kit";
+import { type AsyncContext, div, svg, View } from "gpui-kit";
 import { nextCommand, props, theme } from "herdr";
 import { AgentsListError, rowsOrError } from "../../core/sessions/rowsOrError";
-import type { AgentIcon, AgentsRow, SessionStatus } from "../../core/sessions/sessionList";
+import type { AgentsRow } from "../../core/sessions/sessionList";
 import { errorCard } from "../errorCard";
 import { themeColor } from "../themeColor";
 import { agentsApp } from "./app";
+import { cardView, statusPill } from "./cardView";
 import { agentsGroupHeader } from "./groupHeader";
 import { openSortMenu, sortMenu } from "./sortMenu";
 
@@ -46,66 +47,14 @@ const rowView = (t: Theme, row: AgentsRow) => {
     case "folder":
       return statusPill(t, row.status, row.label, row.count);
     case "card":
-      return card(t, row);
+      return cardView(
+        t,
+        row,
+        agentsApp.since(row.terminal),
+        () => agentsApp.focus(row.terminal),
+        () => agentsApp.promptRename(row.terminal),
+      );
   }
-};
-
-/** Draws an agent's icon the way Herdr's own Agents list does: a tinted glyph, or a picture. */
-const iconView = (t: Theme, icon: AgentIcon | null) =>
-  icon === null
-    ? null
-    : icon.tint
-      ? svg(icon.path).size(14).flex_none().text_color(themeColor(t, "muted"))
-      : image(icon.path).w(14).h(14).flex_none();
-
-/** A status as a pill: outlined in Herdr's color for that status, its name and how many it holds. */
-const statusPill = (t: Theme, status: SessionStatus, label: string, count: number) =>
-  h_flex()
-    .pt(8)
-    .pb(4)
-    .child(
-      h_flex()
-        .gap(6)
-        .px(8)
-        .h(22)
-        .items_center()
-        .rounded_full()
-        .border_1()
-        .border_color(themeColor(t, status))
-        .child(div().size(7).rounded_full().bg(themeColor(t, status)))
-        .child(div().text_size(12).text_color(themeColor(t, "foreground")).child(label))
-        .child(div().text_size(12).text_color(themeColor(t, "muted")).child(String(count))),
-    );
-
-const card = (t: Theme, row: Extract<AgentsRow, { kind: "card" }>) => {
-  const icon = iconView(t, row.icon);
-  return v_flex()
-    .mb(6)
-    .px(8)
-    .bg(themeColor(t, "surface"))
-    .id(`card-${row.terminal}`)
-    .py(4)
-    .rounded(6)
-    .cursor_pointer()
-    .hover((st) => st.bg(themeColor(t, "hover")))
-    .on_click(() => agentsApp.focus(row.terminal))
-    .on_mouse_down("right", () => agentsApp.promptRename(row.terminal))
-    .child(
-      h_flex()
-        .gap(6)
-        .items_start()
-        .when(icon !== null, (el) => (icon ? el.child(icon) : el))
-        .child(
-          div()
-            .flex_1()
-            .min_w_0()
-            .whitespace_normal()
-            .font_semibold()
-            .text_color(themeColor(t, "foreground"))
-            .child(row.title),
-        ),
-    )
-    .child(div().min_w_0().truncate().text_color(themeColor(t, "muted")).child(row.location));
 };
 
 /** One of this copy's props (from the layout, or the overlay that opened it). */
@@ -117,18 +66,30 @@ const prop = (key: string): unknown => {
 };
 const isSortMenu = (): boolean => prop("sortMenu") === true;
 
-/** The rows, or in their place a card with the error's reference. */
+/** The rows, or in their place a card with the error's reference. A group's header draws its own
+ *  margins (a banner spans the full width, as in Spaces); every other row sits inside the side gap. */
 const rowsView = (t: Theme, rows: AgentsRow[] | AgentsListError) =>
   rows instanceof AgentsListError
     ? [errorCard(t, rows.message)]
-    : rows.map((row) => rowView(t, row));
+    : rows.map((row, i) =>
+        row.kind === "group"
+          ? // An open group ends with room below its last card; folded headers stay flush.
+            div()
+              .when(rows[i - 1]?.kind === "card", (el) => el.pt(14))
+              .child(rowView(t, row))
+          : div().px(12).child(rowView(t, row)),
+      );
 
 export default class AgentsMod extends View {
   init(_props: unknown, cx: AsyncContext): void {
     // The sort menu is a second copy of this mod in a popup; only the sidebar's copy takes commands.
     if (isSortMenu()) return;
     agentsApp.recordStartingPoints();
-    cx.timer.every(2000, () => agentsApp.recordStartingPoints());
+    // Every 2 s: record new sessions' starting points, and redraw so each card's time moves on.
+    cx.timer.every(2000, (cx) => {
+      agentsApp.recordStartingPoints();
+      cx.notify();
+    });
     cx.spawn(async (cx) => {
       for (;;) {
         const command = await nextCommand();
@@ -167,10 +128,10 @@ export default class AgentsMod extends View {
     }
     return v_flex()
       .size_full()
-      .px(12)
-      .gap(2)
       .child(
         h_flex()
+          .px(12)
+          .pb(4)
           .justify_between()
           .items_center()
           .child(div().text_color(themeColor(t, "foreground")).child("Agents"))
