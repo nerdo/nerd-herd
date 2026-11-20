@@ -533,6 +533,8 @@ export class Spaces extends View {
       .flex_none()
       .justify_center()
       .rounded(8)
+      .border_2()
+      .border_color(on ? t.ansi5 : "#00000000")
       .when(on, (el) => el.bg(t.selected))
       .when(!on, (el) => el.hover((s) => s.bg(t.hover)))
       .when(this.pressed === w.id && this.over !== w.id, (el) => el.opacity(0.5))

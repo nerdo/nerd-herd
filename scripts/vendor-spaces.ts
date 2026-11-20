@@ -23,6 +23,17 @@ const replace = (from: string, to: string) => {
 };
 
 replace("export default class Spaces extends View {", "export class Spaces extends View {");
+// nerd-herd: the active space's row keeps Herdr's highlight and gains the purple outline the focused
+// card has in Agents; other rows carry a clear outline, so no row shifts (the user, 2026-11-20: "that
+// outline is missing from the spaces section but should be there too for consistency").
+replace(
+  `      .rounded(8)
+      .when(on, (el) => el.bg(t.selected))`,
+  `      .rounded(8)
+      .border_2()
+      .border_color(on ? t.ansi5 : "#00000000")
+      .when(on, (el) => el.bg(t.selected))`,
+);
 // nerd-herd: a button on a row keeps its press from reaching the row, as Herdr's own dialogs do, so
 // pressing it does not start dragging the row (the user, 2026-11-18: a row outline showed on hover
 // after using a row's buttons). Herdr's buttons stop only their click.

@@ -206,6 +206,9 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <li>A folded group's header shows a mark for each status inside it that needs attention, and Herdr's spinner while something inside is working</li>
           <li>A group's banner in Agents has its own overlay settings (where the strip sits, its backing color, its controls color), following Spaces' until set</li>
           <li>The focused session's card is highlighted in Agents</li>
+          <li>The active space's row in Spaces carries the same purple outline as the focused card in Agents</li>
+          <li>A pinned session sits in a Pinned section at the top of Agents in every sort and nowhere else in the list</li>
+          <li>A card's pin button pins and unpins its session with Herdr's own pin</li>
           <li>A card shows its session's version control state under its time: the jj bookmark and changes ahead of it, or the git branch</li>
           <li>A session card shows the session's subject wrapped onto more lines when it is longer than one line</li>
           <li>Renaming a session from its card gives its Herdr tab that name</li>
@@ -277,10 +280,17 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-20">
+        <h3>Pinned sessions</h3>
+        <dl>
+          <dt>Question</dt> <dd data-field="body">How does Agents show and set a pinned session?</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">With Herdr's own pin (<code>terminal.pin</code>, stored as the <code>herdr.pinned</code> label), so a pin matches Herdr's own Agents and every window on that machine. A pinned session leaves its status section or group and sits in a Pinned section at the top in every sort, ordered as Priority orders. Its header is a grey pill reading "Pinned" with its count, and it folds like the status pills. A pinned card keeps its status tint and mark and shows a filled pin; every card has a pin button, shown on hover and always on a pinned card. Purple is not used: it already means the focused session (the outline) and acting on it (Dismiss), and a pinned card that is also focused would have two purple meanings (the user, 2026-11-20: "we're missing the pin functionality ... it pins it to the top, but maybe it also shows it in purple. I don't know if that's going to be confusing with the purple outline ... just make the decision of whatever you think is going to be least confusing").</dd>
+        </dl>
+      </spec-question>
+      <spec-question status="resolved" resolved-on="2026-11-20">
         <h3>Card version control and polish</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">What else goes on a card, and how do the open groups and the focused card look?</dd>
-          <dt>Resolution</dt> <dd data-field="resolution">The card's right column holds the status mark and time, then the session's version control label (the jj bookmark with the changes ahead of it, as the Spaces jj label shows it, or the git branch), with the space and machine on the line below; the focused card is outlined in purple, the color of Dismiss; an open group ends with room below its last card while folded headers stay flush; the icon centers on the title's first line (the user, 2026-11-20: "show in the agent cards the version control status ... on the right, underneath the time put the version control label there and then below that would be the existing project and computer"; "maybe we use purple"; "a little bit more vertical margin at the bottom of an open group"; "the icon is a bit high").</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">The card's right column holds the status mark and time, then the session's version control label (the jj bookmark with the changes ahead of it, as the Spaces jj label shows it, or the git branch), with the space and machine on the line below; the focused card is outlined in purple, the color of Dismiss; an open group ends with room below its last card while folded headers stay flush; the icon centers on the title's first line A plain terminal tab in focus outlines no card, since the outline means "this session has the focus"; the active space's row in Spaces keeps its highlight and gains the same purple outline (the user, 2026-11-20: "terminal tab hint: no, it means this has the focus"; "that outline is missing from the spaces section but should be there too for consistency"; "show in the agent cards the version control status ... on the right, underneath the time put the version control label there and then below that would be the existing project and computer"; "maybe we use purple"; "a little bit more vertical margin at the bottom of an open group"; "the icon is a bit high").</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-20">
@@ -842,6 +852,46 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Given</dt> <dd data-field="given">Two sessions, the second in the focused pane</dd>
             <dt>When</dt> <dd data-field="when">Agents cards are computed</dd>
             <dt>Then</dt> <dd data-field="then">The second card is marked focused and the first is not</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A pinned session sits in a Pinned section at the top of Agents in every sort and nowhere else in the list" covers-module="Session list model" status="pending">
+          <h4>A pinned Idle session sits under Pinned above Done</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A Done session t1 and a pinned Idle session t2, sorted by Priority</dd>
+            <dt>When</dt> <dd data-field="when">Agents rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">The rows are the Pinned section with a count of 1, the t2 card, the Done section, the t1 card; there is no Idle section</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A pinned session sits in a Pinned section at the top of Agents in every sort and nowhere else in the list" covers-module="Session list model" status="pending">
+          <h4>Grouped by group, a pinned session sits under Pinned above every group</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Two Done sessions on a machine in the Work group, the second pinned, grouped by group</dd>
+            <dt>When</dt> <dd data-field="when">Agents rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">The rows open with the Pinned section and the pinned card, then the Work section whose Done folder holds the other card with a count of 1</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A pinned session sits in a Pinned section at the top of Agents in every sort and nowhere else in the list" covers-module="Session list model" status="pending">
+          <h4>A folded Pinned section shows its pill alone</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A pinned session, with Pinned folded</dd>
+            <dt>When</dt> <dd data-field="when">Agents rows are computed</dd>
+            <dt>Then</dt> <dd data-field="then">The Pinned section is its pill alone, marked folded, with a count of 1</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A card's pin button pins and unpins its session with Herdr's own pin" covers-module="Agents sidebar mod" status="pending">
+          <h4>Pinning from a card runs Herdr's pin and moves the card under Pinned</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A running test window with one Idle session</dd>
+            <dt>When</dt> <dd data-field="when">The walk sends the card's pin command</dd>
+            <dt>Then</dt> <dd data-field="then">Herdr reports the session's terminal pinned, and Agents reads "Pinned 1" followed by the card</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="The active space's row in Spaces carries the same purple outline as the focused card in Agents" status="pending">
+          <h4>The active space's row is outlined in purple</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">One space, shown in the window</dd>
+            <dt>When</dt> <dd data-field="when">Spaces draws its rows</dd>
+            <dt>Then</dt> <dd data-field="then">The space's row shows a purple outline</dd>
           </dl>
         </test-case>
         <test-case traces-to="A card shows its session's version control state under its time: the jj bookmark and changes ahead of it, or the git branch" covers-module="Agents sidebar mod" status="pending">
