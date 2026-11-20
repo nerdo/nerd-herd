@@ -12,6 +12,7 @@
       "!.hw-home",
       "!.jj-workspaces",
       "!src/mod/vendor/**/*.js",
+      "!src/mod/status/vendor/**/*.js",
       "!scripts/serve-specs.js"
     ]
   },

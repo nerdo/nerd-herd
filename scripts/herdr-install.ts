@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { withDismissKey } from "../src/core/keyboard/dismissKey";
 import { keyBindings, mergeKeys } from "../src/core/keyboard/keyBindings";
 import { withJjMods } from "./installLayout";
+import { withNerdHerdStatus } from "./installStatus";
 import { scriptSettings as s } from "./settings";
 import { testWindows } from "./testWindows";
 
@@ -75,14 +76,16 @@ async function installLayout(): Promise<void> {
   const homeHas = (mod: string) => existsSync(join(s.herdrHome, "mods", mod));
   await writeFile(
     join(s.herdrHome, "layouts/nerd-herd.json"),
-    withJjMods(
-      main
-        .replace('"mod": "spaces"', `"mod": "${modName}"`)
-        .replace(
-          '"mod": "agents"',
-          s.mods.includes("agents") ? `"mod": "${agentsModName}"` : '"mod": "agents"',
-        ),
-      homeHas,
+    (s.mods.includes("agents") ? withNerdHerdStatus : (text: string) => text)(
+      withJjMods(
+        main
+          .replace('"mod": "spaces"', `"mod": "${modName}"`)
+          .replace(
+            '"mod": "agents"',
+            s.mods.includes("agents") ? `"mod": "${agentsModName}"` : '"mod": "agents"',
+          ),
+        homeHas,
+      ),
     ),
   );
 }
@@ -107,7 +110,10 @@ async function installKeys(): Promise<void> {
 
 const built = build();
 await ensureWindow();
-for (const name of s.mods.includes("agents") ? [modName, agentsModName] : [modName]) {
+const statusMods = ["nerd-herd-status", "nerd-herd-jj-status"];
+for (const name of s.mods.includes("agents")
+  ? [modName, agentsModName, ...statusMods]
+  : [modName]) {
   await mkdir(join(s.herdrHome, "mods", name), { recursive: true });
   await cp(join(built, name), join(s.herdrHome, "mods", name), { recursive: true });
 }

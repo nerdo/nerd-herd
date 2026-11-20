@@ -37,3 +37,5 @@ async function buildMod(name: string, source: string): Promise<void> {
 
 await buildMod("nerd-herd-spaces", "src/mod");
 await buildMod("nerd-herd-agents", "src/mod/agents");
+await buildMod("nerd-herd-status", "src/mod/status/herdr");
+await buildMod("nerd-herd-jj-status", "src/mod/status/jj");
