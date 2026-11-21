@@ -32,6 +32,21 @@ const run = (cmd: string[], env: Record<string, string> = {}) => {
   return { code: p.status, out: p.stdout ?? "", err: p.stderr ?? "" };
 };
 
+
+/** Pixels per point on the main screen, as macOS reports it: 2 on a Retina screen, 1 elsewhere. */
+const screenScale = (): number => {
+  const s = run([
+    "osascript",
+    "-l",
+    "JavaScript",
+    "-e",
+    'ObjC.import("AppKit"); $.NSScreen.mainScreen.backingScaleFactor',
+  ]);
+  const scale = Number(s.out.trim());
+  if (s.code !== 0 || !(scale > 0)) throw new Error(`could not read the screen's scale: ${s.err}`);
+  return scale;
+};
+
 export class HerdrWindow {
   readonly home = e2eSettings.home;
   private shots = 0;
@@ -253,16 +268,18 @@ export class HerdrWindow {
 
   /**
    * The window's size in points, read from a screenshot of it: what the window manager gave the
-   * window, whatever its home's window.json asked for. The walks' displays show one pixel per point
-   * (a 1200 by 634 point window gave a 1200 by 634 pixel screenshot, 2026-11-18).
+   * window, whatever its home's window.json asked for. A screenshot holds the screen's pixels, and a
+   * Retina screen draws two per point (a 1200 by 634 point window gave 2400 by 1268 pixels there and
+   * 1200 by 634 on a one-to-one display), so the size is divided by the screen's scale.
    */
   shownSize(): WindowPoints {
     const shot = this.shotPath();
     const s = run(["herdr-app", "shot", shot], this.env());
     if (s.code !== 0) throw new Error(`herdr-app shot failed: ${s.out}\n${s.err}`);
     const png = readFileSync(shot);
+    const scale = screenScale();
     // A PNG's header holds its width and height as 32-bit numbers at bytes 16 and 20.
-    return { width: png.readUInt32BE(16), height: png.readUInt32BE(20) };
+    return { width: png.readUInt32BE(16) / scale, height: png.readUInt32BE(20) / scale };
   }
 
   /** The window's size in points, as Herdr saved it in window.json; null before Herdr writes it. */
