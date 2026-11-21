@@ -227,7 +227,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Resolution</dt> <dd data-field="resolution">Yes, as its own spec after the Agents mod spec closes (the user, 2026-11-20: "extract the state engine as an agnostic piece of this ... map those inputs to where they need to go and interpret those outputs in the specific domain"; "draft the engine spec while we wait for this one to close").</dd>
         </dl>
       </spec-question>
-      <spec-question status="open" data-roles="design build">
+      <spec-question status="resolved" resolved-on="2026-11-20" data-roles="design build">
         <h3>Engine shape</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Is the engine one pure step function, or an object that holds its state?</dd>
@@ -237,7 +237,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <li>Pure step: <code>step(state, input) → { state, view, effects }</code>. Every test is one call with no setup; the host keeps the state between calls.</li>
             <li>Object: <code>engine.send(input)</code> with the state inside. Hosts are simpler; tests need an engine per case and read state through methods.</li>
           </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Pure step, with a five-line helper that holds the state for hosts that want an object.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Pure step: <code>step(state, input) → { state, view, effects }</code>, with a five-line helper that holds the state for hosts that want an object (the user, 2026-11-20: "do all your recommendations").</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-20" data-roles="design">
@@ -248,7 +248,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Resolution</dt> <dd data-field="resolution">Both. The engine owns every idea in Agents and Spaces with its own models, analogous to Herdr's but self-contained, and the Herdr host is a separate layer that maps Herdr's data in and draws the engine's view out (the user, 2026-11-20: "we should own all the ideas around it and there should be a separate layer that kind of processes it through Herder"; "in my mind they're actually the same idea"). The Herdr host then draws Spaces from the engine's view, so the vendored Spaces file and its patches retire and Herdr's later Spaces changes no longer arrive through the vendor script.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open" data-roles="design build">
+      <spec-question status="resolved" resolved-on="2026-11-20" data-roles="design build">
         <h3>Second host in this spec</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Does this spec build the text host, or leave every second host for later?</dd>
@@ -259,10 +259,10 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <li>Command-line host on live herdr-core data (<code>hc</code>): more useful day to day; adds reading herdr-core outside Herdr, which no spec has looked at yet.</li>
             <li>No second host: the unit tests stand in for one.</li>
           </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Text host from a snapshot file. A live command-line host gets its own spec.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">The text host from a snapshot file is built in this spec. A live command-line host gets its own spec (the user, 2026-11-20: "do all your recommendations").</dd>
         </dl>
       </spec-question>
-      <spec-question status="open" data-roles="design build">
+      <spec-question status="resolved" resolved-on="2026-11-20" data-roles="design build">
         <h3>Engine location</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Does the engine live in this repository's <code>src/core</code>, or in a package of its own?</dd>
@@ -272,10 +272,10 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <li>A folder in <code>src/core/engine/</code> with its own boundary zone: no packaging work now; moving it later is a folder move.</li>
             <li>A package now (<code>packages/agents-engine</code>): ready for outside hosts; adds a workspace and a build for one consumer.</li>
           </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">A folder with its own zone, and a package when a host outside this repository starts.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">A folder in <code>src/core/engine/</code> with its own boundary zone. It becomes a package when a host outside this repository starts (the user, 2026-11-20: "do all your recommendations").</dd>
         </dl>
       </spec-question>
-      <spec-question status="open" data-roles="design">
+      <spec-question status="resolved" resolved-on="2026-11-20" data-roles="design">
         <h3>What the view holds</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Does the engine's view name looks (purple outline, tint colors, sizes), or only meanings (focused, folded, status, attention counts) that each host draws in its own way?</dd>
@@ -285,7 +285,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <li>Meanings only: each host maps a meaning to its look (Herdr: focused → purple outline).</li>
             <li>Meanings and looks: the view carries colors; other hosts ignore them.</li>
           </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Meanings only, with every decision about what shows (folded, outlined, which marks, which label) made in the engine. A host decides only how each meaning looks.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Meanings only. Each host maps a meaning to its own look, such as Herdr drawing focused as the purple outline (the user, 2026-11-20: "do all your recommendations").</dd>
         </dl>
       </spec-question>
     </details>
@@ -336,7 +336,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       <spec-module>
         <h3>Text host</h3>
         <dl>
-          <dt>Responsibility</dt> <dd data-field="responsibility">Prints the Agents list as text from a snapshot of Herdr's data (depends on the open question "Second host in this spec").</dd>
+          <dt>Responsibility</dt> <dd data-field="responsibility">Prints the Agents list as text from a snapshot of Herdr's data.</dd>
           <dt>Owns</dt> <dd data-field="owns">Reading the snapshot file and the text layout.</dd>
           <dt>Delegates</dt> <dd data-field="delegates">Everything else to the engine.</dd>
           <dt>Input <code>Snapshot file</code></dt> <dd data-field="input" data-type="Snapshot file">JSON holding the same data the Herdr host gives the engine.</dd>
@@ -362,7 +362,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       <p>"Engine" means the code that holds the state of Agents and Spaces and decides what shows. "Host" means the code around it that reads a platform's data and draws or prints the view. Herdr is the first host.</p>
       <p>"Same as before" in the first journey is measured by the Agents walks: they run against the engine with their expected values unchanged. Changing an expected value during this spec is a behavior change, and it needs the user's decision first.</p>
       <p>"Same as before" for Spaces is measured by the Spaces walks the same way. Herdr's Spaces mod does things no walk checks today, such as dragging and reconnecting a machine. Before the Spaces phase starts, those behaviors are listed from Herdr's Spaces file and each gets a test, so nothing is dropped because no walk caught it.</p>
-      <p>The view carries meanings or looks according to the open question "What the view holds". The test cases below are written for meanings.</p>
+      <p>The view carries meanings only, as resolved in "What the view holds". Each host decides how a meaning looks.</p>
     </details>
   </section>
 
