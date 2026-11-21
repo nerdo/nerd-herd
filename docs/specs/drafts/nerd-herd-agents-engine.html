@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Spec: nerd-herd Agents engine</title>
+<title>Spec: nerd-herd engine</title>
 <style>
 :root { color-scheme: light dark;
         --ink:#1a1a1a; --bg:#fff; --muted:#595959; --rule:#d4d4d4; --ok:#2e7d32; --warn:#b34700;
@@ -165,7 +165,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
 </nav>
 <main id="content">
 <main id="content">
-  <h1>nerd-herd Agents engine: one state core, many hosts</h1>
+  <h1>nerd-herd engine: one state core for Agents and Spaces, many hosts</h1>
   <p>Today the Agents mod keeps part of its state in the Herdr mod layer (<code>src/mod/agents/</code>): which statuses are folded, when each session entered its status, which sessions got their starting point, the version control labels, and what each click does. Only end-to-end walks in a running window reach that code, and a full walk run takes about 11 minutes. This spec moves that state into one engine that takes plain inputs and returns the view, the next state, and the effects to carry out. Herdr becomes one host that feeds the engine and carries out its effects. A text host, and later a command-line or mobile host, can feed it the same inputs. State behavior is then tested in unit tests that run in about a second, and walks check only what the person sees.</p>
   <dl class="spec-meta">
     <dt>Stage</dt> <dd data-field="stage">drafts</dd>
@@ -192,6 +192,15 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       </ol>
     </details>
     <p>Dannel opens Herdr after the move. The Agents section shows Done, Blocked, Working and Idle pills with the same cards, times and version control labels as the day before, because the Herdr host hands the engine the same agents, spaces, terminals and groups, and draws the view it gets back. Dannel clicks the Idle pill to fold it. The click becomes a fold command, the engine returns a view with Idle folded and asks for the folded statuses to be saved, and the Herdr host saves them. Dannel quits Herdr and opens it again, and Idle is still folded.</p>
+    <h3>The same Spaces, through the same engine</h3>
+    <details open class="claims"><summary>Claims</summary>
+      <ol>
+        <li>The engine computes the same Spaces groups and rows from Herdr's data as Spaces showed before</li>
+        <li>A Spaces action reaches the engine as a command and Herdr carries out what the engine asks for</li>
+        <li>Spaces no longer depends on a copy of Herdr's Spaces mod</li>
+      </ol>
+    </details>
+    <p>Dannel opens Herdr after Spaces moves. The Spaces section shows the same groups, machines and spaces with the active space outlined, now drawn by the Herdr host from the engine's view instead of by a patched copy of Herdr's Spaces mod. Dannel makes a group called Work and drags this computer into it. Each action becomes a command, the engine returns a view with This computer inside Work and asks for the groups to be saved, and the Herdr host saves them and draws the new view. Agents sorted by group shows the same Work group, because both sections read one state.</p>
     <h3>Working out a feature without a window</h3>
     <details open class="claims"><summary>Claims</summary>
       <ol>
@@ -231,17 +240,12 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Recommendation</dt> <dd data-field="recommendation">Pure step, with a five-line helper that holds the state for hosts that want an object.</dd>
         </dl>
       </spec-question>
-      <spec-question status="open" data-roles="design">
+      <spec-question status="resolved" resolved-on="2026-11-20" data-roles="design">
         <h3>Spaces in scope</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">Does this spec move Spaces' state into an engine too, or Agents only?</dd>
-          <dt>Context</dt> <dd data-field="context">Spaces' group model and its commands are already in <code>src/core</code> (<code>applyCommand</code>, the saved group store). The rest of Spaces is Herdr's own mod, vendored and patched (<code>src/mod/vendor/herdrSpaces.js</code>), and its state is Herdr's.</dd>
-          <dt>Options</dt>
-          <dd data-field="options"><ul>
-            <li>Agents only: one mod moves; Spaces keeps working as today.</li>
-            <li>Agents and Spaces: one engine for both; this means rewriting Herdr's Spaces code rather than patching it.</li>
-          </ul></dd>
-          <dt>Recommendation</dt> <dd data-field="recommendation">Agents only.</dd>
+          <dt>Context</dt> <dd data-field="context">Agents is a mod nerd-herd wrote. Spaces is Herdr's own mod, vendored and patched (<code>src/mod/vendor/herdrSpaces.js</code>), with its state kept inside Herdr's class. That difference is how each was built, and it says nothing about what the engine owns.</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">Both. The engine owns every idea in Agents and Spaces with its own models, analogous to Herdr's but self-contained, and the Herdr host is a separate layer that maps Herdr's data in and draws the engine's view out (the user, 2026-11-20: "we should own all the ideas around it and there should be a separate layer that kind of processes it through Herder"; "in my mind they're actually the same idea"). The Herdr host then draws Spaces from the engine's view, so the vendored Spaces file and its patches retire and Herdr's later Spaces changes no longer arrive through the vendor script.</dd>
         </dl>
       </spec-question>
       <spec-question status="open" data-roles="design build">
@@ -265,7 +269,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Context</dt> <dd data-field="context">A mobile app or another repository would import a package; nothing imports it from outside yet.</dd>
           <dt>Options</dt>
           <dd data-field="options"><ul>
-            <li>A folder in <code>src/core/agents/</code> with its own boundary zone: no packaging work now; moving it later is a folder move.</li>
+            <li>A folder in <code>src/core/engine/</code> with its own boundary zone: no packaging work now; moving it later is a folder move.</li>
             <li>A package now (<code>packages/agents-engine</code>): ready for outside hosts; adds a workspace and a build for one consumer.</li>
           </ul></dd>
           <dt>Recommendation</dt> <dd data-field="recommendation">A folder with its own zone, and a package when a host outside this repository starts.</dd>
@@ -294,8 +298,8 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
   herdr["Herdr: agents, spaces, terminals, groups"] --> hostIn["Herdr host reads inputs"]
   clicks["Clicks and keys"] --> hostIn
   clock["Clock"] --> hostIn
-  hostIn --> engine["Agents engine: step(state, input)"]
-  engine --> view["View: sections, folders, cards"]
+  hostIn --> engine["Engine: step(state, input)"]
+  engine --> view["View: Agents sections and cards, Spaces groups and rows"]
   engine --> effects["Effects: save, label, rename, focus, read version control"]
   view --> draw["Herdr host draws"]
   effects --> carry["Herdr host carries out"]
@@ -310,13 +314,13 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
   <section class="module-definitions" data-roles="build">
     <details open><summary><h2>Module Definitions</h2></summary>
       <spec-module>
-        <h3>Agents engine</h3>
+        <h3>Engine</h3>
         <dl>
           <dt>Responsibility</dt> <dd data-field="responsibility">Turns the current state and one input into the next state, the view, and the effects a host must carry out.</dd>
-          <dt>Owns</dt> <dd data-field="owns">The sort, folded groups and statuses, when each session entered its status, which sessions have their starting point, the version control labels, and what each command changes. Today these live in <code>src/mod/agents/app.ts</code>, <code>main.ts</code> and <code>herdrAgents.ts</code>.</dd>
+          <dt>Owns</dt> <dd data-field="owns">For Agents: the sort, folded groups and statuses, when each session entered its status, which sessions have their starting point, the version control labels, and what each command changes. Today these live in <code>src/mod/agents/app.ts</code>, <code>main.ts</code> and <code>herdrAgents.ts</code>. For Spaces: the groups and what holds what, the active space, folded groups, space colors, reconnecting machines, a drag in progress, which dialog is open, and what each Spaces command changes. Today the group parts live in <code>src/core/groups</code> and the rest inside Herdr's class in <code>src/mod/vendor/herdrSpaces.js</code>.</dd>
           <dt>Delegates</dt> <dd data-field="delegates">Arranging rows to the session list model (<code>src/core/sessions/sessionList.ts</code>); the Done rule to the Done ledger; time text to <code>statusTime.ts</code>; label text to <code>src/core/jj/vcsLabel.ts</code>; group looks to <code>src/core/groups/groupLook.ts</code>.</dd>
-          <dt>Input <code>AgentsInput</code></dt> <dd data-field="input" data-type="AgentsInput">One of: Herdr's data (sessions, groups, focus), a clock tick, a typed command, a version control reading, or saved values at start.</dd>
-          <dt>Output <code>AgentsStep</code></dt> <dd data-field="output" data-type="AgentsStep">The next state, the view (rows with meanings), and a list of effects.</dd>
+          <dt>Input <code>AgentsInput</code></dt> <dd data-field="input" data-type="AgentsInput">One of: Herdr's data (sessions, spaces, machines, focus), a clock tick, a typed Agents or Spaces command, a version control reading, or saved values at start.</dd>
+          <dt>Output <code>AgentsStep</code></dt> <dd data-field="output" data-type="AgentsStep">The next state, the view (Agents rows and Spaces rows, with meanings), and a list of effects.</dd>
         </dl>
       </spec-module>
       <spec-module>
@@ -326,7 +330,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dt>Owns</dt> <dd data-field="owns">Reading Herdr (<code>agents()</code>, <code>spaces()</code>, <code>terminals()</code>, <code>panes()</code>), the command text format (<code>fold-status:{json}</code> and the rest), drawing with gpui-kit, and storage in localStorage and shared state.</dd>
           <dt>Delegates</dt> <dd data-field="delegates">Every decision about state and what shows to the engine.</dd>
           <dt>Input <code>Herdr APIs</code></dt> <dd data-field="input" data-type="Herdr APIs">Herdr's data, commands, the timer.</dd>
-          <dt>Output <code>Elements and Herdr calls</code></dt> <dd data-field="output" data-type="Elements and Herdr calls">The drawn Agents section, and Herdr commands for each effect.</dd>
+          <dt>Output <code>Elements and Herdr calls</code></dt> <dd data-field="output" data-type="Elements and Herdr calls">The drawn Agents and Spaces sections, and Herdr commands for each effect.</dd>
         </dl>
       </spec-module>
       <spec-module>
@@ -355,8 +359,9 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
 
   <section class="ambiguity-resolution">
     <details open><summary><h2>Ambiguity Resolution</h2></summary>
-      <p>"Engine" means the code that holds Agents' state and decides what shows. "Host" means the code around it that reads a platform's data and draws or prints the view. Herdr is the first host.</p>
+      <p>"Engine" means the code that holds the state of Agents and Spaces and decides what shows. "Host" means the code around it that reads a platform's data and draws or prints the view. Herdr is the first host.</p>
       <p>"Same as before" in the first journey is measured by the Agents walks: they run against the engine with their expected values unchanged. Changing an expected value during this spec is a behavior change, and it needs the user's decision first.</p>
+      <p>"Same as before" for Spaces is measured by the Spaces walks the same way. Herdr's Spaces mod does things no walk checks today, such as dragging and reconnecting a machine. Before the Spaces phase starts, those behaviors are listed from Herdr's Spaces file and each gets a test, so nothing is dropped because no walk caught it.</p>
       <p>The view carries meanings or looks according to the open question "What the view holds". The test cases below are written for meanings.</p>
     </details>
   </section>
@@ -365,7 +370,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
     <details open><summary><h2>Test Cases</h2></summary>
       <test-group category="happy-path">
         <h3>Engine behavior</h3>
-        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Engine" status="pending">
           <h4>Folding a status records it and asks the host to save it</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">An Idle session and a Done session, sorted by Priority, nothing folded</dd>
@@ -373,7 +378,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The view shows the Idle pill alone, marked folded, and the effects hold one save of the folded statuses with the value [&quot;idle&quot;]</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Engine" status="pending">
           <h4>Renaming a session asks the host to rename its tab</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">A session in terminal t1</dd>
@@ -381,7 +386,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The effects hold one tab rename for t1 with the name &quot;NAS drive health&quot;</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Engine" status="pending">
           <h4>Clicking a card asks the host to focus its pane</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">A session in terminal t1, another pane focused</dd>
@@ -389,7 +394,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The effects hold one focus of t1</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Engine" status="pending">
           <h4>Dismissing the focused Done session asks for its handled label</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">The focused session t1 is under Done at turn 4</dd>
@@ -397,7 +402,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The effects hold one label write on t1: nerd-herd.handled = 4</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Engine" status="pending">
           <h4>A dismissed session moves to Idle once its label comes back</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">Session t1 dismissed at turn 4</dd>
@@ -405,7 +410,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The view shows t1 under Idle</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Engine" status="pending">
           <h4>A session seen for the first time gets its starting point once</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">A session t1 with no nerd-herd.handled label, whose Herdr seen turn is 3</dd>
@@ -413,7 +418,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The first result's effects hold one label write on t1: nerd-herd.handled = 3, and the second result holds none</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Engine" status="pending">
           <h4>Time in status follows the clock input</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">A session that became Done at 10:00</dd>
@@ -421,7 +426,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The card's time in status reads 5m</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Engine" status="pending">
           <h4>The engine asks the host to read each session's version control</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">A session t1 working in /repo on this computer</dd>
@@ -429,7 +434,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The effects hold one version control read for t1 in /repo on this computer</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Engine" status="pending">
           <h4>A version control reading lands under the card's time</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">A session t1</dd>
@@ -437,7 +442,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The card for t1 reads main ↑2</dd>
           </dl>
         </test-case>
-        <test-case traces-to="Folds and the sort and time in status read back after a restart as before" covers-module="Agents engine" status="pending">
+        <test-case traces-to="Folds and the sort and time in status read back after a restart as before" covers-module="Engine" status="pending">
           <h4>Saved state handed in at start shapes the first view</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">Saved values: sort groups, Work folded, Done folded</dd>
@@ -445,10 +450,18 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The view is grouped by group, Work is folded, and no save effect is returned</dd>
           </dl>
         </test-case>
+        <test-case traces-to="A Spaces action reaches the engine as a command and Herdr carries out what the engine asks for" covers-module="Engine" status="pending">
+          <h4>Making a group and moving this computer into it asks the host to save the groups</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">No groups and this computer with one space</dd>
+            <dt>When</dt> <dd data-field="when">The engine takes the command to make the group Work and then the command to move this computer into Work</dd>
+            <dt>Then</dt> <dd data-field="then">The Spaces view holds Work with This computer inside it, and the last effect asks the host to save the groups</dd>
+          </dl>
+        </test-case>
       </test-group>
       <test-group category="error-scenarios">
         <h3>Error scenarios</h3>
-        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Agents engine" status="pending">
+        <test-case traces-to="A behavior of the Agents state is tested by giving the engine inputs and reading what it returns without a Herdr window" covers-module="Engine" status="pending">
           <h4>A rename for a terminal Agents does not list asks for nothing</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">Sessions t1 and t2</dd>
@@ -456,7 +469,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The effects are empty and the view is unchanged</dd>
           </dl>
         </test-case>
-        <test-case traces-to="Folds and the sort and time in status read back after a restart as before" covers-module="Agents engine" status="pending">
+        <test-case traces-to="Folds and the sort and time in status read back after a restart as before" covers-module="Engine" status="pending">
           <h4>A saved value that cannot be read counts as never saved</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">A saved folded-statuses value of &quot;idle&quot; (text, not a list)</dd>
@@ -467,12 +480,20 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       </test-group>
       <test-group category="architecture">
         <h3>Architecture</h3>
-        <test-case traces-to="The engine imports nothing from Herdr or from any host" covers-module="Agents engine" status="pending">
+        <test-case traces-to="The engine imports nothing from Herdr or from any host" covers-module="Engine" status="pending">
           <h4>The engine zone imports only the core</h4>
           <dl>
             <dt>Given</dt> <dd data-field="given">The boundary configuration with an engine zone allowed to import the core only</dd>
             <dt>When</dt> <dd data-field="when">bun run check:boundaries runs</dd>
             <dt>Then</dt> <dd data-field="then">It exits 0 with no violations; a test import of herdr from the engine makes it exit non-zero</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="Spaces no longer depends on a copy of Herdr's Spaces mod" covers-module="Herdr host" status="pending">
+          <h4>No copy of Herdr's Spaces mod remains</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The repository after the Spaces phase</dd>
+            <dt>When</dt> <dd data-field="when">rg -l herdrSpaces src scripts runs</dd>
+            <dt>Then</dt> <dd data-field="then">It finds no file, and src/mod/vendor and patches/spaces do not exist</dd>
           </dl>
         </test-case>
       </test-group>
@@ -484,6 +505,14 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Given</dt> <dd data-field="given">Every Agents walk in e2e/ as it is before this spec, with the expected values unchanged</dd>
             <dt>When</dt> <dd data-field="when">bun run test:e2e runs against the Herdr host on the engine</dd>
             <dt>Then</dt> <dd data-field="then">Every Agents walk passes</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="The engine computes the same Spaces groups and rows from Herdr's data as Spaces showed before" covers-module="Herdr host" status="pending">
+          <h4>The Spaces walks pass unchanged on the engine</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Every Spaces walk in e2e/ as it is before this spec, with the expected values unchanged</dd>
+            <dt>When</dt> <dd data-field="when">bun run test:e2e runs against the Herdr host drawing Spaces from the engine</dd>
+            <dt>Then</dt> <dd data-field="then">Every Spaces walk passes</dd>
           </dl>
         </test-case>
         <test-case traces-to="A click in Agents reaches the engine as a command and Herdr carries out what the engine asks for" covers-module="Herdr host" status="pending">
@@ -521,7 +550,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <dl>
           <dt>Writes</dt>
           <dd><ul>
-            <li data-field="shared-artifact">src/core/agents/engine.ts (stubbed step)</li>
+            <li data-field="shared-artifact">src/core/engine/engine.ts (stubbed step)</li>
             <li data-field="shared-artifact">src/mod/agents/main.ts and app.ts (Herdr data through the engine)</li>
             <li data-field="shared-artifact">.fallowrc.json (engine zone, at error, before the first walk)</li>
           </ul></dd>
@@ -532,7 +561,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <h3>Commands through the engine</h3>
         <dl>
           <dt>Writes</dt>
-          <dd><ul><li data-field="shared-artifact">src/core/agents/*</li><li data-field="shared-artifact">src/mod/agents/main.ts</li></ul></dd>
+          <dd><ul><li data-field="shared-artifact">src/core/engine/*</li><li data-field="shared-artifact">src/mod/agents/main.ts</li></ul></dd>
           <dt>Agent-suitable</dt> <dd data-field="agent-suitable">yes</dd>
         </dl>
       </spec-phase>
@@ -540,7 +569,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <h3>Clock and saved state</h3>
         <dl>
           <dt>Writes</dt>
-          <dd><ul><li data-field="shared-artifact">src/core/agents/*</li><li data-field="shared-artifact">src/mod/agents/app.ts and herdrAgents.ts</li></ul></dd>
+          <dd><ul><li data-field="shared-artifact">src/core/engine/*</li><li data-field="shared-artifact">src/mod/agents/app.ts and herdrAgents.ts</li></ul></dd>
           <dt>Agent-suitable</dt> <dd data-field="agent-suitable">yes</dd>
         </dl>
       </spec-phase>
@@ -548,11 +577,23 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <h3>Version control reads as effects</h3>
         <dl>
           <dt>Writes</dt>
-          <dd><ul><li data-field="shared-artifact">src/core/agents/*</li><li data-field="shared-artifact">src/mod/agents/app.ts and herdrAgents.ts</li></ul></dd>
+          <dd><ul><li data-field="shared-artifact">src/core/engine/*</li><li data-field="shared-artifact">src/mod/agents/app.ts and herdrAgents.ts</li></ul></dd>
           <dt>Agent-suitable</dt> <dd data-field="agent-suitable">yes</dd>
         </dl>
       </spec-phase>
       <spec-phase depends-on="Version control reads as effects" parallel-safe="no" agent-suitable="no">
+        <h3>Spaces through the engine</h3>
+        <dl>
+          <dt>Writes</dt>
+          <dd><ul>
+            <li data-field="shared-artifact">src/core/engine/*</li>
+            <li data-field="shared-artifact">src/mod/main.ts and app.ts (Spaces drawn from the engine's view)</li>
+            <li data-field="shared-artifact">src/mod/vendor, scripts/vendor-spaces.ts and patches/spaces (removed)</li>
+          </ul></dd>
+          <dt>Agent-suitable</dt> <dd data-field="agent-suitable">no</dd>
+        </dl>
+      </spec-phase>
+      <spec-phase depends-on="Spaces through the engine" parallel-safe="no" agent-suitable="no">
         <h3>Re-walk on the engine</h3>
         <dl>
           <dt>Writes</dt>
@@ -571,12 +612,12 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
       <h3>Definition of Done</h3>
       <ol class="tasks">
         <li><h4>bun run check:all passes, boundary check included</h4><dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
-        <li><h4>Every Agents walk passes with its expected values unchanged</h4><dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
-        <li><h4>No Agents state is kept in src/mod/agents outside the engine's state</h4><dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+        <li><h4>Every Agents and Spaces walk passes with its expected values unchanged</h4><dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+        <li><h4>No Agents or Spaces state is kept in src/mod outside the engine's state</h4><dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
         <li><h4>The security scans run clean</h4><dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
         <li><h4>Dannel uses the reinstalled mods for a day and sees no change</h4><dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
       </ol>
-      <execution-plan>Walking skeleton &rarr; Commands through the engine &rarr; Clock and saved state &rarr; Version control reads as effects &rarr; Re-walk on the engine &rarr; Text host</execution-plan>
+      <execution-plan>Walking skeleton &rarr; Commands through the engine &rarr; Clock and saved state &rarr; Version control reads as effects &rarr; Spaces through the engine &rarr; Re-walk on the engine &rarr; Text host</execution-plan>
     </details>
   </section>
 </main>
