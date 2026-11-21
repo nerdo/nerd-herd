@@ -38,7 +38,8 @@ replace(
 // pressing it does not start dragging the row (the user, 2026-11-18: a row outline showed on hover
 // after using a row's buttons). Herdr's buttons stop only their click.
 const clickStop = ".on_click((_e, cx) => { cx.stop_propagation();";
-if (!text.includes(clickStop)) throw new Error(`Herdr's Spaces mod changed; not found:\n${clickStop}`);
+if (!text.includes(clickStop))
+  throw new Error(`Herdr's Spaces mod changed; not found:\n${clickStop}`);
 text = text.replaceAll(
   clickStop,
   `.on_mouse_down("left", (_e, cx) => cx.stop_propagation())${clickStop}`,
@@ -120,7 +121,7 @@ replace(
 // re-usable components for those parts"). The rules live in src/core/vcs/vcsTail.ts.
 replace(
   'import { jjProgramLookup } from "../../core/jj/jjProgram";',
-  'import { jjProgramLookup } from "../../core/jj/jjProgram";\nimport { vcsTail } from "../../core/vcs/vcsTail";\nimport { vcsTailView } from "../vcsTailView";',
+  'import { jjProgramLookup } from "../../core/jj/jjProgram";\nimport { vcsTail } from "../../core/vcs/vcsTail";\nimport { repoTooltip, vcsTailView } from "../vcsTailView";',
 );
 replace(
   `  gitTail(g, tree, name, t) {
@@ -143,7 +144,7 @@ replace(
   }`,
   `  // nerd-herd: the shared label (src/mod/vcsTailView.ts), the one Agents' cards draw.
   gitTail(g, tree, name, t) {
-    const tail = vcsTail({ repo: g.name, branch: g.branch, ahead: g.ahead, behind: g.behind }, { place: name, nested: Boolean(tree) });
+    const tail = vcsTail({ repo: g.name, branch: g.branch, ahead: g.ahead, behind: g.behind }, { place: name });
     return h_flex()
       .flex_auto()
       .min_w(tail.where ? SIDE_MIN : 0)
@@ -151,6 +152,12 @@ replace(
       .items_center()
       .child(vcsTailView(t, tail, \`vcs-\${name}\`));
   }`,
+);
+
+replace(
+  "          .child(div().flex_initial().min_w(SIDE_MIN).truncate().text_color(t.foreground).child(w.name))",
+  // nerd-herd: the space's name carries its repository's name as a tooltip (src/mod/vcsTailView.ts).
+  "          .child(div().id(`name-${w.id}`).flex_initial().min_w(SIDE_MIN).truncate().text_color(t.foreground).when(Boolean(g), (el) => el.tooltip(repoTooltip(g.name))).child(w.name))",
 );
 
 const header = `// Vendored from Herdr 0.1.16's shipped Spaces mod (~/.config/herdr-app/mods/spaces/main.js),

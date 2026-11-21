@@ -4,8 +4,7 @@ import { type SortChoice, sortChoices } from "../../core/sessions/sortChoices";
 import { doneSessions, startingLabels, withLedger } from "../../core/sessions/doneLedger";
 import { dismissal } from "../../core/sessions/dismiss";
 import { readVcsInfo } from "../../core/vcs/readVcsInfo";
-import { type VcsInfo, type VcsTail, vcsTail } from "../../core/vcs/vcsTail";
-import { type Located, nestedCheckout } from "../../core/vcs/nesting";
+import { type VcsTail, vcsTail } from "../../core/vcs/vcsTail";
 import { duration, type SinceRecord, statusSince } from "../../core/sessions/statusTime";
 import type { BannerFile } from "../../core/banners/bannerCache";
 import { groupLook } from "../../core/groups/groupLook";
@@ -20,7 +19,6 @@ import {
   readSessions,
   readSort,
   readTerminals,
-  readSpaceFolders,
   readVcsTargets,
   togglePin,
   vcsIn,
@@ -83,24 +81,13 @@ export const agentsApp = {
   /** Reads every session's version control label again; true when any label changed. */
   refreshVcs: async (): Promise<boolean> => {
     let changed = false;
-    // One read per folder this pass: the spaces' folders, for nesting, and the sessions' own.
-    const read = new Map<string, Promise<VcsInfo | null>>();
-    const readAt = (cwd: string, machine: string | null) => {
-      const key = JSON.stringify([machine, cwd]);
-      if (!read.has(key)) read.set(key, readVcsInfo(vcsIn(cwd, machine)));
-      return read.get(key) as Promise<VcsInfo | null>;
-    };
-    const spaceInfos: Located[] = [];
-    for (const folder of readSpaceFolders()) {
-      const info = await readAt(folder.cwd, folder.machine);
-      if (info) spaceInfos.push({ machine: folder.machine, info });
-    }
     for (const target of readVcsTargets()) {
-      const info = await readAt(target.cwd, target.machine);
-      // A card's label nests as its space's row does in Spaces (src/core/vcs/nesting.ts).
-      const nested = info !== null && nestedCheckout({ machine: target.machine, info }, spaceInfos);
-      const label = info === null ? null : vcsTail(info, { place: target.place, nested });
-      if (JSON.stringify(vcs.get(target.terminal)) !== JSON.stringify(label) || !vcs.has(target.terminal)) {
+      const info = await readVcsInfo(vcsIn(target.cwd, target.machine));
+      const label = info === null ? null : vcsTail(info, { place: target.place });
+      if (
+        JSON.stringify(vcs.get(target.terminal)) !== JSON.stringify(label) ||
+        !vcs.has(target.terminal)
+      ) {
         vcs.set(target.terminal, label);
         changed = true;
       }

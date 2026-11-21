@@ -9,13 +9,12 @@ export type VcsInfo = {
   readonly branch: string | null;
   readonly ahead: number;
   readonly behind: number;
-  /** The repository's own path (a jj .jj/repo folder, or git's common .git folder), and whether
-   *  this folder is a second checkout of it: a git worktree or a second jj workspace. */
-  readonly checkout?: { readonly path: string; readonly linked: boolean };
 };
 
-/** The label to draw: the name text (cut to fit), the whole name, and the counts. */
+/** The label to draw: the branch text (cut to fit), the whole branch, and the counts; and the
+ *  repository's name, which the space's name shows as its tooltip. */
 export type VcsTail = {
+  readonly repo: string;
   readonly where: string;
   readonly whole: string;
   readonly ahead: number;
@@ -28,17 +27,18 @@ const room = 20;
 
 /**
  * The label for a space named `place`. A branch goes when it is main or master or the space's own
- * name; the repository goes when it is the space's name, or when the space is nested under its
- * repository's main checkout, whose row already names it.
+ * name. The repository's name is never in the label: the space's name carries it as a tooltip
+ * (Dannel, 2026-11-21: "that information belongs as a tooltip of the space name").
  */
-export const vcsTail = (
-  info: VcsInfo,
-  o: { readonly place: string; readonly nested: boolean },
-): VcsTail => {
-  const same = (a: string) => a.toLowerCase() === o.place.toLowerCase();
+export const vcsTail = (info: VcsInfo, o: { readonly place: string }): VcsTail => {
   const raw = info.branch ?? "detached";
-  const branch = same(raw) || raw === "master" || raw === "main" ? "" : raw;
-  const repo = o.nested || same(info.repo) ? "" : info.repo;
-  const whole = [repo, branch].filter(Boolean).join(" · ");
-  return { where: middleEllipsis(whole, room), whole, ahead: info.ahead, behind: info.behind };
+  const same = raw.toLowerCase() === o.place.toLowerCase();
+  const branch = same || raw === "master" || raw === "main" ? "" : raw;
+  return {
+    repo: info.repo,
+    where: middleEllipsis(branch, room),
+    whole: branch,
+    ahead: info.ahead,
+    behind: info.behind,
+  };
 };

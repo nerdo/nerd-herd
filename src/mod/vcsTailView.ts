@@ -27,3 +27,6 @@ export const vcsTailView = (t: Record<string, string>, tail: VcsTail, id: string
     .when(tail.behind > 0, (el) =>
       el.child(div().flex_none().text_color(themeColor(t, "ansi1")).child(`↓${tail.behind}`)),
     );
+
+/** The tooltip on a space's name: the repository its folder is in. */
+export const repoTooltip = (repo: string): string => `Repository: ${repo}`;

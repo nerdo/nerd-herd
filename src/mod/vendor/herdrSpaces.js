@@ -17,7 +17,7 @@ import { v_flex, h_flex, ScrollHandle } from "gpui-base";
 import { spaces, machines, panes, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout, readTextFile } from "herdr";
 import { jjProgramLookup } from "../../core/jj/jjProgram";
 import { vcsTail } from "../../core/vcs/vcsTail";
-import { vcsTailView } from "../vcsTailView";
+import { repoTooltip, vcsTailView } from "../vcsTailView";
 
 // Which program runs jj on a machine: on another machine, the path its login shell reports, since
 // Herdr runs mod commands there without the user's login PATH (src/core/jj/jjProgram.ts).
@@ -504,7 +504,7 @@ export class Spaces extends View {
   // and the name both start from their text's width and give way in proportion.
   // nerd-herd: the shared label (src/mod/vcsTailView.ts), the one Agents' cards draw.
   gitTail(g, tree, name, t) {
-    const tail = vcsTail({ repo: g.name, branch: g.branch, ahead: g.ahead, behind: g.behind }, { place: name, nested: Boolean(tree) });
+    const tail = vcsTail({ repo: g.name, branch: g.branch, ahead: g.ahead, behind: g.behind }, { place: name });
     return h_flex()
       .flex_auto()
       .min_w(tail.where ? SIDE_MIN : 0)
@@ -567,7 +567,7 @@ export class Spaces extends View {
           .items_center()
           .when(Boolean(tree), el => el.pl(22).child(svg("mods/workspace-chrome/branch.svg").size(13).flex_none().text_color(t.dim)))
           .when(!tree, el => el.child(h_flex().size(18).flex_none().rounded(5).bg(fill).items_center().justify_center().text_size(10.5).font_bold().text_color("#ffffff").child([...w.name][0]?.toUpperCase() ?? "?")))
-          .child(div().flex_initial().min_w(SIDE_MIN).truncate().text_color(t.foreground).child(w.name))
+          .child(div().id(`name-${w.id}`).flex_initial().min_w(SIDE_MIN).truncate().text_color(t.foreground).when(Boolean(g), (el) => el.tooltip(repoTooltip(g.name))).child(w.name))
           .child(g ? this.gitTail(g, tree, w.name, t) : div().flex_1()),
       );
   }

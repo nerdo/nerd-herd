@@ -215,7 +215,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <li>A long bookmark name leaves the title its room</li>
           <li>The changes ahead show in green as in Spaces</li>
           <li>A space's row and its session's card show the same version control label</li>
-          <li>A card in a second checkout leaves out the repository name, as its space's row nested under the main checkout's space does</li>
+          <li>The version control label leaves out the repository name, and the space's name shows it as a tooltip, in Spaces and on a card</li>
           <li>A session card shows the session's subject wrapped onto more lines when it is longer than one line</li>
           <li>Renaming a session from its card gives its Herdr tab that name</li>
           <li>Renaming a session to an empty name returns it to its automatic name</li>
@@ -956,12 +956,12 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">Both titles' first lines end at the same word (Dannel, 2026-11-21: "the push pin is making the title on the card shift sometimes, making the size of the card change")</dd>
           </dl>
         </test-case>
-        <test-case traces-to="A card in a second checkout leaves out the repository name, as its space's row nested under the main checkout's space does" covers-module="Agents sidebar mod" status="pending">
-          <h4>A card in a second checkout leaves out the repository name</h4>
+        <test-case traces-to="The version control label leaves out the repository name, and the space's name shows it as a tooltip, in Spaces and on a card" covers-module="Agents sidebar mod" status="pending">
+          <h4>A space named unlike its repository shows only its branch</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">The space herdr-main on the jj repository herdr-main, and the space herdr-spike on a second jj workspace of it, both two changes ahead of feature-x, each with a session; the session in herdr-spike is titled Ship the spike</dd>
+            <dt>Given</dt> <dd data-field="given">The space notes on the jj repository herdr-main, two changes ahead of feature-x, with a session</dd>
             <dt>When</dt> <dd data-field="when">The window is read</dd>
-            <dt>Then</dt> <dd data-field="then">The Ship the spike card reads feature-x and ↑2, with no herdr-main before them (Dannel, 2026-11-21, of a card reading "strflt-system-administration · Keenser/herdr-instead-of-orca": "why is the repository name in there?")</dd>
+            <dt>Then</dt> <dd data-field="then">The Spaces row and the card each read feature-x and ↑2, and neither reads herdr-main (Dannel, 2026-11-21: the repository name "belongs as a tooltip of the space name, not a tooltip of the branch")</dd>
           </dl>
         </test-case>
       </test-group>
@@ -1309,6 +1309,8 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <li><h4>Install into the person's own Herdr home (bun run herdr:install, by the person): the Agents mod then records each session's starting point as a nerd-herd.handled label on its machine. Checked by Dannel on 2026-11-21: "working as expected covers all the things you mentioned"</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
         <li><h4>Hand check (needs the pointer): hovering a card's cut version control label shows the whole label. Checked by Dannel on 2026-11-21: "hover check: it works"</h4>
+          <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+        <li><h4>Hand check (needs the pointer): hovering a space's name, in Spaces or on a card, shows its repository's name</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
         <li><h4>A security scan runs clean</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>

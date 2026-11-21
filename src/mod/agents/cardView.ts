@@ -6,7 +6,7 @@ import { div, type Element, image, svg } from "gpui-kit";
 import type { VcsTail } from "../../core/vcs/vcsTail";
 import type { AgentIcon, AgentsCard, SessionStatus } from "../../core/sessions/sessionList";
 import { type HexColor, themeColor } from "../themeColor";
-import { hasVcsTail, vcsTailView } from "../vcsTailView";
+import { hasVcsTail, repoTooltip, vcsTailView } from "../vcsTailView";
 
 type Theme = Record<string, string>;
 
@@ -192,8 +192,19 @@ export const cardView = (
       h_flex()
         .gap(8)
         .items_center()
+        // The space's name carries its repository's name as a tooltip, as in Spaces (the user,
+        // 2026-11-21: it "belongs as a tooltip of the space name, not a tooltip of the branch").
         .child(
-          div().flex_1().min_w_0().truncate().text_color(themeColor(t, "muted")).child(row.place),
+          div()
+            .id(`place-${row.terminal}`)
+            .flex_1()
+            .min_w_0()
+            .truncate()
+            .text_color(themeColor(t, "muted"))
+            .when(vcs !== null && row.place !== "", (el) =>
+              el.tooltip(repoTooltip(vcs?.repo ?? "")),
+            )
+            .child(row.place),
         )
         .child(div().flex_none().text_size(10).text_color(themeColor(t, "dim")).child(row.machine)),
     );
