@@ -727,11 +727,24 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
     box.querySelector(':scope > summary').textContent =
       'Referenced by (' + box.querySelectorAll(':scope > ul > li').length + ')';
   };
+  // A list separates its names with commas, and a name can hold a comma of its own.
+  // Each step takes the longest run of pieces that names a target; a piece that
+  // starts no such run stands alone and renders unresolved.
+  const splitRefs = (raw, index) => {
+    const pieces = raw.split(','), refs = [];
+    for (let i = 0; i < pieces.length;) {
+      let end = pieces.length;
+      while (end > i + 1 && !index.has(pieces.slice(i, end).join(',').trim().toLowerCase())) end--;
+      refs.push(pieces.slice(i, end).join(',').trim());
+      i = end;
+    }
+    return refs.filter(Boolean);
+  };
   const resolve = (node, attr, label, index = byLabel) => {
     const raw = node.getAttribute(attr);
     if (!raw) return;
     const dd = el('dd');
-    raw.split(',').map(s => s.trim()).filter(Boolean).forEach((ref, i) => {
+    splitRefs(raw, index).forEach((ref, i) => {
       if (i) dd.append(document.createTextNode(', '));
       const target = index.get(ref.toLowerCase());
       if (!target) return dd.append(el('span', {
