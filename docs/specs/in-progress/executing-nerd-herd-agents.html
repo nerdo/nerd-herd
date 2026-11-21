@@ -214,6 +214,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <li>A long bookmark name leaves the title its room</li>
           <li>The changes ahead show in green as in Spaces</li>
           <li>A space's row and its session's card show the same version control label</li>
+          <li>A card in a second checkout leaves out the repository name, as its space's row nested under the main checkout's space does</li>
           <li>A session card shows the session's subject wrapped onto more lines when it is longer than one line</li>
           <li>Renaming a session from its card gives its Herdr tab that name</li>
           <li>Renaming a session to an empty name returns it to its automatic name</li>
@@ -944,6 +945,14 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Given</dt> <dd data-field="given">The space long-repo two changes ahead of a bookmark whose name is longer than the label's room, and its session</dd>
             <dt>When</dt> <dd data-field="when">The window is read</dd>
             <dt>Then</dt> <dd data-field="then">The space's row and the card show the same cut name and the same ↑2</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A card in a second checkout leaves out the repository name, as its space's row nested under the main checkout's space does" covers-module="Agents sidebar mod" status="pending">
+          <h4>A card in a second checkout leaves out the repository name</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The space herdr-main on the jj repository herdr-main, and the space herdr-spike on a second jj workspace of it, both two changes ahead of feature-x, each with a session; the session in herdr-spike is titled Ship the spike</dd>
+            <dt>When</dt> <dd data-field="when">The window is read</dd>
+            <dt>Then</dt> <dd data-field="then">The Ship the spike card reads feature-x and ↑2, with no herdr-main before them (Dannel, 2026-11-21, of a card reading "strflt-system-administration · Keenser/herdr-instead-of-orca": "why is the repository name in there?")</dd>
           </dl>
         </test-case>
       </test-group>

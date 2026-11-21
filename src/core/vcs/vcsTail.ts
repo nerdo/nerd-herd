@@ -9,6 +9,9 @@ export type VcsInfo = {
   readonly branch: string | null;
   readonly ahead: number;
   readonly behind: number;
+  /** The repository's own path (a jj .jj/repo folder, or git's common .git folder), and whether
+   *  this folder is a second checkout of it: a git worktree or a second jj workspace. */
+  readonly checkout?: { readonly path: string; readonly linked: boolean };
 };
 
 /** The label to draw: the name text (cut to fit), the whole name, and the counts. */

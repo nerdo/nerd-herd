@@ -34,9 +34,10 @@ const readJj = async (exec: VcsExec): Promise<VcsInfo | null> => {
       ? resolveFrom(`${top}/.jj`, pointer.stdout.trim())
       : `${top}/.jj/repo`;
   const name = base(repo.replace(/\/\.jj\/repo$/, ""));
+  const checkout = { path: repo, linked: repo !== `${top}/.jj/repo` };
   return "change" in state
-    ? { repo: name, branch: `@${state.change}`, ahead: 0, behind: 0 }
-    : { repo: name, branch: state.bookmark, ahead: state.ahead, behind: 0 };
+    ? { repo: name, branch: `@${state.change}`, ahead: 0, behind: 0, checkout }
+    : { repo: name, branch: state.bookmark, ahead: state.ahead, behind: 0, checkout };
 };
 
 const readGit = async (exec: VcsExec): Promise<VcsInfo | null> => {
@@ -57,6 +58,8 @@ const readGit = async (exec: VcsExec): Promise<VcsInfo | null> => {
     branch: branch?.code === 0 ? branch.stdout.trim().replace(/^refs\/heads\//, "") : "(detached)",
     ahead,
     behind,
+    // The repository's own .git folder names it; a worktree's top differs from it.
+    checkout: { path: repo, linked: repo !== `${top.stdout.replace(/\n$/, "")}/.git` },
   };
 };
 

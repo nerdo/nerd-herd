@@ -101,8 +101,10 @@ test("a card's count of changes ahead is green, as in Spaces", () => {
 //  both sections. all the same pieces of info do")
 test("a space's row in Spaces and its session's card show the same label", () => {
   const label = /feature\/r\S*?(?:…|\.{2,3})\S*\s+\S?2\b/;
-  const row = lines.find((l) => /^long-r/.test(l))?.match(label)?.[0];
-  const cardLine = lines.find((l) => !/^long-r/.test(l) && label.test(l))?.match(label)?.[0];
+  // The row holds the space's name and the label; the card's label line holds no space name. The
+  // reader may put the row's avatar letter before the name ("L long-repo ..." on a 1x screen).
+  const row = lines.find((l) => /\blong-repo\b/.test(l) && label.test(l))?.match(label)?.[0];
+  const cardLine = lines.find((l) => !/\blong-repo\b/.test(l) && label.test(l))?.match(label)?.[0];
   expect(
     row !== undefined && row === cardLine,
     `the same label in the row (${row}) and the card (${cardLine}) in: ${lines.join(" | ")}`,

@@ -149,6 +149,18 @@ export const readVcsTargets = (): {
   });
 };
 
+/** Each space's folder on its machine, as Herdr's Spaces picks it: the first of its panes with a
+ *  folder, else where its new terminals start. Agents reads these to nest a card's label as Spaces
+ *  nests a second checkout's space under its main checkout's. */
+export const readSpaceFolders = (): { cwd: string; machine: string | null }[] => {
+  const ps = panes();
+  return spaces().flatMap((space) => {
+    const tabs = new Set((space.tabs ?? []).map((t) => t.id));
+    const cwd = ps.find((p) => tabs.has(p.tab) && p.cwd)?.cwd || space.folder;
+    return cwd ? [{ cwd, machine: space.machine }] : [];
+  });
+};
+
 /** jj by the path the machine's login shell finds it at (src/core/jj/jjProgram.ts). */
 const jjProgram = jjProgramLookup(
   (machine, script) => exec("sh", ["-c", script], { on: machine }),
