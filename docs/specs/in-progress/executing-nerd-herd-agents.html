@@ -210,6 +210,9 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <li>A pinned session sits in a Pinned section at the top of Agents in every sort and nowhere else in the list</li>
           <li>A card's pin button pins and unpins its session with Herdr's own pin</li>
           <li>A card shows its session's version control state under its time: the jj bookmark and changes ahead of it, or the git branch</li>
+          <li>A long bookmark name is cut in the middle and its count stays</li>
+          <li>A long bookmark name leaves the title its room</li>
+          <li>The changes ahead show in green as in Spaces</li>
           <li>A session card shows the session's subject wrapped onto more lines when it is longer than one line</li>
           <li>Renaming a session from its card gives its Herdr tab that name</li>
           <li>Renaming a session to an empty name returns it to its automatic name</li>
@@ -290,7 +293,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <h3>Card version control and polish</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">What else goes on a card, and how do the open groups and the focused card look?</dd>
-          <dt>Resolution</dt> <dd data-field="resolution">The card's right column holds the status mark and time, then the session's version control label (the jj bookmark with the changes ahead of it, as the Spaces jj label shows it, or the git branch), with the space and machine on the line below; the focused card is outlined in purple, the color of Dismiss; an open group ends with room below its last card while folded headers stay flush; the icon centers on the title's first line A plain terminal tab in focus outlines no card, since the outline means "this session has the focus"; the active space's row in Spaces keeps its highlight and gains the same purple outline (the user, 2026-11-20: "terminal tab hint: no, it means this has the focus"; "that outline is missing from the spaces section but should be there too for consistency"; "show in the agent cards the version control status ... on the right, underneath the time put the version control label there and then below that would be the existing project and computer"; "maybe we use purple"; "a little bit more vertical margin at the bottom of an open group"; "the icon is a bit high").</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">The card's right column holds the status mark and time, then the session's version control label (the jj bookmark with the changes ahead of it, as the Spaces jj label shows it, or the git branch), with the space and machine on the line below; the focused card is outlined in purple, the color of Dismiss; an open group ends with room below its last card while folded headers stay flush; the icon centers on the title's first line A plain terminal tab in focus outlines no card, since the outline means "this session has the focus"; the active space's row in Spaces keeps its highlight and gains the same purple outline (the user, 2026-11-20: "terminal tab hint: no, it means this has the focus"; "that outline is missing from the spaces section but should be there too for consistency"; "show in the agent cards the version control status ... on the right, underneath the time put the version control label there and then below that would be the existing project and computer"; "maybe we use purple"; "a little bit more vertical margin at the bottom of an open group"; "the icon is a bit high"). The label then moved to its own line at the right under the title: a long name took the title's width, so it is cut in its middle to 24 characters with the whole label on hover, and its colors follow Spaces' (the user, 2026-11-20: "The branch name is long and eats into the space for the title"; "put the ellipses in the middle so that you can kind of read the beginning and ends"; "we do not have the same color coding on the version control as we do in the spaces").</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-20">
@@ -902,6 +905,38 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Then</dt> <dd data-field="then">The card reads main ↑2 under its time</dd>
           </dl>
         </test-case>
+        <test-case traces-to="A long bookmark name is cut in the middle and its count stays" covers-module="Agents sidebar mod" status="pending">
+          <h4>A long bookmark name is cut in the middle</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A bookmark name of 54 characters and room for 24</dd>
+            <dt>When</dt> <dd data-field="when">The card's label is made</dd>
+            <dt>Then</dt> <dd data-field="then">It keeps the name's first 12 and last 11 characters with an ellipsis between; a name that fits is shown whole</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A long bookmark name is cut in the middle and its count stays" covers-module="Agents sidebar mod" status="pending">
+          <h4>A long bookmark name is cut in the middle and its count stays</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session two changes ahead of a bookmark whose name is longer than the label's room</dd>
+            <dt>When</dt> <dd data-field="when">The Agents section is read</dd>
+            <dt>Then</dt> <dd data-field="then">The card shows the start of the name and an ellipsis and the end of the name then ↑2</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A long bookmark name leaves the title its room" covers-module="Agents sidebar mod" status="pending">
+          <h4>A long bookmark name leaves the title its room</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session titled Tune the cache whose bookmark name is longer than the label's room</dd>
+            <dt>When</dt> <dd data-field="when">The Agents section is read</dd>
+            <dt>Then</dt> <dd data-field="then">The title reads Tune the cache on one line, and the label sits on its own line at the right under it</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="The changes ahead show in green as in Spaces" covers-module="Agents sidebar mod" status="pending">
+          <h4>The changes ahead show in green as in Spaces</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">A session two changes ahead of its bookmark</dd>
+            <dt>When</dt> <dd data-field="when">The window is drawn</dd>
+            <dt>Then</dt> <dd data-field="then">The card's ↑2 is drawn in the theme's green, as Spaces draws it, and the name in Spaces' dim gray</dd>
+          </dl>
+        </test-case>
       </test-group>
       <test-group category="ux-validation">
         <h3>UX validation</h3>
@@ -1230,7 +1265,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
         <li><h4>The sessions journey walked by hand in the running Herdr window, with screenshots</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
-        <li><h4>Hand check (needs a key press): with a terminal focused, cmd-e dismisses the focused Done session. Not walked: a walk sends the mod's dismiss command and cannot press keys, so whether Herdr routes a global key to a mod's command is unobserved. Supporting evidence, not proof (2026-11-20): Herdr's own Windows 98 layout binds keys in its layout:win98 section to its mod's commands (win98.start on Ctrl+Esc, win98.taskman on Ctrl+Shift+Esc), and its dialog says Ctrl+Shift+Esc opens it anytime</h4>
+        <li><h4>Hand check (needs a key press): with a terminal focused, cmd-e dismisses the focused Done session. Not walked: a walk sends the mod's dismiss command and cannot press keys, so whether Herdr routes a global key to a mod's command is unobserved. Supporting evidence, not proof (2026-11-20): Herdr's own Windows 98 layout binds keys in its layout:win98 section to its mod's commands (win98.start on Ctrl+Esc, win98.taskman on Ctrl+Shift+Esc), and its dialog says Ctrl+Shift+Esc opens it anytime. Checked by Dannel on 2026-11-20: "cmd+e does work"</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
         <li><h4>Hand check (needs the pointer): clicking a card focuses its session's pane, and right-clicking it opens Herdr's rename prompt</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
@@ -1245,6 +1280,8 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <li><h4>Hand check (needs a person looking): opening a Done session and leaving it keeps it under Done once Herdr marks it seen. A walk's window never has the keyboard, so Herdr never marks a walk's session seen</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
         <li><h4>Install into the person's own Herdr home (bun run herdr:install, by the person): the Agents mod then records each session's starting point as a nerd-herd.handled label on its machine</h4>
+          <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
+        <li><h4>Hand check (needs the pointer): hovering a card's cut version control label shows the whole label</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>
         <li><h4>A security scan runs clean</h4>
           <dl><dt>Kind</dt> <dd data-field="kind">definition-of-done</dd></dl></li>

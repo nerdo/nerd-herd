@@ -38,7 +38,28 @@ export const readJjState = async (jj: JjRun): Promise<JjState | null> => {
 
 /** The label a card shows: "main ↑2", "main", "@<change id>", else the git branch; null for none. */
 export const vcsLabel = (jj: JjState | null, gitBranch: string | null): string | null => {
-  if (jj === null) return gitBranch;
-  if ("change" in jj) return `@${jj.change}`;
-  return jj.ahead > 0 ? `${jj.bookmark} ↑${jj.ahead}` : jj.bookmark;
+  const parts = vcsParts(jj, gitBranch);
+  return parts === null ? null : vcsText(parts);
+};
+
+/** The whole label for a name and the changes ahead of it: "main ↑2", or the name alone. */
+export const vcsText = (parts: VcsParts): string =>
+  parts.ahead > 0 ? `${parts.name} ↑${parts.ahead}` : parts.name;
+
+export type VcsParts = { readonly name: string; readonly ahead: number };
+
+/** The label's name and the changes ahead of it, apart, so a card can cut a long name short. */
+export const vcsParts = (jj: JjState | null, gitBranch: string | null): VcsParts | null => {
+  if (jj === null) return gitBranch === null ? null : { name: gitBranch, ahead: 0 };
+  if ("change" in jj) return { name: `@${jj.change}`, ahead: 0 };
+  return { name: jj.bookmark, ahead: jj.ahead };
+};
+
+/** The name cut to at most `room` characters, keeping its start and its end around an ellipsis. */
+export const middleEllipsis = (name: string, room: number): string => {
+  const chars = [...name];
+  if (chars.length <= room) return name;
+  const kept = room - 1;
+  const head = Math.ceil(kept / 2);
+  return `${chars.slice(0, head).join("")}…${chars.slice(chars.length - (kept - head)).join("")}`;
 };

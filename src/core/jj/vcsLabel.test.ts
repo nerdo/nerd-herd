@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { type JjRun, readJjState, vcsLabel } from "./vcsLabel";
+import { type JjRun, middleEllipsis, readJjState, vcsLabel, vcsParts } from "./vcsLabel";
 
 /** A jj that answers each command the way a repository at `bookmark`, `ahead` changes on, would. */
 const fakeJj =
@@ -32,4 +32,32 @@ test("a jj working copy with no bookmark below it reads its change id", async ()
 // Outside jj, Herdr's git branch for the pane, as Herdr's Spaces shows it.
 test("outside jj, a session reads its git branch", () => {
   expect(vcsLabel(null, "develop"), "the label").toBe("develop");
+});
+
+// Spec: docs/specs/in-progress/executing-nerd-herd-agents.html#test-case-a-long-bookmark-name-is-cut-in-the-middle-and-its-count-stays
+// "A session twelve changes ahead of feature/rework-the-sync-scheduler: the card gives the name and
+//  the count apart so it can cut the name short and keep ↑12."
+test("a bookmark's name and the changes ahead of it come apart", async () => {
+  const state = await readJjState(
+    fakeJj({ bookmark: "feature/rework-the-sync-scheduler", ahead: 12, change: "kxyz" }),
+  );
+  expect(vcsParts(state, null), "the name and the count").toEqual({
+    name: "feature/rework-the-sync-scheduler",
+    ahead: 12,
+  });
+});
+
+// Spec: docs/specs/in-progress/executing-nerd-herd-agents.html#test-case-a-long-bookmark-name-is-cut-in-the-middle
+// "A bookmark name of 54 characters and room for 24: the card keeps its first 12 and last 11
+//  characters with an ellipsis between." (the user, 2026-11-20: "put the ellipses in the middle so
+//  that you can kind of read the beginning and ends")
+test("a name longer than its room keeps its start and its end with an ellipsis between", () => {
+  expect(
+    middleEllipsis("feature/rework-the-sync-scheduler-across-every-replica", 24),
+    "the start, an ellipsis, the end",
+  ).toBe("feature/rewo…ery-replica");
+});
+
+test("a name that fits its room is shown whole", () => {
+  expect(middleEllipsis("main", 24), "the name").toBe("main");
 });
