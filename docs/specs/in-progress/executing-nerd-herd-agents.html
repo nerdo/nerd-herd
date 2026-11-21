@@ -209,6 +209,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <li>The active space's row in Spaces carries the same purple outline as the focused card in Agents</li>
           <li>A pinned session sits in a Pinned section at the top of Agents in every sort and nowhere else in the list</li>
           <li>A card's pin button pins and unpins its session with Herdr's own pin</li>
+          <li>A card keeps the pin's room whether the pin shows or not, so its title does not move</li>
           <li>A card shows its session's version control state under its time: the jj bookmark and changes ahead of it, or the git branch</li>
           <li>A long bookmark name is cut in the middle and its count stays</li>
           <li>A long bookmark name leaves the title its room</li>
@@ -945,6 +946,14 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Given</dt> <dd data-field="given">The space long-repo two changes ahead of a bookmark whose name is longer than the label's room, and its session</dd>
             <dt>When</dt> <dd data-field="when">The window is read</dd>
             <dt>Then</dt> <dd data-field="then">The space's row and the card show the same cut name and the same ↑2</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A card keeps the pin's room whether the pin shows or not, so its title does not move" covers-module="Agents sidebar mod" status="pending">
+          <h4>A card keeps the pin's room whether the pin shows or not</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">Two sessions with the same title, too long for one line, one of them pinned</dd>
+            <dt>When</dt> <dd data-field="when">The window is read</dd>
+            <dt>Then</dt> <dd data-field="then">Both titles' first lines end at the same word (Dannel, 2026-11-21: "the push pin is making the title on the card shift sometimes, making the size of the card change")</dd>
           </dl>
         </test-case>
         <test-case traces-to="A card in a second checkout leaves out the repository name, as its space's row nested under the main checkout's space does" covers-module="Agents sidebar mod" status="pending">

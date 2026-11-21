@@ -144,25 +144,26 @@ export const cardView = (
                 .h(line)
                 .gap(5)
                 .items_center()
-                // The pin: always on a pinned card, on hover on the others (Herdr's own pin icons).
-                .when(row.pinned === true || pin.hovered, (el) =>
-                  el.child(
-                    div()
-                      .id(`pin-${row.terminal}`)
-                      .flex_none()
-                      .p(2)
-                      .rounded(4)
-                      .cursor_pointer()
-                      .text_color(themeColor(t, row.pinned ? "foreground" : "dim"))
-                      .hover((s) => s.bg(tint(t, row.status, "40")))
-                      .tooltip(row.pinned ? "Unpin" : "Pin to the top")
-                      .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
-                      .on_click((_e, cx) => {
-                        cx.stop_propagation();
-                        pin.toggle();
-                      })
-                      .child(svg("mods/workspace-chrome/pin.svg").size(12)),
-                  ),
+                // The pin: always on a pinned card, on hover on the others (Herdr's own pin icons). Its
+                // room is kept while it is hidden, so the title does not move when it shows (the user,
+                // 2026-11-21: the pin "is making the title on the card shift sometimes").
+                .child(
+                  div()
+                    .id(`pin-${row.terminal}`)
+                    .when(row.pinned !== true && !pin.hovered, (el) => el.invisible())
+                    .flex_none()
+                    .p(2)
+                    .rounded(4)
+                    .cursor_pointer()
+                    .text_color(themeColor(t, row.pinned ? "foreground" : "dim"))
+                    .hover((s) => s.bg(tint(t, row.status, "40")))
+                    .tooltip(row.pinned ? "Unpin" : "Pin to the top")
+                    .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+                    .on_click((_e, cx) => {
+                      cx.stop_propagation();
+                      pin.toggle();
+                    })
+                    .child(svg("mods/workspace-chrome/pin.svg").size(12)),
                 )
                 .child(statusMark(t, row.status))
                 .when(since !== null, (el) =>
