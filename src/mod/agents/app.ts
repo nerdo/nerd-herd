@@ -3,7 +3,8 @@ import { type AgentsRow, arrangeSessions } from "../../core/sessions/sessionList
 import { type SortChoice, sortChoices } from "../../core/sessions/sortChoices";
 import { doneSessions, startingLabels, withLedger } from "../../core/sessions/doneLedger";
 import { dismissal } from "../../core/sessions/dismiss";
-import { readJjState, type VcsParts, vcsParts } from "../../core/jj/vcsLabel";
+import { readVcsInfo } from "../../core/vcs/readVcsInfo";
+import { type VcsTail, vcsTail } from "../../core/vcs/vcsTail";
 import { duration, type SinceRecord, statusSince } from "../../core/sessions/statusTime";
 import type { BannerFile } from "../../core/banners/bannerCache";
 import { groupLook } from "../../core/groups/groupLook";
@@ -20,7 +21,7 @@ import {
   readTerminals,
   readVcsTargets,
   togglePin,
-  jjIn,
+  vcsIn,
   focusedTerminal,
   runHc,
   renameSession,
@@ -71,7 +72,7 @@ let since: SinceRecord = (() => {
 })();
 
 /** Each session's version control label, read in the background (refreshVcs). */
-const vcs = new Map<string, VcsParts | null>();
+const vcs = new Map<string, VcsTail | null>();
 
 /** Starting points already sent, so a session is labeled once while the label is on its way. */
 const sent = new Set<string>();
@@ -81,9 +82,10 @@ export const agentsApp = {
   refreshVcs: async (): Promise<boolean> => {
     let changed = false;
     for (const target of readVcsTargets()) {
-      const label = vcsParts(await readJjState(jjIn(target.cwd, target.machine)), target.gitBranch);
-      const was = vcs.get(target.terminal);
-      if (was?.name !== label?.name || was?.ahead !== label?.ahead || !vcs.has(target.terminal)) {
+      const info = await readVcsInfo(vcsIn(target.cwd, target.machine));
+      // Agents' cards are never nested under a main checkout, as a worktree's space is in Spaces.
+      const label = info === null ? null : vcsTail(info, { place: target.place, nested: false });
+      if (JSON.stringify(vcs.get(target.terminal)) !== JSON.stringify(label) || !vcs.has(target.terminal)) {
         vcs.set(target.terminal, label);
         changed = true;
       }
@@ -91,7 +93,7 @@ export const agentsApp = {
     return changed;
   },
   /** A session's version control label, once read; null before it was read or with none. */
-  vcs: (terminal: string): VcsParts | null => vcs.get(terminal) ?? null,
+  vcs: (terminal: string): VcsTail | null => vcs.get(terminal) ?? null,
   /** Records the starting point of each session nerd-herd reads for the first time. */
   recordStartingPoints: (): void => {
     for (const args of startingLabels(readTerminals())) {

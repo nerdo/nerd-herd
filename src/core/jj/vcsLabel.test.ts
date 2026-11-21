@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { type JjRun, middleEllipsis, readJjState, vcsLabel, vcsParts } from "./vcsLabel";
+import { type JjRun, middleEllipsis, readJjState } from "./vcsLabel";
 
 /** A jj that answers each command the way a repository at `bookmark`, `ahead` changes on, would. */
 const fakeJj =
@@ -18,34 +18,18 @@ const fakeJj =
 // Spec: docs/specs/in-progress/executing-nerd-herd-agents.html#test-case-a-card-shows-its-jj-bookmark-and-the-changes-ahead-of-it@jj:607ab1aa
 // "A session in a jj repository whose working copy is two non-empty changes ahead of the main
 //  bookmark: the card reads main ↑2 under its time."
-test("a jj working copy two changes ahead of main reads main ↑2", async () => {
+test("a jj working copy two changes ahead of main reads main and 2 ahead", async () => {
   const state = await readJjState(fakeJj({ bookmark: "main", ahead: 2, change: "kxyz" }));
-  expect(vcsLabel(state, null), "the label").toBe("main ↑2");
+  expect(state, "the bookmark and the changes ahead").toEqual({ bookmark: "main", ahead: 2 });
 });
 
 // As the Spaces jj label: with no bookmark below the working copy, its change id.
 test("a jj working copy with no bookmark below it reads its change id", async () => {
   const state = await readJjState(fakeJj({ bookmark: null, ahead: 0, change: "kxyz1234" }));
-  expect(vcsLabel(state, null), "the label").toBe("@kxyz1234");
+  expect(state, "the change id").toEqual({ change: "kxyz1234" });
 });
 
-// Outside jj, Herdr's git branch for the pane, as Herdr's Spaces shows it.
-test("outside jj, a session reads its git branch", () => {
-  expect(vcsLabel(null, "develop"), "the label").toBe("develop");
-});
 
-// Spec: docs/specs/in-progress/executing-nerd-herd-agents.html#test-case-a-long-bookmark-name-is-cut-in-the-middle-and-its-count-stays
-// "A session twelve changes ahead of feature/rework-the-sync-scheduler: the card gives the name and
-//  the count apart so it can cut the name short and keep ↑12."
-test("a bookmark's name and the changes ahead of it come apart", async () => {
-  const state = await readJjState(
-    fakeJj({ bookmark: "feature/rework-the-sync-scheduler", ahead: 12, change: "kxyz" }),
-  );
-  expect(vcsParts(state, null), "the name and the count").toEqual({
-    name: "feature/rework-the-sync-scheduler",
-    ahead: 12,
-  });
-});
 
 // Spec: docs/specs/in-progress/executing-nerd-herd-agents.html#test-case-a-long-bookmark-name-is-cut-in-the-middle
 // "A bookmark name of 54 characters and room for 24: the card keeps its first 12 and last 11

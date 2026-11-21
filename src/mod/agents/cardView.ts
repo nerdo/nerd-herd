@@ -3,9 +3,10 @@
 // Herdr's status marks and time in status, and the machine set apart from the space.
 import { h_flex, v_flex } from "gpui-base";
 import { div, type Element, image, svg } from "gpui-kit";
-import { middleEllipsis, type VcsParts, vcsText } from "../../core/jj/vcsLabel";
+import type { VcsTail } from "../../core/vcs/vcsTail";
 import type { AgentIcon, AgentsCard, SessionStatus } from "../../core/sessions/sessionList";
 import { type HexColor, themeColor } from "../themeColor";
+import { hasVcsTail, vcsTailView } from "../vcsTailView";
 
 type Theme = Record<string, string>;
 
@@ -84,9 +85,6 @@ export const statusMark = (t: Theme, status: SessionStatus): Element => {
   return div().size(7).mx(3).flex_none().rounded(4).bg(themeColor(t, "done"));
 };
 
-/** The most characters a version control name takes before it is cut in its middle. */
-const vcsRoom = 24;
-
 /** The height of the title's first line, so the icon and the marks center on it. */
 const line = 26;
 
@@ -94,7 +92,7 @@ export const cardView = (
   t: Theme,
   row: AgentsCard,
   since: string | null,
-  vcs: VcsParts | null,
+  vcs: VcsTail | null,
   focus: () => void,
   rename: () => void,
   pin: {
@@ -180,33 +178,13 @@ export const cardView = (
     )
     // The session's version control, on its own line at the right under the title, so the title
     // keeps the card's width (the user, 2026-11-20: a long branch name "eats into the space for the
-    // title"). A long name is cut in its middle, keeping its start and end, and the whole label shows
-    // on hover. The colors are Spaces': a dim name and a green count of changes ahead.
-    .when(vcs !== null, (el) =>
+    // title"). It is the label Spaces draws, from the same component (the user, 2026-11-20: "the
+    // branch name needs to be rendered the same in both sections").
+    .when(hasVcsTail(vcs), (el) =>
       el.child(
         h_flex()
           .justify_end()
-          .child(
-            h_flex()
-              .id(`vcs-${row.terminal}`)
-              .gap(3)
-              .text_size(11)
-              .text_color(themeColor(t, "dim"))
-              .tooltip(vcs ? vcsText(vcs) : "")
-              .child(
-                div()
-                  .whitespace_nowrap()
-                  .child(vcs ? middleEllipsis(vcs.name, vcsRoom) : ""),
-              )
-              .when((vcs?.ahead ?? 0) > 0, (el) =>
-                el.child(
-                  div()
-                    .whitespace_nowrap()
-                    .text_color(themeColor(t, "ansi2"))
-                    .child(`↑${vcs?.ahead ?? 0}`),
-                ),
-              ),
-          ),
+          .child(vcs ? vcsTailView(t, vcs, `vcs-${row.terminal}`) : div()),
       ),
     )
     .child(

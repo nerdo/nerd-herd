@@ -1,5 +1,6 @@
-// A session's version control label: the jj bookmark at or below its working copy with the non-empty
-// changes since it ("main ↑2"), or @<change id> with no bookmark, or else its git branch.
+// A folder's jj state, read as the Spaces jj label reads it: the jj bookmark at or below its working
+// copy with the non-empty changes since it, or @<change id> with no bookmark. Also the middle cut a
+// long label name takes.
 
 /** Runs jj with these arguments in the session's folder, on its machine; null when it cannot run. */
 export type JjRun = (args: readonly string[]) => Promise<{ code: number; stdout: string } | null>;
@@ -34,25 +35,6 @@ export const readJjState = async (jj: JjRun): Promise<JjState | null> => {
   const at = await run(["log", "-r", "@", "--no-graph", "-T", template]);
   const change = at?.code === 0 ? (at.stdout.split("\t")[0] ?? "").trim() : "";
   return change ? { change } : null;
-};
-
-/** The label a card shows: "main ↑2", "main", "@<change id>", else the git branch; null for none. */
-export const vcsLabel = (jj: JjState | null, gitBranch: string | null): string | null => {
-  const parts = vcsParts(jj, gitBranch);
-  return parts === null ? null : vcsText(parts);
-};
-
-/** The whole label for a name and the changes ahead of it: "main ↑2", or the name alone. */
-export const vcsText = (parts: VcsParts): string =>
-  parts.ahead > 0 ? `${parts.name} ↑${parts.ahead}` : parts.name;
-
-export type VcsParts = { readonly name: string; readonly ahead: number };
-
-/** The label's name and the changes ahead of it, apart, so a card can cut a long name short. */
-export const vcsParts = (jj: JjState | null, gitBranch: string | null): VcsParts | null => {
-  if (jj === null) return gitBranch === null ? null : { name: gitBranch, ahead: 0 };
-  if ("change" in jj) return { name: `@${jj.change}`, ahead: 0 };
-  return { name: jj.bookmark, ahead: jj.ahead };
 };
 
 /** The name cut to at most `room` characters, keeping its start and its end around an ellipsis. */

@@ -16,6 +16,8 @@ import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex, ScrollHandle } from "gpui-base";
 import { spaces, machines, panes, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout, readTextFile } from "herdr";
 import { jjProgramLookup } from "../../core/jj/jjProgram";
+import { vcsTail } from "../../core/vcs/vcsTail";
+import { vcsTailView } from "../vcsTailView";
 
 // Which program runs jj on a machine: on another machine, the path its login shell reports, since
 // Herdr runs mod commands there without the user's login PATH (src/core/jj/jjProgram.ts).
@@ -500,23 +502,15 @@ export class Spaces extends View {
   // branch goes when the name already says it (a worktree is named after its branch),
   // and master/main go: nearly every space is on one. When the row is full, it
   // and the name both start from their text's width and give way in proportion.
+  // nerd-herd: the shared label (src/mod/vcsTailView.ts), the one Agents' cards draw.
   gitTail(g, tree, name, t) {
-    const raw = g.branch ?? "detached";
-    const same = (a) => a.toLowerCase() === name.toLowerCase();
-    const branch = same(raw) || raw === "master" || raw === "main" ? "" : raw;
-    const repo = tree || same(g.name) ? "" : g.name;
-    const where = [repo, branch].filter(Boolean).join(" \u00b7 ");
+    const tail = vcsTail({ repo: g.name, branch: g.branch, ahead: g.ahead, behind: g.behind }, { place: name, nested: Boolean(tree) });
     return h_flex()
       .flex_auto()
-      .min_w(where ? SIDE_MIN : 0)
-      .gap(5)
+      .min_w(tail.where ? SIDE_MIN : 0)
       .justify_end()
       .items_center()
-      .text_size(11.5)
-      .text_color(t.dim)
-      .when(Boolean(where), (el) => el.child(div().min_w(0).truncate().child(where)))
-      .when(g.ahead > 0, (el) => el.child(div().flex_none().text_color(t.ansi2).child(`\u2191${g.ahead}`)))
-      .when(g.behind > 0, (el) => el.child(div().flex_none().text_color(t.ansi1).child(`\u2193${g.behind}`)));
+      .child(vcsTailView(t, tail, `vcs-${name}`));
   }
 
   row({ w, i, g, tree }, t) {

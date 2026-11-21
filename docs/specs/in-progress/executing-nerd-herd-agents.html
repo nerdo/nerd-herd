@@ -213,6 +213,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           <li>A long bookmark name is cut in the middle and its count stays</li>
           <li>A long bookmark name leaves the title its room</li>
           <li>The changes ahead show in green as in Spaces</li>
+          <li>A space's row and its session's card show the same version control label</li>
           <li>A session card shows the session's subject wrapped onto more lines when it is longer than one line</li>
           <li>Renaming a session from its card gives its Herdr tab that name</li>
           <li>Renaming a session to an empty name returns it to its automatic name</li>
@@ -293,7 +294,7 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
         <h3>Card version control and polish</h3>
         <dl>
           <dt>Question</dt> <dd data-field="body">What else goes on a card, and how do the open groups and the focused card look?</dd>
-          <dt>Resolution</dt> <dd data-field="resolution">The card's right column holds the status mark and time, then the session's version control label (the jj bookmark with the changes ahead of it, as the Spaces jj label shows it, or the git branch), with the space and machine on the line below; the focused card is outlined in purple, the color of Dismiss; an open group ends with room below its last card while folded headers stay flush; the icon centers on the title's first line A plain terminal tab in focus outlines no card, since the outline means "this session has the focus"; the active space's row in Spaces keeps its highlight and gains the same purple outline (the user, 2026-11-20: "terminal tab hint: no, it means this has the focus"; "that outline is missing from the spaces section but should be there too for consistency"; "show in the agent cards the version control status ... on the right, underneath the time put the version control label there and then below that would be the existing project and computer"; "maybe we use purple"; "a little bit more vertical margin at the bottom of an open group"; "the icon is a bit high"). The label then moved to its own line at the right under the title: a long name took the title's width, so it is cut in its middle to 24 characters with the whole label on hover, and its colors follow Spaces' (the user, 2026-11-20: "The branch name is long and eats into the space for the title"; "put the ellipses in the middle so that you can kind of read the beginning and ends"; "we do not have the same color coding on the version control as we do in the spaces").</dd>
+          <dt>Resolution</dt> <dd data-field="resolution">The card's right column holds the status mark and time, then the session's version control label (the jj bookmark with the changes ahead of it, as the Spaces jj label shows it, or the git branch), with the space and machine on the line below; the focused card is outlined in purple, the color of Dismiss; an open group ends with room below its last card while folded headers stay flush; the icon centers on the title's first line A plain terminal tab in focus outlines no card, since the outline means "this session has the focus"; the active space's row in Spaces keeps its highlight and gains the same purple outline (the user, 2026-11-20: "terminal tab hint: no, it means this has the focus"; "that outline is missing from the spaces section but should be there too for consistency"; "show in the agent cards the version control status ... on the right, underneath the time put the version control label there and then below that would be the existing project and computer"; "maybe we use purple"; "a little bit more vertical margin at the bottom of an open group"; "the icon is a bit high"). The label then moved to its own line at the right under the title: a long name took the title's width, so it is cut in its middle with the whole label on hover, and its colors follow Spaces'. The label is then one component that Spaces' rows and Agents' cards both draw, with Spaces' rules for what shows (a branch named main or master or like the space, and a repository named like the space, are left out; changes behind show in red), read with Spaces' commands, and cut in its middle to 20 characters to fit a space's row (the user, 2026-11-20: "The branch name is long and eats into the space for the title"; "put the ellipses in the middle so that you can kind of read the beginning and ends"; "we do not have the same color coding on the version control as we do in the spaces"; "the branch name needs to be rendered the same in both sections. all the same pieces of info do"; "they should be treated as re-usable components for those parts").</dd>
         </dl>
       </spec-question>
       <spec-question status="resolved" resolved-on="2026-11-20">
@@ -898,19 +899,19 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
           </dl>
         </test-case>
         <test-case traces-to="A card shows its session's version control state under its time: the jj bookmark and changes ahead of it, or the git branch" covers-module="Agents sidebar mod" status="pending">
-          <h4>A card shows its jj bookmark and the changes ahead of it</h4>
+          <h4>A card on main shows only its changes ahead as Spaces does</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">A session in a jj repository whose working copy is two non-empty changes ahead of the main bookmark</dd>
+            <dt>Given</dt> <dd data-field="given">A session in the space repo whose jj working copy is two non-empty changes ahead of the main bookmark</dd>
             <dt>When</dt> <dd data-field="when">The Agents section is read</dd>
-            <dt>Then</dt> <dd data-field="then">The card reads main ↑2 under its time</dd>
+            <dt>Then</dt> <dd data-field="then">The card shows ↑2 and no name, as Spaces shows a space on main</dd>
           </dl>
         </test-case>
         <test-case traces-to="A long bookmark name is cut in the middle and its count stays" covers-module="Agents sidebar mod" status="pending">
           <h4>A long bookmark name is cut in the middle</h4>
           <dl>
-            <dt>Given</dt> <dd data-field="given">A bookmark name of 54 characters and room for 24</dd>
-            <dt>When</dt> <dd data-field="when">The card's label is made</dd>
-            <dt>Then</dt> <dd data-field="then">It keeps the name's first 12 and last 11 characters with an ellipsis between; a name that fits is shown whole</dd>
+            <dt>Given</dt> <dd data-field="given">A bookmark name of 54 characters and room for 20</dd>
+            <dt>When</dt> <dd data-field="when">The label is made</dd>
+            <dt>Then</dt> <dd data-field="then">It keeps the name's first 10 and last 9 characters with an ellipsis between; a name that fits is shown whole</dd>
           </dl>
         </test-case>
         <test-case traces-to="A long bookmark name is cut in the middle and its count stays" covers-module="Agents sidebar mod" status="pending">
@@ -935,6 +936,14 @@ section > details:not([open]) > summary > h2 { color: var(--muted); border-botto
             <dt>Given</dt> <dd data-field="given">A session two changes ahead of its bookmark</dd>
             <dt>When</dt> <dd data-field="when">The window is drawn</dd>
             <dt>Then</dt> <dd data-field="then">The card's ↑2 is drawn in the theme's green, as Spaces draws it, and the name in Spaces' dim gray</dd>
+          </dl>
+        </test-case>
+        <test-case traces-to="A space's row and its session's card show the same version control label" covers-module="Agents sidebar mod" status="pending">
+          <h4>Spaces and a card show the same label</h4>
+          <dl>
+            <dt>Given</dt> <dd data-field="given">The space long-repo two changes ahead of a bookmark whose name is longer than the label's room, and its session</dd>
+            <dt>When</dt> <dd data-field="when">The window is read</dd>
+            <dt>Then</dt> <dd data-field="then">The space's row and the card show the same cut name and the same ↑2</dd>
           </dl>
         </test-case>
       </test-group>

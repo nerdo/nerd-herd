@@ -2,7 +2,7 @@
 // pane.
 import { agents, exec, focused, hc, panes, run, setShared, shared, spaces, terminals } from "herdr";
 import { jjProgramLookup } from "../../core/jj/jjProgram";
-import type { JjRun } from "../../core/jj/vcsLabel";
+import type { VcsExec } from "../../core/vcs/readVcsInfo";
 import type { CoreTerminal } from "../../core/sessions/doneLedger";
 import type { SavedGroups } from "../../core/groups/groupModel";
 import type { SortId } from "../../core/sessions/sortChoices";
@@ -123,15 +123,16 @@ export const saveFoldedStatuses = (keys: readonly string[]): void => {
   setShared(foldedStatusesKey, keys);
 };
 
-/** Where each session's version control is read: its pane's folder on its machine, and Herdr's git
- *  branch for that folder. */
+/** Where each session's version control is read: its pane's folder on its machine, with the name of
+ *  its space, which the label leaves out where the repository or branch repeats it. */
 export const readVcsTargets = (): {
   terminal: TerminalAddress;
   cwd: string;
   machine: string | null;
-  gitBranch: string | null;
+  place: string;
 }[] => {
   const machineOf = new Map(spaces().map((space) => [space.id, space.machine]));
+  const nameOf = new Map(spaces().map((space) => [space.id, space.name]));
   const paneOf = new Map(panes().map((p) => [p.pane, p]));
   return agents().flatMap((a) => {
     const pane = paneOf.get(a.pane);
@@ -141,7 +142,7 @@ export const readVcsTargets = (): {
             terminal: a.address,
             cwd: pane.cwd,
             machine: machineOf.get(a.space) ?? null,
-            gitBranch: pane.branch,
+            place: nameOf.get(a.space) ?? "",
           },
         ]
       : [];
@@ -154,8 +155,11 @@ const jjProgram = jjProgramLookup(
   () => Date.now(),
 );
 
-/** Runs jj in a folder on a machine, for reading its version control state. */
-export const jjIn =
-  (cwd: string, machine: string | null): JjRun =>
-  async (args) =>
-    exec(await jjProgram(machine), [...args], { cwd, on: machine }).catch(() => null);
+/** Runs jj, git or cat in a folder on a machine, for reading its version control. */
+export const vcsIn =
+  (cwd: string, machine: string | null): VcsExec =>
+  async (program, args) =>
+    exec(program === "jj" ? await jjProgram(machine) : program, [...args], {
+      cwd,
+      on: machine,
+    }).catch(() => null);
